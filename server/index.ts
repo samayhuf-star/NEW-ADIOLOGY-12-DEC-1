@@ -973,7 +973,7 @@ app.get('/api/google-ads/accounts', async (c) => {
 // Google Ads Transparency - Submit search request (Playwright-based scraper)
 app.post('/api/google-ads/search', async (c) => {
   try {
-    const { keywords, dateRange, userId } = await c.req.json();
+    const { keywords, dateRange, userId, name } = await c.req.json();
 
     if (!keywords || keywords.length === 0) {
       return c.json({ error: 'No keywords provided', results: [] });
@@ -1032,11 +1032,12 @@ app.post('/api/google-ads/search', async (c) => {
       });
     }
 
+    const searchName = name?.trim() || validKeywords.join(', ');
     const insertResult = await pool.query(
-      `INSERT INTO ad_search_requests (keywords, date_range, user_id, status) 
-       VALUES ($1, $2, $3, 'pending') 
+      `INSERT INTO ad_search_requests (keywords, date_range, user_id, status, name) 
+       VALUES ($1, $2, $3, 'pending', $4) 
        RETURNING id`,
-      [validKeywords, dateRange || 'last_30_days', userId || null]
+      [validKeywords, dateRange || 'last_30_days', userId || null, searchName]
     );
 
     const requestId = insertResult.rows[0].id;
@@ -1081,6 +1082,7 @@ app.get('/api/google-ads/search/:requestId', async (c) => {
       status: request.status,
       requestId: request.id,
       keywords: request.keywords,
+      name: request.name || request.keywords.join(', '),
       results: request.results || [],
       createdAt: request.created_at,
       processedAt: request.processed_at,
@@ -1097,7 +1099,7 @@ app.get('/api/google-ads/search/:requestId', async (c) => {
 app.get('/api/google-ads/requests', async (c) => {
   try {
     const result = await pool.query(
-      `SELECT r.id, r.keywords, r.status, r.created_at, r.processed_at,
+      `SELECT r.id, r.keywords, r.name, r.status, r.created_at, r.processed_at,
         (SELECT COUNT(*) FROM ad_search_results res WHERE res.request_id = r.id) as result_count
        FROM ad_search_requests r 
        ORDER BY r.created_at DESC 
