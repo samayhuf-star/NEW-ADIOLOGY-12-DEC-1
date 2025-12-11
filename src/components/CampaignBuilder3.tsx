@@ -49,6 +49,7 @@ import {
   generateNegativeKeywords,
   generateLocationInput 
 } from '../utils/autoFill';
+import { getKeywordMetrics, type KeywordMetrics } from '../utils/keywordPlannerApi';
 
 // Campaign Structure Types (14 structures)
 const CAMPAIGN_STRUCTURES = [
@@ -287,6 +288,8 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
   const [editingAdId, setEditingAdId] = useState<string | null>(null);
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [seedKeywordsText, setSeedKeywordsText] = useState('');
+  const [keywordDataSource, setKeywordDataSource] = useState<'google_ads_api' | 'fallback' | 'estimated' | 'local'>('local');
+  const [googleAdsCustomerId, setGoogleAdsCustomerId] = useState<string | null>(null);
   const [campaignData, setCampaignData] = useState<CampaignData>({
     url: '',
     campaignName: '',
@@ -458,6 +461,25 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
       });
     }
   }, [initialData]);
+
+  // Fetch Google Ads customer ID on mount (for Keyword Planner API)
+  useEffect(() => {
+    const fetchGoogleAdsAccount = async () => {
+      try {
+        const response = await fetch('/api/google-ads/accounts');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.accounts && data.accounts.length > 0) {
+            // Use the first account as default
+            setGoogleAdsCustomerId(data.accounts[0]);
+          }
+        }
+      } catch (error) {
+        console.log('Google Ads accounts not available, will use fallback data');
+      }
+    };
+    fetchGoogleAdsAccount();
+  }, []);
 
   // Generate default campaign name: Search-date-time
   useEffect(() => {
@@ -807,22 +829,78 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
         throw new Error('No keywords were generated after formatting. Please check your seed keywords and match type selections.');
       }
 
+      // Fetch metrics from Google Ads Keyword Planner API
+      let enrichedKeywords = shuffled;
+      let dataSource: 'google_ads_api' | 'fallback' | 'estimated' | 'local' = 'local';
+      
+      try {
+        // Get unique base keywords for API call (without match type formatting)
+        const uniqueBaseKeywords = [...new Set(shuffled.map(kw => {
+          const text = kw.text || kw.keyword || '';
+          return text.replace(/^["\[\]]|["\[\]]$/g, '').trim().toLowerCase();
+        }))].slice(0, 50); // API limit
+        
+        console.log('[Keyword Planner] Fetching metrics for', uniqueBaseKeywords.length, 'unique keywords');
+        
+        const metricsResponse = await getKeywordMetrics({
+          keywords: uniqueBaseKeywords,
+          targetCountry: campaignData.targetCountry === 'United States' ? 'US' : 'US',
+          customerId: googleAdsCustomerId || undefined,
+        });
+        
+        if (metricsResponse.success && metricsResponse.keywords.length > 0) {
+          dataSource = metricsResponse.source;
+          
+          // Create a map of keyword -> metrics
+          const metricsMap = new Map<string, KeywordMetrics>();
+          metricsResponse.keywords.forEach(m => {
+            metricsMap.set(m.keyword.toLowerCase(), m);
+          });
+          
+          // Enrich keywords with metrics
+          enrichedKeywords = shuffled.map(kw => {
+            const baseText = (kw.text || kw.keyword || '').replace(/^["\[\]]|["\[\]]$/g, '').trim().toLowerCase();
+            const metrics = metricsMap.get(baseText);
+            
+            return {
+              ...kw,
+              volume: metrics?.avgMonthlySearches ?? null,
+              avgMonthlySearches: metrics?.avgMonthlySearches ?? null,
+              cpc: metrics?.avgCpc ?? null,
+              avgCpc: metrics?.avgCpc ?? null,
+              competition: metrics?.competition ?? null,
+              competitionIndex: metrics?.competitionIndex ?? null,
+              lowBid: metrics?.lowTopOfPageBid ?? null,
+              highBid: metrics?.highTopOfPageBid ?? null,
+            };
+          });
+          
+          console.log('[Keyword Planner] Enriched keywords with', dataSource, 'data');
+        }
+      } catch (apiError) {
+        console.warn('[Keyword Planner] Could not fetch metrics, using local data:', apiError);
+        dataSource = 'local';
+      }
+      
+      setKeywordDataSource(dataSource);
+
       // Generate ad groups based on campaign structure
-      const adGroups = generateAdGroupsFromKeywords(shuffled, campaignData.selectedStructure || 'skag');
+      const adGroups = generateAdGroupsFromKeywords(enrichedKeywords, campaignData.selectedStructure || 'skag');
 
       setCampaignData(prev => ({
         ...prev,
-        generatedKeywords: shuffled,
-        selectedKeywords: shuffled, // Auto-select all by default
+        generatedKeywords: enrichedKeywords,
+        selectedKeywords: enrichedKeywords, // Auto-select all by default
         adGroups: adGroups,
       }));
       
       // Auto-save draft
       await autoSaveDraft();
 
-      notifications.success(`Generated ${shuffled.length} keywords`, {
+      const sourceLabel = dataSource === 'google_ads_api' ? 'Google Ads API' : (dataSource === 'fallback' || dataSource === 'estimated') ? 'estimated data' : 'local patterns';
+      notifications.success(`Generated ${enrichedKeywords.length} keywords`, {
         title: 'Keywords Generated',
-        description: `Successfully generated ${shuffled.length} keywords using autocomplete patterns`
+        description: `Generated ${enrichedKeywords.length} keywords with metrics from ${sourceLabel}`
       });
 
       // Scroll to generated keywords section
@@ -2382,12 +2460,38 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
 
           <Card className="mb-6" data-keywords-section>
               <CardHeader>
-                <CardTitle>Generated Keywords & Negative Keywords ({filteredKeywords.length + campaignData.negativeKeywords.length})</CardTitle>
-                <CardDescription>Keywords organized by campaign structure: {campaignData.selectedStructure?.toUpperCase() || 'SKAG'}. Red keywords with × are negative keywords (excluded from campaigns).</CardDescription>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Generated Keywords & Negative Keywords ({filteredKeywords.length + campaignData.negativeKeywords.length})</span>
+                  <div className="flex items-center gap-2 text-xs font-normal">
+                    <span className="text-slate-500">Data Source:</span>
+                    <Badge variant="outline" className={`text-xs ${
+                      keywordDataSource === 'google_ads_api' 
+                        ? 'bg-green-50 text-green-700 border-green-200' 
+                        : (keywordDataSource === 'fallback' || keywordDataSource === 'estimated')
+                          ? 'bg-yellow-50 text-yellow-700 border-yellow-200' 
+                          : 'bg-slate-50 text-slate-600 border-slate-200'
+                    }`}>
+                      {keywordDataSource === 'google_ads_api' 
+                        ? 'Google Ads API' 
+                        : (keywordDataSource === 'fallback' || keywordDataSource === 'estimated')
+                          ? 'Estimated Data' 
+                          : 'Local Patterns'}
+                    </Badge>
+                  </div>
+                </CardTitle>
+                <CardDescription>Keywords with search volume, CPC, and competition metrics. Red keywords are negative (excluded).</CardDescription>
               </CardHeader>
             <CardContent>
+              {/* Column Headers */}
+              <div className="hidden md:grid grid-cols-12 gap-2 p-2 mb-2 text-xs font-semibold text-slate-600 bg-slate-100 rounded-t border">
+                <div className="col-span-5">Keyword</div>
+                <div className="col-span-1 text-center">Type</div>
+                <div className="col-span-2 text-center">Volume</div>
+                <div className="col-span-2 text-center">CPC</div>
+                <div className="col-span-2 text-center">Competition</div>
+              </div>
               <ScrollArea className="h-96">
-                <div className="space-y-2">
+                <div className="space-y-1">
                     {filteredKeywords.length === 0 && campaignData.negativeKeywords.length === 0 ? (
                       <div className="text-center py-8 text-slate-500">
                         <p>No keywords match your filters.</p>
@@ -2395,16 +2499,58 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                       </div>
                     ) : (
                       <>
-                        {/* Generated Keywords */}
+                        {/* Generated Keywords with Metrics */}
                         {filteredKeywords.map((kw, idx) => {
                           const keywordText = typeof kw === 'string' ? kw : (kw?.text || kw?.keyword || String(kw || ''));
+                          const volume = kw?.volume ?? kw?.avgMonthlySearches;
+                          const cpc = kw?.cpc ?? kw?.avgCpc;
+                          const competition = kw?.competition;
+                          
+                          const formatVolume = (v: number | null | undefined) => {
+                            if (v === null || v === undefined) return '-';
+                            if (v >= 1000000) return (v / 1000000).toFixed(1) + 'M';
+                            if (v >= 1000) return (v / 1000).toFixed(1) + 'K';
+                            return v.toString();
+                          };
+                          
+                          const formatCpc = (c: number | null | undefined) => {
+                            if (c === null || c === undefined) return '-';
+                            return '$' + c.toFixed(2);
+                          };
+                          
+                          const getCompetitionStyle = (comp: string | null | undefined) => {
+                            switch (comp) {
+                              case 'LOW': return 'bg-green-50 text-green-700 border-green-200';
+                              case 'MEDIUM': return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+                              case 'HIGH': return 'bg-red-50 text-red-700 border-red-200';
+                              default: return 'bg-slate-50 text-slate-500 border-slate-200';
+                            }
+                          };
+                          
                           return (
-                            <div key={kw?.id || idx} className="flex items-center justify-between p-2 border rounded bg-slate-50 hover:bg-slate-100">
-                              <span className="text-sm text-slate-700">{keywordText}</span>
-                              {kw?.matchType && (
-                          <Badge variant="outline" className="text-xs">{kw.matchType}</Badge>
-                            )}
-                          </div>
+                            <div key={kw?.id || idx} className="grid grid-cols-12 gap-2 items-center p-2 border rounded bg-white hover:bg-slate-50 transition-colors">
+                              <div className="col-span-12 md:col-span-5">
+                                <span className="text-sm font-medium text-slate-800">{keywordText}</span>
+                              </div>
+                              <div className="col-span-4 md:col-span-1 flex justify-center">
+                                {kw?.matchType && (
+                                  <Badge variant="outline" className="text-xs capitalize">{kw.matchType}</Badge>
+                                )}
+                              </div>
+                              <div className="col-span-2 md:col-span-2 text-center">
+                                <span className="text-sm font-semibold text-blue-700">{formatVolume(volume)}</span>
+                                <span className="text-xs text-slate-400 block md:hidden">vol</span>
+                              </div>
+                              <div className="col-span-3 md:col-span-2 text-center">
+                                <span className="text-sm font-medium text-green-700">{formatCpc(cpc)}</span>
+                                <span className="text-xs text-slate-400 block md:hidden">cpc</span>
+                              </div>
+                              <div className="col-span-3 md:col-span-2 flex justify-center">
+                                <Badge variant="outline" className={`text-xs ${getCompetitionStyle(competition)}`}>
+                                  {competition || 'N/A'}
+                                </Badge>
+                              </div>
+                            </div>
                           );
                         })}
                         
