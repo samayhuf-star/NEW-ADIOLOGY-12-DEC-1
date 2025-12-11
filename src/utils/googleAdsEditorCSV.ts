@@ -103,6 +103,15 @@ export interface ImageAssetRow {
   url: string;
 }
 
+export interface PriceExtensionRow {
+  campaignName: string;
+  type: string;
+  priceQualifier?: string;
+  itemHeader: string;
+  itemPrice: string;
+  itemFinalUrl: string;
+}
+
 export interface LocationRow {
   campaignName: string;
   location: string;
@@ -119,6 +128,7 @@ export interface GoogleAdsEditorData {
   callouts?: CalloutRow[];
   snippets?: SnippetRow[];
   promotions?: PromotionRow[];
+  priceExtensions?: PriceExtensionRow[];
   imageAssets?: ImageAssetRow[];
   locations?: LocationRow[];
 }
@@ -210,7 +220,7 @@ function buildCallOnlyAdRow(data: CallOnlyAdRow): Record<string, string> {
   const row = createEmptyRow();
   row['Campaign'] = data.campaignName;
   row['Ad Group'] = data.adGroupName;
-  row['Ad Type'] = 'Call-only ad';
+  row['Ad Type'] = 'Call only ad';
   row['Final URL'] = data.verificationUrl || '';
   row['Headline 1'] = (data.headlines[0] || '').substring(0, 30);
   row['Headline 2'] = (data.headlines[1] || '').substring(0, 30);
@@ -271,6 +281,17 @@ function buildImageAssetRow(data: ImageAssetRow): Record<string, string> {
   return row;
 }
 
+function buildPriceExtensionRow(data: PriceExtensionRow): Record<string, string> {
+  const row = createEmptyRow();
+  row['Campaign'] = data.campaignName;
+  row['Price Extension Type'] = data.type || 'Services';
+  row['Price Extension Price Qualifier'] = data.priceQualifier || 'From';
+  row['Price Extension Item Header'] = data.itemHeader || '';
+  row['Price Extension Item Price'] = data.itemPrice || '';
+  row['Price Extension Item Final URL'] = data.itemFinalUrl || '';
+  return row;
+}
+
 function buildLocationRow(data: LocationRow): Record<string, string> {
   const row = createEmptyRow();
   row['Campaign'] = data.campaignName;
@@ -300,6 +321,8 @@ export function generateGoogleAdsEditorCSV(data: GoogleAdsEditorData): string {
   data.snippets?.forEach(sn => rows.push(buildSnippetRow(sn)));
   
   data.promotions?.forEach(pr => rows.push(buildPromotionRow(pr)));
+  
+  data.priceExtensions?.forEach(pe => rows.push(buildPriceExtensionRow(pe)));
   
   data.imageAssets?.forEach(ia => rows.push(buildImageAssetRow(ia)));
   
@@ -528,6 +551,7 @@ export function convertBuilderDataToEditorFormat(
   const callouts: CalloutRow[] = [];
   const snippets: SnippetRow[] = [];
   const promotions: PromotionRow[] = [];
+  const priceExtensions: PriceExtensionRow[] = [];
   const imageAssets: ImageAssetRow[] = [];
   
   (extensions || []).forEach(ext => {
@@ -563,6 +587,28 @@ export function convertBuilderDataToEditorFormat(
         name: ext.name || 'Image',
         url: ext.url || ext.imageUrl || ''
       });
+    } else if (ext.type === 'price' || ext.extensionType === 'price') {
+      if (ext.items && Array.isArray(ext.items)) {
+        ext.items.forEach((item: any) => {
+          priceExtensions.push({
+            campaignName: campaignNameClean,
+            type: ext.priceType || 'Services',
+            priceQualifier: ext.priceQualifier || 'From',
+            itemHeader: item.header || '',
+            itemPrice: item.price || '',
+            itemFinalUrl: item.finalUrl || item.url || baseUrl
+          });
+        });
+      } else {
+        priceExtensions.push({
+          campaignName: campaignNameClean,
+          type: ext.type || ext.priceType || 'Services',
+          priceQualifier: ext.priceQualifier || 'From',
+          itemHeader: ext.itemHeader || ext.header || '',
+          itemPrice: ext.itemPrice || ext.price || '',
+          itemFinalUrl: ext.itemFinalUrl || ext.finalUrl || baseUrl
+        });
+      }
     }
   });
   
@@ -632,6 +678,28 @@ export function convertBuilderDataToEditorFormat(
               url: ext.url || ext.imageUrl || ''
             });
           }
+        } else if (ext.type === 'price' || ext.extensionType === 'price') {
+          if (ext.items && Array.isArray(ext.items)) {
+            ext.items.forEach((item: any) => {
+              priceExtensions.push({
+                campaignName: campaignNameClean,
+                type: ext.priceType || 'Services',
+                priceQualifier: ext.priceQualifier || 'From',
+                itemHeader: item.header || '',
+                itemPrice: item.price || '',
+                itemFinalUrl: item.finalUrl || item.url || baseUrl
+              });
+            });
+          } else {
+            priceExtensions.push({
+              campaignName: campaignNameClean,
+              type: ext.priceType || 'Services',
+              priceQualifier: ext.priceQualifier || 'From',
+              itemHeader: ext.itemHeader || ext.header || '',
+              itemPrice: ext.itemPrice || ext.price || '',
+              itemFinalUrl: ext.itemFinalUrl || ext.finalUrl || baseUrl
+            });
+          }
         }
       });
     }
@@ -660,6 +728,7 @@ export function convertBuilderDataToEditorFormat(
     callouts: callouts.length > 0 ? callouts : undefined,
     snippets: snippets.length > 0 ? snippets : undefined,
     promotions: promotions.length > 0 ? promotions : undefined,
+    priceExtensions: priceExtensions.length > 0 ? priceExtensions : undefined,
     imageAssets: imageAssets.length > 0 ? imageAssets : undefined,
     locations: locationRows.length > 0 ? locationRows : undefined
   };
