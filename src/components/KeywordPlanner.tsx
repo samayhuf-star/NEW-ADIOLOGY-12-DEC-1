@@ -616,36 +616,36 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
     }, []);
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-6">
+        <div className="min-h-screen bg-white p-6">
             <div className="max-w-6xl mx-auto">
                 {/* Header */}
                 <div className="mb-8">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 shadow-lg shadow-violet-500/25">
+                        <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/25">
                             <Sparkles className="w-6 h-6 text-white" />
                         </div>
-                        <h1 className="text-3xl font-bold text-white tracking-tight">
+                        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
                             Keyword Planner
                         </h1>
                     </div>
-                    <p className="text-slate-400 ml-14">
+                    <p className="text-gray-600 ml-14">
                         Generate comprehensive keyword lists powered by AI and Google Ads data
                     </p>
                 </div>
 
                 {/* Tabs */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                    <TabsList className="bg-slate-800/50 border border-slate-700/50 p-1 rounded-xl backdrop-blur-sm">
+                    <TabsList className="bg-gray-100 border border-gray-200 p-1 rounded-xl">
                         <TabsTrigger 
                             value="planner" 
-                            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-violet-500/20 rounded-lg px-6 py-2.5 text-slate-400 transition-all duration-300"
+                            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-violet-500/20 rounded-lg px-6 py-2.5 text-gray-600 transition-all duration-300"
                         >
                             <Sparkles className="w-4 h-4 mr-2" />
                             Keyword Planner
                         </TabsTrigger>
                         <TabsTrigger 
                             value="saved"
-                            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-violet-500/20 rounded-lg px-6 py-2.5 text-slate-400 transition-all duration-300"
+                            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-violet-500/20 rounded-lg px-6 py-2.5 text-gray-600 transition-all duration-300"
                         >
                             <FolderOpen className="w-4 h-4 mr-2" />
                             Saved Lists
@@ -656,16 +656,16 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {/* Left Panel: Configuration */}
                             <div className="relative group">
-                                <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-2xl blur opacity-20 group-hover:opacity-30 transition duration-500"></div>
-                                <div className="relative bg-slate-900/90 backdrop-blur-xl rounded-2xl p-6 border border-slate-700/50 shadow-2xl">
+                                <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-500 to-purple-500 rounded-2xl blur opacity-10 group-hover:opacity-20 transition duration-500"></div>
+                                <div className="relative bg-white rounded-2xl p-6 border border-gray-200 shadow-lg">
                                     {/* Panel Header */}
                                     <div className="flex items-start justify-between mb-6">
                                         <div>
-                                            <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                                            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
                                                 <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse"></div>
                                                 Configuration
                                             </h2>
-                                            <p className="text-sm text-slate-500 mt-1">
+                                            <p className="text-sm text-gray-500 mt-1">
                                                 Set up your keyword generation parameters
                                             </p>
                                         </div>
@@ -673,17 +673,17 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                             variant="outline"
                                             size="sm"
                                             onClick={handleFillInfo}
-                                            className="bg-slate-800/50 border-slate-600/50 text-slate-300 hover:bg-slate-700/50 hover:text-white hover:border-violet-500/50 transition-all duration-300"
+                                            className="bg-white border-gray-300 text-gray-700 hover:bg-violet-50 hover:text-violet-700 hover:border-violet-400 transition-all duration-300"
                                         >
-                                            <Sparkles className="w-4 h-4 mr-2 text-violet-400" />
+                                            <Sparkles className="w-4 h-4 mr-2 text-violet-500" />
                                             Auto Fill
                                         </Button>
                                     </div>
 
                                     <div className="space-y-5">
                                         {/* URL Seed Generator */}
-                                        <div className="relative p-4 rounded-xl bg-gradient-to-r from-violet-950/50 to-indigo-950/50 border border-violet-500/20">
-                                            <Label htmlFor="urlInput" className="flex items-center gap-2 text-sm font-medium text-violet-300 mb-3">
+                                        <div className="relative p-4 rounded-xl bg-violet-50 border border-violet-200">
+                                            <Label htmlFor="urlInput" className="flex items-center gap-2 text-sm font-medium text-violet-700 mb-3">
                                                 <Link className="w-4 h-4" />
                                                 Generate from URL
                                             </Label>
@@ -693,12 +693,12 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                     placeholder="https://example.com/landing-page"
                                                     value={urlInput}
                                                     onChange={(e) => setUrlInput(e.target.value)}
-                                                    className="flex-1 bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-500 focus:border-violet-500/50 focus:ring-violet-500/20 rounded-lg"
+                                                    className="flex-1 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:border-violet-500 focus:ring-violet-500/20 rounded-lg"
                                                 />
                                                 <Button
                                                     onClick={handleGenerateSeedsFromUrl}
                                                     disabled={isGeneratingSeedFromUrl || !urlInput.trim()}
-                                                    className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white border-0 shadow-lg shadow-violet-500/20 disabled:opacity-50 rounded-lg px-4"
+                                                    className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white border-0 shadow-lg shadow-violet-500/20 disabled:opacity-50 rounded-lg px-4"
                                                 >
                                                     {isGeneratingSeedFromUrl ? (
                                                         <RefreshCw className="w-4 h-4 animate-spin" />
@@ -707,15 +707,15 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                     )}
                                                 </Button>
                                             </div>
-                                            <p className="text-xs text-slate-500 mt-2">
+                                            <p className="text-xs text-gray-500 mt-2">
                                                 Extract seed keywords automatically from any landing page
                                             </p>
                                         </div>
 
                                         {/* Seed Keywords */}
                                         <div className="space-y-3">
-                                            <Label htmlFor="seedKeywords" className="flex items-center gap-2 text-sm font-medium text-slate-300">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                            <Label htmlFor="seedKeywords" className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-violet-500"></span>
                                                 Seed Keywords
                                             </Label>
                                             <Input
@@ -723,18 +723,18 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                 placeholder="airline number, contact airline, delta phone..."
                                                 value={seedKeywords}
                                                 onChange={(e) => setSeedKeywords(e.target.value)}
-                                                className="bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-500 focus:border-violet-500/50 focus:ring-violet-500/20 rounded-lg"
+                                                className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:border-violet-500 focus:ring-violet-500/20 rounded-lg"
                                             />
-                                            <p className="text-xs text-slate-500">
+                                            <p className="text-xs text-gray-500">
                                                 Enter 3-5 core keywords, comma-separated
                                             </p>
                                             
                                             {/* AI Suggestions */}
                                             {suggestedKeywords.length > 0 && (
-                                                <div className="mt-4 p-4 rounded-xl bg-gradient-to-r from-cyan-950/30 to-blue-950/30 border border-cyan-500/20">
+                                                <div className="mt-4 p-4 rounded-xl bg-purple-50 border border-purple-200">
                                                     <div className="flex items-center gap-2 mb-3">
-                                                        <Lightbulb className="w-4 h-4 text-cyan-400" />
-                                                        <span className="text-sm font-medium text-cyan-300">AI Suggestions</span>
+                                                        <Lightbulb className="w-4 h-4 text-purple-600" />
+                                                        <span className="text-sm font-medium text-purple-700">AI Suggestions</span>
                                                     </div>
                                                     <div className="flex flex-wrap gap-2">
                                                         {suggestedKeywords.map((keyword, idx) => (
@@ -743,7 +743,7 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                                 variant="outline"
                                                                 size="sm"
                                                                 onClick={() => applySuggestedKeyword(keyword)}
-                                                                className="h-8 text-xs bg-slate-800/50 border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/20 hover:border-cyan-400/50 hover:text-cyan-200 transition-all duration-200"
+                                                                className="h-8 text-xs bg-white border-purple-300 text-purple-700 hover:bg-purple-100 hover:border-purple-400 hover:text-purple-800 transition-all duration-200"
                                                             >
                                                                 <Plus className="w-3 h-3 mr-1.5" />
                                                                 {keyword}
@@ -756,8 +756,8 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
 
                                         {/* Match Types */}
                                         <div className="space-y-3">
-                                            <Label className="flex items-center gap-2 text-sm font-medium text-slate-300">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                            <Label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-violet-500"></span>
                                                 Match Types
                                             </Label>
                                             <div className="grid grid-cols-3 gap-3">
@@ -765,8 +765,8 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                     onClick={() => setMatchTypes(prev => ({...prev, broad: !prev.broad}))}
                                                     className={`cursor-pointer p-3 rounded-xl border transition-all duration-300 ${
                                                         matchTypes.broad 
-                                                            ? 'bg-amber-500/10 border-amber-500/50 shadow-lg shadow-amber-500/10' 
-                                                            : 'bg-slate-800/30 border-slate-700/50 hover:border-slate-600/50'
+                                                            ? 'bg-amber-50 border-amber-400 shadow-lg shadow-amber-500/10' 
+                                                            : 'bg-gray-50 border-gray-200 hover:border-gray-300'
                                                     }`}
                                                 >
                                                     <div className="flex items-center justify-between mb-1">
@@ -777,7 +777,7 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                             className="border-amber-400 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
                                                         />
                                                     </div>
-                                                    <span className={`text-xs font-medium ${matchTypes.broad ? 'text-amber-300' : 'text-slate-400'}`}>
+                                                    <span className={`text-xs font-medium ${matchTypes.broad ? 'text-amber-700' : 'text-gray-500'}`}>
                                                         Broad
                                                     </span>
                                                 </div>
@@ -785,8 +785,8 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                     onClick={() => setMatchTypes(prev => ({...prev, phrase: !prev.phrase}))}
                                                     className={`cursor-pointer p-3 rounded-xl border transition-all duration-300 ${
                                                         matchTypes.phrase 
-                                                            ? 'bg-blue-500/10 border-blue-500/50 shadow-lg shadow-blue-500/10' 
-                                                            : 'bg-slate-800/30 border-slate-700/50 hover:border-slate-600/50'
+                                                            ? 'bg-blue-50 border-blue-400 shadow-lg shadow-blue-500/10' 
+                                                            : 'bg-gray-50 border-gray-200 hover:border-gray-300'
                                                     }`}
                                                 >
                                                     <div className="flex items-center justify-between mb-1">
@@ -797,7 +797,7 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                             className="border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
                                                         />
                                                     </div>
-                                                    <span className={`text-xs font-medium ${matchTypes.phrase ? 'text-blue-300' : 'text-slate-400'}`}>
+                                                    <span className={`text-xs font-medium ${matchTypes.phrase ? 'text-blue-700' : 'text-gray-500'}`}>
                                                         "Phrase"
                                                     </span>
                                                 </div>
@@ -805,8 +805,8 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                     onClick={() => setMatchTypes(prev => ({...prev, exact: !prev.exact}))}
                                                     className={`cursor-pointer p-3 rounded-xl border transition-all duration-300 ${
                                                         matchTypes.exact 
-                                                            ? 'bg-emerald-500/10 border-emerald-500/50 shadow-lg shadow-emerald-500/10' 
-                                                            : 'bg-slate-800/30 border-slate-700/50 hover:border-slate-600/50'
+                                                            ? 'bg-emerald-50 border-emerald-400 shadow-lg shadow-emerald-500/10' 
+                                                            : 'bg-gray-50 border-gray-200 hover:border-gray-300'
                                                     }`}
                                                 >
                                                     <div className="flex items-center justify-between mb-1">
@@ -817,7 +817,7 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                             className="border-emerald-400 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
                                                         />
                                                     </div>
-                                                    <span className={`text-xs font-medium ${matchTypes.exact ? 'text-emerald-300' : 'text-slate-400'}`}>
+                                                    <span className={`text-xs font-medium ${matchTypes.exact ? 'text-emerald-700' : 'text-gray-500'}`}>
                                                         [Exact]
                                                     </span>
                                                 </div>
@@ -826,28 +826,28 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
 
                                         {/* Negative Keywords */}
                                         <div className="space-y-3">
-                                            <Label className="flex items-center gap-2 text-sm font-medium text-slate-300">
-                                                <AlertCircle className="w-3.5 h-3.5 text-slate-500" />
+                                            <Label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                                                <AlertCircle className="w-3.5 h-3.5 text-gray-500" />
                                                 Negative Keywords
                                             </Label>
                                             <Textarea
                                                 placeholder="cheap, discount, reviews, job, free..."
                                                 value={negativeKeywords}
                                                 onChange={(e) => setNegativeKeywords(e.target.value)}
-                                                className="min-h-[100px] bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-500 focus:border-violet-500/50 focus:ring-violet-500/20 rounded-lg text-sm resize-none"
+                                                className="min-h-[100px] bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:border-violet-500 focus:ring-violet-500/20 rounded-lg text-sm resize-none"
                                             />
-                                            <p className="text-xs text-slate-500">
+                                            <p className="text-xs text-gray-500">
                                                 One per line or comma-separated. These terms will be excluded.
                                             </p>
                                         </div>
                                     </div>
 
                                     {/* Generate Button */}
-                                    <div className="mt-6 pt-6 border-t border-slate-700/50 space-y-3">
+                                    <div className="mt-6 pt-6 border-t border-gray-200 space-y-3">
                                         <Button
                                             onClick={() => handleGenerate(false)}
                                             disabled={isGenerating || !(typeof seedKeywords === 'string' && seedKeywords.trim())}
-                                            className="w-full h-12 bg-gradient-to-r from-violet-600 via-indigo-600 to-violet-600 hover:from-violet-500 hover:via-indigo-500 hover:to-violet-500 text-white font-semibold rounded-xl shadow-lg shadow-violet-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 text-sm"
+                                            className="w-full h-12 bg-gradient-to-r from-violet-600 via-purple-600 to-violet-600 hover:from-violet-500 hover:via-purple-500 hover:to-violet-500 text-white font-semibold rounded-xl shadow-lg shadow-violet-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 text-sm"
                                         >
                                             {isGenerating ? (
                                                 <>
@@ -866,7 +866,7 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                 onClick={() => handleGenerate(true)}
                                                 disabled={isGenerating || !(typeof seedKeywords === 'string' && seedKeywords.trim())}
                                                 variant="outline"
-                                                className="w-full h-10 bg-slate-800/50 border-slate-600/50 text-slate-300 hover:bg-slate-700/50 hover:text-white hover:border-violet-500/50 rounded-xl transition-all duration-300 text-sm"
+                                                className="w-full h-10 bg-white border-gray-300 text-gray-700 hover:bg-violet-50 hover:text-violet-700 hover:border-violet-400 rounded-xl transition-all duration-300 text-sm"
                                             >
                                                 <Plus className="w-4 h-4 mr-2" />
                                                 Append More ({generatedKeywords.length} total)
@@ -878,16 +878,16 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
 
                             {/* Right Panel: Generated Keywords */}
                             <div className="relative group">
-                                <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-600 to-cyan-600 rounded-2xl blur opacity-20 group-hover:opacity-30 transition duration-500"></div>
-                                <div className="relative bg-slate-900/90 backdrop-blur-xl rounded-2xl p-6 border border-slate-700/50 shadow-2xl h-full flex flex-col">
+                                <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-500 to-purple-500 rounded-2xl blur opacity-10 group-hover:opacity-20 transition duration-500"></div>
+                                <div className="relative bg-white rounded-2xl p-6 border border-gray-200 shadow-lg h-full flex flex-col">
                                     {/* Panel Header */}
                                     <div className="mb-4">
                                         <div className="flex items-center justify-between mb-2">
-                                            <h2 className="text-xl font-semibold text-white flex items-center gap-3">
-                                                <div className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></div>
+                                            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-3">
+                                                <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse"></div>
                                                 Keywords
                                                 {generatedKeywords.length > 0 && (
-                                                    <span className="px-2.5 py-1 text-xs font-bold bg-gradient-to-r from-violet-600 to-indigo-600 rounded-full text-white shadow-lg shadow-violet-500/20">
+                                                    <span className="px-2.5 py-1 text-xs font-bold bg-gradient-to-r from-violet-600 to-purple-600 rounded-full text-white shadow-lg shadow-violet-500/20">
                                                         {generatedKeywords.length}
                                                     </span>
                                                 )}
@@ -898,17 +898,17 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                         variant="ghost"
                                                         size="sm"
                                                         onClick={() => setShowMetrics(!showMetrics)}
-                                                        className="h-8 text-xs text-slate-400 hover:text-white hover:bg-slate-800/50"
+                                                        className="h-8 text-xs text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                                                     >
                                                         <BarChart3 className="w-3.5 h-3.5 mr-1.5" />
                                                         {showMetrics ? 'Hide' : 'Show'}
                                                     </Button>
                                                     <Badge className={`text-xs px-2.5 py-1 rounded-full font-medium border-0 ${
                                                         dataSource === 'google_ads_api' 
-                                                            ? 'bg-emerald-500/20 text-emerald-400' 
+                                                            ? 'bg-emerald-100 text-emerald-700' 
                                                             : dataSource === 'fallback' 
-                                                                ? 'bg-amber-500/20 text-amber-400' 
-                                                                : 'bg-slate-700/50 text-slate-400'
+                                                                ? 'bg-amber-100 text-amber-700' 
+                                                                : 'bg-gray-100 text-gray-600'
                                                     }`}>
                                                         {dataSource === 'google_ads_api' 
                                                             ? 'Google Ads API' 
@@ -919,7 +919,7 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                 </div>
                                             )}
                                         </div>
-                                        <p className="text-sm text-slate-500">
+                                        <p className="text-sm text-gray-500">
                                             {showMetrics && enrichedKeywords.some(k => k.metrics) 
                                                 ? 'Keywords with volume, CPC, and competition metrics' 
                                                 : 'Your generated keywords will appear here'}
@@ -930,17 +930,17 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                         {generatedKeywords.length === 0 ? (
                                             <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
                                                 <div className="relative mb-6">
-                                                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 flex items-center justify-center shadow-xl">
-                                                        <Sparkles className="w-10 h-10 text-slate-500" />
+                                                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shadow-lg">
+                                                        <Sparkles className="w-10 h-10 text-gray-400" />
                                                     </div>
-                                                    <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg">
+                                                    <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-gradient-to-r from-violet-600 to-purple-600 flex items-center justify-center shadow-lg">
                                                         <Plus className="w-3 h-3 text-white" />
                                                     </div>
                                                 </div>
-                                                <h3 className="text-lg font-semibold text-white mb-2">
+                                                <h3 className="text-lg font-semibold text-gray-900 mb-2">
                                                     Ready to Generate
                                                 </h3>
-                                                <p className="text-sm text-slate-500 max-w-xs">
+                                                <p className="text-sm text-gray-500 max-w-xs">
                                                     Configure your seed keywords and click Generate to create a comprehensive keyword list
                                                 </p>
                                             </div>
@@ -952,7 +952,7 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                         onClick={handleOpenSaveDialog}
                                                         disabled={isSaving || generatedKeywords.length === 0}
                                                         size="sm"
-                                                        className="h-9 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white border-0 shadow-lg shadow-violet-500/20 text-xs font-medium rounded-lg"
+                                                        className="h-9 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white border-0 shadow-lg shadow-violet-500/20 text-xs font-medium rounded-lg"
                                                     >
                                                         <Save className="w-3.5 h-3.5 mr-1.5" />
                                                         {isSaving ? 'Saving...' : 'Save'}
@@ -961,7 +961,7 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                         onClick={handleCopyAll}
                                                         variant="outline"
                                                         size="sm"
-                                                        className="h-9 bg-slate-800/50 border-slate-600/50 text-slate-300 hover:bg-slate-700/50 hover:text-white hover:border-slate-500/50 text-xs rounded-lg"
+                                                        className="h-9 bg-white border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-gray-900 hover:border-gray-400 text-xs rounded-lg"
                                                     >
                                                         <Copy className="w-3.5 h-3.5 mr-1.5" />
                                                         Copy
@@ -970,7 +970,7 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                         onClick={handleDownloadKeywords}
                                                         variant="outline"
                                                         size="sm"
-                                                        className="h-9 bg-slate-800/50 border-slate-600/50 text-slate-300 hover:bg-slate-700/50 hover:text-white hover:border-slate-500/50 text-xs rounded-lg"
+                                                        className="h-9 bg-white border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-gray-900 hover:border-gray-400 text-xs rounded-lg"
                                                     >
                                                         <Download className="w-3.5 h-3.5 mr-1.5" />
                                                         Export
@@ -997,7 +997,7 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                         }}
                                                         disabled={generatedKeywords.length === 0}
                                                         size="sm"
-                                                        className="h-9 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-cyan-500/20 text-xs font-medium rounded-lg ml-auto"
+                                                        className="h-9 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white border-0 shadow-lg shadow-violet-500/20 text-xs font-medium rounded-lg ml-auto"
                                                     >
                                                         <ArrowRight className="w-3.5 h-3.5 mr-1.5" />
                                                         Create Campaign
@@ -1005,16 +1005,16 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                 </div>
 
                                                 {/* Keywords Table */}
-                                                <div className="flex-1 overflow-hidden rounded-xl border border-slate-700/50 bg-slate-800/30">
+                                                <div className="flex-1 overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
                                                     {showMetrics && enrichedKeywords.some(k => k.metrics) && (
-                                                        <div className="grid grid-cols-12 gap-3 px-4 py-3 bg-slate-800/80 border-b border-slate-700/50 text-xs font-semibold text-slate-400 sticky top-0">
+                                                        <div className="grid grid-cols-12 gap-3 px-4 py-3 bg-gray-100 border-b border-gray-200 text-xs font-semibold text-gray-600 sticky top-0">
                                                             <div className="col-span-5">Keyword</div>
                                                             <div className="col-span-2 text-center">Volume</div>
                                                             <div className="col-span-2 text-center">CPC</div>
                                                             <div className="col-span-3 text-center">Competition</div>
                                                         </div>
                                                     )}
-                                                    <div className="max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+                                                    <div className="max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                                                         {(showMetrics && enrichedKeywords.length > 0 ? enrichedKeywords : generatedKeywords.map(k => ({ text: k }))).map((item, idx) => {
                                                             const kw = typeof item === 'string' ? { text: item } : item;
                                                             const metrics = (kw as EnrichedKeyword).metrics;
@@ -1022,14 +1022,14 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                             return showMetrics && metrics ? (
                                                                 <div
                                                                     key={idx}
-                                                                    className="grid grid-cols-12 gap-3 px-4 py-3 border-b border-slate-700/30 hover:bg-slate-700/20 transition-colors duration-200 text-sm"
+                                                                    className="grid grid-cols-12 gap-3 px-4 py-3 border-b border-gray-200 hover:bg-gray-100 transition-colors duration-200 text-sm bg-white"
                                                                 >
-                                                                    <div className="col-span-5 font-mono text-slate-200 truncate" title={kw.text}>
+                                                                    <div className="col-span-5 font-mono text-gray-800 truncate" title={kw.text}>
                                                                         {kw.text}
                                                                     </div>
                                                                     <div className="col-span-2 text-center flex items-center justify-center gap-1.5">
-                                                                        <TrendingUp className="w-3.5 h-3.5 text-blue-400" />
-                                                                        <span className="text-slate-300 font-medium">
+                                                                        <TrendingUp className="w-3.5 h-3.5 text-blue-500" />
+                                                                        <span className="text-gray-700 font-medium">
                                                                             {metrics.avgMonthlySearches 
                                                                                 ? metrics.avgMonthlySearches >= 1000 
                                                                                     ? `${(metrics.avgMonthlySearches / 1000).toFixed(1)}K`
@@ -1038,18 +1038,18 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                                         </span>
                                                                     </div>
                                                                     <div className="col-span-2 text-center flex items-center justify-center gap-1.5">
-                                                                        <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
-                                                                        <span className="text-slate-300 font-medium">
+                                                                        <DollarSign className="w-3.5 h-3.5 text-emerald-500" />
+                                                                        <span className="text-gray-700 font-medium">
                                                                             {metrics.avgCpc ? `$${metrics.avgCpc.toFixed(2)}` : '-'}
                                                                         </span>
                                                                     </div>
                                                                     <div className="col-span-3 text-center">
                                                                         <span className={`inline-flex px-2.5 py-1 text-xs font-semibold rounded-full ${
                                                                             metrics.competition === 'HIGH' 
-                                                                                ? 'bg-rose-500/20 text-rose-400' 
+                                                                                ? 'bg-rose-100 text-rose-700' 
                                                                                 : metrics.competition === 'MEDIUM' 
-                                                                                    ? 'bg-amber-500/20 text-amber-400' 
-                                                                                    : 'bg-emerald-500/20 text-emerald-400'
+                                                                                    ? 'bg-amber-100 text-amber-700' 
+                                                                                    : 'bg-emerald-100 text-emerald-700'
                                                                         }`}>
                                                                             {metrics.competition || 'Low'}
                                                                         </span>
@@ -1058,7 +1058,7 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                             ) : (
                                                                 <div
                                                                     key={idx}
-                                                                    className="px-4 py-3 border-b border-slate-700/30 hover:bg-slate-700/20 transition-colors duration-200 text-sm text-slate-300 font-mono"
+                                                                    className="px-4 py-3 border-b border-gray-200 hover:bg-gray-100 transition-colors duration-200 text-sm text-gray-800 font-mono bg-white"
                                                                 >
                                                                     {kw.text}
                                                                 </div>
@@ -1076,14 +1076,14 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                     
                     <TabsContent value="saved" className="mt-0">
                         <div className="relative group">
-                            <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-600 to-cyan-600 rounded-2xl blur opacity-20 group-hover:opacity-30 transition duration-500"></div>
-                            <div className="relative bg-slate-900/90 backdrop-blur-xl rounded-2xl p-6 border border-slate-700/50 shadow-2xl">
+                            <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-500 to-purple-500 rounded-2xl blur opacity-10 group-hover:opacity-20 transition duration-500"></div>
+                            <div className="relative bg-white rounded-2xl p-6 border border-gray-200 shadow-lg">
                                 <div className="mb-6">
-                                    <h2 className="text-xl font-semibold text-white flex items-center gap-3">
+                                    <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-3">
                                         <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse"></div>
                                         Saved Keyword Lists
                                         {savedLists.length > 0 && (
-                                            <span className="px-2.5 py-1 text-xs font-bold bg-gradient-to-r from-violet-600 to-indigo-600 rounded-full text-white">
+                                            <span className="px-2.5 py-1 text-xs font-bold bg-gradient-to-r from-violet-600 to-purple-600 rounded-full text-white">
                                                 {savedLists.length}
                                             </span>
                                         )}
@@ -1094,12 +1094,12 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                         {savedLists.map(list => (
                                             <div
                                                 key={list.id}
-                                                className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 hover:border-violet-500/30 hover:bg-slate-800/70 transition-all duration-300"
+                                                className="p-4 rounded-xl bg-gray-50 border border-gray-200 hover:border-violet-300 hover:bg-violet-50/50 transition-all duration-300"
                                             >
                                                 <div className="flex justify-between items-center">
                                                     <div className="space-y-1">
-                                                        <span className="text-base font-semibold text-white">{list.name}</span>
-                                                        <p className="text-xs text-slate-500">
+                                                        <span className="text-base font-semibold text-gray-900">{list.name}</span>
+                                                        <p className="text-xs text-gray-500">
                                                             Created {new Date(list.createdAt).toLocaleDateString()}
                                                         </p>
                                                     </div>
@@ -1108,7 +1108,7 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                             onClick={() => handleLoadSavedList(list.id)}
                                                             variant="outline"
                                                             size="sm"
-                                                            className="h-9 bg-slate-700/50 border-slate-600/50 text-slate-300 hover:bg-violet-600/20 hover:text-violet-300 hover:border-violet-500/50 rounded-lg text-xs"
+                                                            className="h-9 bg-white border-gray-300 text-gray-700 hover:bg-violet-50 hover:text-violet-700 hover:border-violet-400 rounded-lg text-xs"
                                                         >
                                                             <FolderOpen className="w-3.5 h-3.5 mr-1.5" />
                                                             Load
@@ -1117,7 +1117,7 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                             onClick={() => handleDeleteSavedList(list.id)}
                                                             variant="outline"
                                                             size="sm"
-                                                            className="h-9 bg-rose-500/10 border-rose-500/30 text-rose-400 hover:bg-rose-500/20 hover:border-rose-500/50 rounded-lg text-xs"
+                                                            className="h-9 bg-rose-50 border-rose-300 text-rose-700 hover:bg-rose-100 hover:border-rose-400 rounded-lg text-xs"
                                                         >
                                                             <Trash2 className="w-3.5 h-3.5 mr-1.5" />
                                                             Delete
@@ -1130,14 +1130,14 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                 ) : (
                                     <div className="flex flex-col items-center justify-center py-16 text-center">
                                         <div className="relative mb-6">
-                                            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 flex items-center justify-center shadow-xl">
-                                                <FolderOpen className="w-10 h-10 text-slate-500" />
+                                            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shadow-lg">
+                                                <FolderOpen className="w-10 h-10 text-gray-400" />
                                             </div>
                                         </div>
-                                        <h3 className="text-lg font-semibold text-white mb-2">
+                                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
                                             No Saved Lists
                                         </h3>
-                                        <p className="text-sm text-slate-500 max-w-xs">
+                                        <p className="text-sm text-gray-500 max-w-xs">
                                             Generate keywords and save them for future use
                                         </p>
                                     </div>
@@ -1149,27 +1149,27 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
 
                 {/* Save Dialog */}
                 <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
-                    <DialogContent className="bg-slate-900 border-slate-700/50 shadow-2xl rounded-2xl sm:max-w-[440px]">
+                    <DialogContent className="bg-white border-gray-200 shadow-2xl rounded-2xl sm:max-w-[440px]">
                         <DialogHeader>
-                            <DialogTitle className="text-xl font-semibold text-white flex items-center gap-3">
-                                <div className="p-2 rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600">
+                            <DialogTitle className="text-xl font-semibold text-gray-900 flex items-center gap-3">
+                                <div className="p-2 rounded-lg bg-gradient-to-br from-violet-600 to-purple-600">
                                     <Save className="w-4 h-4 text-white" />
                                 </div>
                                 Save Keyword Plan
                             </DialogTitle>
-                            <DialogDescription className="text-slate-400">
+                            <DialogDescription className="text-gray-500">
                                 Give your keyword plan a name to save it for later
                             </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4 py-4">
                             <div className="space-y-2">
-                                <Label htmlFor="name" className="text-sm font-medium text-slate-300">Plan Name</Label>
+                                <Label htmlFor="name" className="text-sm font-medium text-gray-700">Plan Name</Label>
                                 <Input
                                     id="name"
                                     placeholder="My Keyword Plan"
                                     value={listName}
                                     onChange={(e) => setListName(e.target.value)}
-                                    className="bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-500 focus:border-violet-500/50 focus:ring-violet-500/20 rounded-lg"
+                                    className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:border-violet-500 focus:ring-violet-500/20 rounded-lg"
                                 />
                             </div>
                         </div>
@@ -1177,14 +1177,14 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                             <Button
                                 onClick={handleCloseSaveDialog}
                                 variant="outline"
-                                className="bg-slate-800/50 border-slate-600/50 text-slate-300 hover:bg-slate-700/50 hover:text-white rounded-lg"
+                                className="bg-white border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-gray-900 rounded-lg"
                             >
                                 Cancel
                             </Button>
                             <Button
                                 onClick={handleSaveWithCustomName}
                                 disabled={isSaving}
-                                className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white border-0 shadow-lg shadow-violet-500/20 rounded-lg"
+                                className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white border-0 shadow-lg shadow-violet-500/20 rounded-lg"
                             >
                                 {isSaving ? (
                                     <>
