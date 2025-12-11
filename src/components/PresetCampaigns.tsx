@@ -5,7 +5,6 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
-import { ScrollArea } from './ui/scroll-area';
 import { notifications } from '../utils/notifications';
 import { generateCampaignStructure, StructureSettings, Ad } from '../utils/campaignStructureGenerator';
 import { exportCampaignToGoogleAdsEditorCSV, validateCSVRows, campaignStructureToCSVRows } from '../utils/googleAdsEditorCSVExporter';
@@ -363,7 +362,7 @@ export const PresetCampaigns: React.FC<PresetCampaignsProps> = ({ onLoadPreset }
 
       {/* Preview Modal */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
           {selectedPreset && (
             <>
               <DialogHeader className="shrink-0">
@@ -395,7 +394,7 @@ export const PresetCampaigns: React.FC<PresetCampaignsProps> = ({ onLoadPreset }
                 <DialogDescription>{selectedPreset.description}</DialogDescription>
               </DialogHeader>
 
-              <ScrollArea className="flex-1 mt-4">
+              <div className="flex-1 mt-4 min-h-0 overflow-y-auto max-h-[60vh]">
                 <div className="space-y-6 pr-4">
                   {/* Keywords Section */}
                   <div>
@@ -483,7 +482,7 @@ export const PresetCampaigns: React.FC<PresetCampaignsProps> = ({ onLoadPreset }
                     </div>
                   </div>
                 </div>
-              </ScrollArea>
+              </div>
 
               {/* Modal Footer */}
               <div className="flex items-center justify-between gap-4 pt-4 mt-4 border-t shrink-0">
