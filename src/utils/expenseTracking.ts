@@ -9,9 +9,11 @@ export interface ServiceExpense {
   description: string;
   monthlyBudget: number;
   currentSpend: number;
-  status: 'active' | 'free_tier' | 'inactive';
+  status: 'active' | 'free_tier' | 'inactive' | 'no_key' | 'error' | 'not_configured';
   lastBilled: string;
   currency?: string;
+  isManual?: boolean;
+  apiConnected?: boolean;
 }
 
 // OpenAI Expense Tracking
@@ -196,7 +198,9 @@ export async function fetchAllExpenses(): Promise<ServiceExpense[]> {
         monthlyBudget: s.monthlyBudget,
         currentSpend: s.currentSpend || 0,
         status: s.status || 'inactive',
-        lastBilled: s.lastBilled || 'N/A'
+        lastBilled: s.lastBilled || 'N/A',
+        isManual: s.isManual ?? true,
+        apiConnected: s.apiConnected ?? false
       }));
     }
   } catch (error) {

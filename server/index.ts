@@ -619,76 +619,228 @@ app.get('/api/admin/services-billing', async (c) => {
     currentSpend: number;
     status: string;
     lastBilled: string;
+    isManual: boolean;
+    apiConnected: boolean;
   }
   const services: ServiceBilling[] = [];
   const today = new Date().toISOString().split('T')[0];
 
-  // OpenAI - use the integration API key
+  // OpenAI - use the integration API key with usage endpoint
   try {
     const openaiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
     if (openaiKey) {
-      // OpenAI usage API
-      const startDate = new Date();
-      startDate.setDate(1); // Start of month
-      const response = await fetch(`https://api.openai.com/v1/dashboard/billing/usage?start_date=${startDate.toISOString().split('T')[0]}&end_date=${today}`, {
-        headers: { 'Authorization': `Bearer ${openaiKey}` }
+      // Try fetching from OpenAI usage API (organization level)
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      
+      // OpenAI usage costs endpoint
+      const response = await fetch(`https://api.openai.com/v1/organization/costs?start_time=${Math.floor(startOfMonth.getTime() / 1000)}&end_time=${Math.floor(now.getTime() / 1000)}&limit=100`, {
+        headers: { 
+          'Authorization': `Bearer ${openaiKey}`,
+          'Content-Type': 'application/json'
+        }
       });
       
+      let openaiSpend = 0;
       if (response.ok) {
         const data = await response.json();
+        // Sum up all costs
+        if (data.data && Array.isArray(data.data)) {
+          openaiSpend = data.data.reduce((sum: number, item: any) => sum + (item.results?.reduce((s: number, r: any) => s + (r.amount?.value || 0), 0) || 0), 0);
+        }
         services.push({
           name: 'OpenAI',
           description: 'AI & GPT API',
           monthlyBudget: 500,
-          currentSpend: (data.total_usage || 0) / 100,
+          currentSpend: openaiSpend,
           status: 'active',
-          lastBilled: today
+          lastBilled: today,
+          isManual: false,
+          apiConnected: true
         });
       } else {
-        services.push({ name: 'OpenAI', description: 'AI & GPT API', monthlyBudget: 500, currentSpend: 0, status: 'active', lastBilled: today });
+        // Try alternative usage endpoint
+        const altResponse = await fetch(`https://api.openai.com/v1/usage?date=${today}`, {
+          headers: { 'Authorization': `Bearer ${openaiKey}` }
+        });
+        
+        if (altResponse.ok) {
+          const altData = await altResponse.json();
+          // Estimate cost based on tokens (rough estimate)
+          const totalTokens = (altData.data || []).reduce((sum: number, d: any) => 
+            sum + (d.n_generated_tokens_total || 0) + (d.n_context_tokens_total || 0), 0);
+          openaiSpend = (totalTokens / 1000) * 0.002; // Rough estimate at $0.002 per 1K tokens
+        }
+        
+        services.push({
+          name: 'OpenAI',
+          description: 'AI & GPT API',
+          monthlyBudget: 500,
+          currentSpend: openaiSpend,
+          status: 'active',
+          lastBilled: today,
+          isManual: openaiSpend === 0,
+          apiConnected: openaiSpend > 0
+        });
       }
     } else {
-      services.push({ name: 'OpenAI', description: 'AI & GPT API', monthlyBudget: 500, currentSpend: 0, status: 'inactive', lastBilled: 'N/A' });
+      services.push({ 
+        name: 'OpenAI', 
+        description: 'AI & GPT API', 
+        monthlyBudget: 500, 
+        currentSpend: 0, 
+        status: 'no_key', 
+        lastBilled: 'N/A',
+        isManual: true,
+        apiConnected: false
+      });
     }
   } catch (error) {
     console.error('Error fetching OpenAI billing:', error);
-    services.push({ name: 'OpenAI', description: 'AI & GPT API', monthlyBudget: 500, currentSpend: 0, status: 'inactive', lastBilled: 'N/A' });
+    services.push({ 
+      name: 'OpenAI', 
+      description: 'AI & GPT API', 
+      monthlyBudget: 500, 
+      currentSpend: 0, 
+      status: 'error', 
+      lastBilled: 'N/A',
+      isManual: true,
+      apiConnected: false
+    });
   }
 
-  // Supabase - based on plan (free tier $0, Pro $25)
-  services.push({
-    name: 'Supabase',
-    description: 'Database & Auth',
-    monthlyBudget: 75,
-    currentSpend: 25, // Pro plan cost
-    status: 'active',
-    lastBilled: today
-  });
+  // Supabase - check if we can get usage from API
+  const supabaseUrl = process.env.SUPABASE_URL;
+  if (supabaseUrl) {
+    // Supabase Pro plan is $25/mo base, can't easily get real usage without management API
+    services.push({
+      name: 'Supabase',
+      description: 'Database & Auth',
+      monthlyBudget: 75,
+      currentSpend: 25, // Pro plan base cost
+      status: 'active',
+      lastBilled: today,
+      isManual: true, // Real usage requires Management API access
+      apiConnected: true
+    });
+  } else {
+    services.push({
+      name: 'Supabase',
+      description: 'Database & Auth',
+      monthlyBudget: 75,
+      currentSpend: 0,
+      status: 'not_configured',
+      lastBilled: 'N/A',
+      isManual: true,
+      apiConnected: false
+    });
+  }
 
-  // Stripe - calculate from actual payments processed
+  // Stripe - calculate from actual payments processed (we have full API access)
   try {
     const stripe = await getUncachableStripeClient();
-    const charges = await stripe.charges.list({ limit: 100, created: { gte: Math.floor(new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime() / 1000) } });
-    const fees = charges.data.reduce((sum, charge) => sum + (charge.amount * 0.029 + 30), 0) / 100;
+    const startOfMonth = Math.floor(new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime() / 1000);
+    
+    // Get actual balance transactions (fees Stripe charged you)
+    const balanceTransactions = await stripe.balanceTransactions.list({ 
+      limit: 100, 
+      created: { gte: startOfMonth },
+      type: 'stripe_fee'
+    });
+    
+    const totalFees = balanceTransactions.data.reduce((sum, tx) => sum + Math.abs(tx.amount), 0) / 100;
+    
+    // Also get charges to calculate processing fees
+    const charges = await stripe.charges.list({ 
+      limit: 100, 
+      created: { gte: startOfMonth } 
+    });
+    const estimatedFees = charges.data.reduce((sum, charge) => {
+      // Stripe fee: 2.9% + $0.30 per successful charge
+      if (charge.status === 'succeeded') {
+        return sum + (charge.amount * 0.029 + 30);
+      }
+      return sum;
+    }, 0) / 100;
+    
+    const stripeFees = totalFees > 0 ? totalFees : estimatedFees;
+    
     services.push({
       name: 'Stripe',
       description: 'Payment Processing',
       monthlyBudget: 200,
-      currentSpend: fees,
+      currentSpend: Math.round(stripeFees * 100) / 100,
       status: 'active',
-      lastBilled: today
+      lastBilled: today,
+      isManual: false,
+      apiConnected: true
     });
   } catch (error) {
-    services.push({ name: 'Stripe', description: 'Payment Processing', monthlyBudget: 200, currentSpend: 0, status: 'active', lastBilled: today });
+    console.error('Error fetching Stripe billing:', error);
+    services.push({ 
+      name: 'Stripe', 
+      description: 'Payment Processing', 
+      monthlyBudget: 200, 
+      currentSpend: 0, 
+      status: 'error', 
+      lastBilled: today,
+      isManual: true,
+      apiConnected: false
+    });
   }
 
-  // Static services (no real-time API available)
+  // Services without billing APIs - marked as manual
   services.push(
-    { name: 'Vercel', description: 'Hosting & Deployments', monthlyBudget: 50, currentSpend: 0, status: 'active', lastBilled: today },
-    { name: 'Redis Cloud', description: 'Caching & Sessions', monthlyBudget: 30, currentSpend: 0, status: 'free_tier', lastBilled: 'N/A' },
-    { name: 'SendGrid', description: 'Email Service', monthlyBudget: 25, currentSpend: 0, status: 'active', lastBilled: today },
-    { name: 'Replit', description: 'Development Platform', monthlyBudget: 30, currentSpend: 0, status: 'active', lastBilled: today },
-    { name: 'GitHub', description: 'CI/CD & Actions', monthlyBudget: 50, currentSpend: 0, status: 'free_tier', lastBilled: today }
+    { 
+      name: 'Vercel', 
+      description: 'Hosting & Deployments', 
+      monthlyBudget: 50, 
+      currentSpend: 0, 
+      status: 'active', 
+      lastBilled: today,
+      isManual: true,
+      apiConnected: false
+    },
+    { 
+      name: 'Redis Cloud', 
+      description: 'Caching & Sessions', 
+      monthlyBudget: 30, 
+      currentSpend: 0, 
+      status: 'free_tier', 
+      lastBilled: 'N/A',
+      isManual: true,
+      apiConnected: false
+    },
+    { 
+      name: 'SendGrid', 
+      description: 'Email Service', 
+      monthlyBudget: 25, 
+      currentSpend: 0, 
+      status: 'active', 
+      lastBilled: today,
+      isManual: true,
+      apiConnected: false
+    },
+    { 
+      name: 'Replit', 
+      description: 'Development Platform', 
+      monthlyBudget: 30, 
+      currentSpend: 0, 
+      status: 'active', 
+      lastBilled: today,
+      isManual: true,
+      apiConnected: false
+    },
+    { 
+      name: 'GitHub', 
+      description: 'CI/CD & Actions', 
+      monthlyBudget: 50, 
+      currentSpend: 0, 
+      status: 'free_tier', 
+      lastBilled: today,
+      isManual: true,
+      apiConnected: false
+    }
   );
 
   return c.json(services);

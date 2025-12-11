@@ -706,7 +706,7 @@ function ExpensesPage({ expenses, onRefresh, onCreate, onEdit, onDelete }: {
               <th className="px-4 py-3 text-left">Monthly Budget</th>
               <th className="px-4 py-3 text-left">Usage</th>
               <th className="px-4 py-3 text-left">Status</th>
-              <th className="px-4 py-3 text-left">Last Billed</th>
+              <th className="px-4 py-3 text-left">Data Source</th>
             </tr>
           </thead>
           <tbody>
@@ -725,7 +725,13 @@ function ExpensesPage({ expenses, onRefresh, onCreate, onEdit, onDelete }: {
                   <tr key={service.name} className="border-t hover:bg-gray-50">
                     <td className="px-4 py-3 font-medium">{service.name}</td>
                     <td className="px-4 py-3 text-gray-600">{service.description}</td>
-                    <td className="px-4 py-3 font-semibold">${service.currentSpend.toFixed(2)}</td>
+                    <td className="px-4 py-3 font-semibold">
+                      {service.isManual && service.currentSpend === 0 ? (
+                        <span className="text-gray-400">--</span>
+                      ) : (
+                        `$${service.currentSpend.toFixed(2)}`
+                      )}
+                    </td>
                     <td className="px-4 py-3">${service.monthlyBudget}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -746,7 +752,17 @@ function ExpensesPage({ expenses, onRefresh, onCreate, onEdit, onDelete }: {
                         {service.status === 'free_tier' ? 'Free Tier' : service.status === 'active' ? 'Active' : 'Inactive'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-500">{service.lastBilled}</td>
+                    <td className="px-4 py-3">
+                      {service.apiConnected ? (
+                        <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 font-medium">
+                          API
+                        </span>
+                      ) : (
+                        <span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-700 font-medium">
+                          Manual
+                        </span>
+                      )}
+                    </td>
                   </tr>
                 );
               })
