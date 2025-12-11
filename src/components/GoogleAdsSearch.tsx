@@ -91,39 +91,47 @@ export function GoogleAdsSearch({ user }: GoogleAdsSearchProps) {
     setLoading(true);
     setError('');
     setResults([]);
-    setSearchStatus('idle');
-    setStatusMessage('');
+    setSearchStatus('processing');
+    setStatusMessage('Searching for ads via RapidAPI...');
 
     try {
-      const response = await fetch('/api/google-ads/search', {
+      // Use RapidAPI for instant results
+      const response = await fetch('/api/google-ads/search-advertiser', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          keywords: validKeywords, 
-          dateRange,
-          userId: user?.id,
-          name: searchName.trim() || undefined
+          query: validKeywords.join(' ')
         }),
       });
 
       const data = await response.json();
 
-      if (data.error && !data.status) {
-        setError(data.error);
+      if (!response.ok || !data.success) {
+        setError(data.error || 'Failed to search ads');
         setSearchStatus('failed');
-      } else {
-        setSearchStatus(data.status || 'pending');
-        setStatusMessage(data.message || '');
-        setRequestId(data.requestId || null);
-
-        if (data.status === 'completed' && data.results) {
-          setResults(data.results);
-        }
+        return;
       }
 
-      fetchPreviousRequests();
+      // Transform RapidAPI results to our format
+      const transformedResults = (data.data?.ads || []).map((ad: any) => ({
+        advertiser: ad.advertiserName || ad.advertiserId || 'Unknown Advertiser',
+        headline: ad.headline || ad.title || '',
+        description: ad.description || ad.bodyText || '',
+        destination_url: ad.destinationUrl || ad.landingPage || '',
+        platform: 'Google Ads',
+        ad_format: ad.format || 'Text',
+        region: ad.regions?.join(', ') || 'Multiple Regions',
+        imageUrl: ad.imageUrl || null,
+        firstShown: ad.firstShown,
+        lastShown: ad.lastShown
+      }));
+
+      setResults(transformedResults);
+      setSearchStatus('completed');
+      setStatusMessage(`Found ${transformedResults.length} ads`);
+
     } catch (err: any) {
-      setError(err.message || 'Failed to submit search request');
+      setError(err.message || 'Failed to search ads');
       setSearchStatus('failed');
     } finally {
       setLoading(false);
@@ -319,89 +327,61 @@ export function GoogleAdsSearch({ user }: GoogleAdsSearchProps) {
         {/* New Search Tab */}
         {activeTab === 'new' && (
           <div className="p-6">
-            {/* Search Name */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Search Name</label>
-              <input
-                type="text"
-                value={searchName}
-                onChange={(e) => setSearchName(e.target.value)}
-                placeholder="e.g., Competitor Analysis Q4 2025"
-                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-              <p className="text-xs text-gray-500 mt-1">Give your search a memorable name (optional)</p>
-            </div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Search Keywords</label>
+              <p className="text-xs text-gray-500 mb-3">Enter keywords to find competitor ads (e.g., "plumber near me", "best coffee shop")</p>
+              
+              <div className="space-y-3">
+                {keywords.map((keyword, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <input
+                      type="text"
+                      value={keyword}
+                      onChange={(e) => updateKeyword(index, e.target.value)}
+                      placeholder={`Keyword ${index + 1}`}
+                      className="flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      onKeyDown={(e) => e.key === 'Enter' && searchKeywords()}
+                    />
+                    {keywords.length > 1 && (
+                      <button
+                        onClick={() => removeKeyword(index)}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
+                ))}
 
-            <h3 className="font-semibold mb-4">Search Keywords</h3>
-            
-            <div className="space-y-4">
-              {keywords.map((keyword, index) => (
-                <div key={index} className="flex items-center gap-3">
-                  <input
-                    type="text"
-                    value={keyword}
-                    onChange={(e) => updateKeyword(index, e.target.value)}
-                    placeholder={`Keyword ${index + 1}`}
-                    className="flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                  {keywords.length > 1 && (
-                    <button
-                      onClick={() => removeKeyword(index)}
-                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  )}
-                </div>
-              ))}
-
-              {keywords.length < 5 && (
-                <button
-                  onClick={addKeyword}
-                  className="flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add another keyword
-                </button>
-              )}
-            </div>
-
-            <div className="mt-6 flex items-center gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
-                <select
-                  value={dateRange}
-                  onChange={(e) => setDateRange(e.target.value)}
-                  className="px-4 py-2 border rounded-lg"
-                >
-                  <option value="7">Last 7 days</option>
-                  <option value="14">Last 14 days</option>
-                  <option value="30">Last 30 days</option>
-                  <option value="60">Last 60 days</option>
-                  <option value="90">Last 90 days</option>
-                </select>
-              </div>
-
-              <div className="flex-1"></div>
-
-              <button
-                onClick={searchKeywords}
-                disabled={loading}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
-              >
-                {loading ? (
-                  <>
-                    <RefreshCw className="w-5 h-5 animate-spin" />
-                    Submitting...
-                  </>
-                ) : (
-                  <>
-                    <Search className="w-5 h-5" />
-                    Search
-                  </>
+                {keywords.length < 5 && (
+                  <button
+                    onClick={addKeyword}
+                    className="flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add another keyword
+                  </button>
                 )}
-              </button>
+              </div>
             </div>
+
+            <button
+              onClick={searchKeywords}
+              disabled={loading}
+              className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <RefreshCw className="w-5 h-5 animate-spin" />
+                  Searching...
+                </>
+              ) : (
+                <>
+                  <Search className="w-5 h-5" />
+                  Search Competitor Ads
+                </>
+              )}
+            </button>
 
             {error && (
               <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
@@ -410,14 +390,14 @@ export function GoogleAdsSearch({ user }: GoogleAdsSearchProps) {
             )}
 
             {/* Info Box */}
-            <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-medium text-blue-800 mb-2">How it works</h4>
-              <ul className="text-sm text-blue-700 space-y-1">
-                <li>• Enter up to 5 keywords you want to research</li>
-                <li>• Your search is queued and processed in the background</li>
-                <li>• Results are scraped from Google Ads Transparency Center</li>
-                <li>• Check back in about 1 hour for your results</li>
-                <li>• Results are cached for 24 hours for instant access</li>
+            <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
+              <h4 className="font-medium text-green-800 mb-2">Instant Results via RapidAPI</h4>
+              <ul className="text-sm text-green-700 space-y-1">
+                <li>• Enter keywords to search for competitor ads</li>
+                <li>• Get instant results from Google Ads Transparency Center</li>
+                <li>• View headlines, descriptions, and landing pages</li>
+                <li>• See which regions ads are targeting</li>
+                <li>• Research competitor ad strategies in real-time</li>
               </ul>
             </div>
           </div>
