@@ -52,9 +52,11 @@ const API_BASE = '/api/google-ads';
 
 /**
  * Generate keyword ideas with metrics from Google Ads Keyword Planner
+ * Supports both seed keywords and URL-based generation
  */
 export async function getKeywordIdeas(params: {
-  seedKeywords: string[];
+  seedKeywords?: string[];
+  url?: string;
   targetCountry?: string;
   language?: string;
   customerId?: string;

@@ -1223,19 +1223,25 @@ interface KeywordMetrics {
 }
 
 // Generate keyword ideas with metrics from Google Ads Keyword Planner API
+// Supports both seed keywords and URL-based generation
 app.post('/api/google-ads/keyword-planner', async (c) => {
   try {
     const body = await c.req.json();
     const { 
       seedKeywords, 
+      url,
       targetCountry = 'US',
       language = 'en',
       customerId,
       includeAdultKeywords = false
     } = body;
 
-    if (!seedKeywords || !Array.isArray(seedKeywords) || seedKeywords.length === 0) {
-      return c.json({ error: 'Please provide seed keywords', success: false }, 400);
+    // Validate input - need either seedKeywords or URL
+    const hasSeedKeywords = seedKeywords && Array.isArray(seedKeywords) && seedKeywords.length > 0;
+    const hasUrl = url && typeof url === 'string' && url.trim().length > 0;
+
+    if (!hasSeedKeywords && !hasUrl) {
+      return c.json({ error: 'Please provide seed keywords or a URL', success: false }, 400);
     }
 
     const accessToken = await refreshAccessToken();
@@ -1243,11 +1249,12 @@ app.post('/api/google-ads/keyword-planner', async (c) => {
     // If no access token or no customer ID, return fallback data
     if (!accessToken || !customerId) {
       console.log('[Keyword Planner] Returning fallback data - no access token or customer ID');
+      const fallbackSeeds = hasSeedKeywords ? seedKeywords : ['website', 'service', 'product'];
       return c.json({
         success: true,
         source: 'fallback',
         message: 'Using estimated data. Connect Google Ads for real metrics.',
-        keywords: generateFallbackKeywordData(seedKeywords),
+        keywords: generateFallbackKeywordData(fallbackSeeds),
       });
     }
 
@@ -1255,6 +1262,45 @@ app.post('/api/google-ads/keyword-planner', async (c) => {
     const cleanCustomerId = customerId.replace('customers/', '');
 
     try {
+      // Build the request body based on input type
+      const requestBody: any = {
+        language: `languageConstants/${language === 'en' ? '1000' : '1000'}`, // English by default
+        geoTargetConstants: [`geoTargetConstants/${getGeoTargetId(targetCountry)}`],
+        keywordPlanNetwork: 'GOOGLE_SEARCH',
+        includeAdultKeywords: includeAdultKeywords,
+        pageSize: 100
+      };
+
+      // Use URL seed if URL provided, otherwise use keyword seed
+      if (hasUrl) {
+        // Validate URL format and sanitize
+        let sanitizedUrl = url.trim();
+        try {
+          const urlObj = new URL(sanitizedUrl);
+          // Only allow http/https protocols
+          if (!['http:', 'https:'].includes(urlObj.protocol)) {
+            throw new Error('Invalid protocol');
+          }
+          // Limit URL length to prevent abuse
+          if (sanitizedUrl.length > 2048) {
+            sanitizedUrl = sanitizedUrl.substring(0, 2048);
+          }
+          requestBody.urlSeed = { url: sanitizedUrl };
+          console.log('[Keyword Planner] Using URL seed:', sanitizedUrl);
+        } catch (urlError) {
+          console.error('[Keyword Planner] Invalid URL:', urlError);
+          return c.json({
+            success: false,
+            source: 'fallback',
+            message: 'Invalid URL format. Please provide a valid http/https URL.',
+            keywords: [],
+          }, 400);
+        }
+      } else if (hasSeedKeywords) {
+        requestBody.keywordSeed = { keywords: seedKeywords.slice(0, 10) };
+        console.log('[Keyword Planner] Using keyword seed:', seedKeywords.slice(0, 10));
+      }
+
       // Call Google Ads Keyword Planner API - Generate Keyword Ideas
       const response = await fetch(
         `https://googleads.googleapis.com/v18/customers/${cleanCustomerId}:generateKeywordIdeas`,
@@ -1265,16 +1311,7 @@ app.post('/api/google-ads/keyword-planner', async (c) => {
             'developer-token': GOOGLE_ADS_DEVELOPER_TOKEN || '',
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            keywordSeed: {
-              keywords: seedKeywords.slice(0, 10) // API limit
-            },
-            language: `languageConstants/${language === 'en' ? '1000' : '1000'}`, // English by default
-            geoTargetConstants: [`geoTargetConstants/${getGeoTargetId(targetCountry)}`],
-            keywordPlanNetwork: 'GOOGLE_SEARCH',
-            includeAdultKeywords: includeAdultKeywords,
-            pageSize: 100
-          }),
+          body: JSON.stringify(requestBody),
         }
       );
 
