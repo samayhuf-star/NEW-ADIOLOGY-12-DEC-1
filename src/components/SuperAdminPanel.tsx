@@ -2516,24 +2516,45 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onBackToLandin
   };
 
   // Modal save handlers
-  const handleModalSave = (type: string, data: any) => {
+  const handleModalSave = async (type: string, data: any) => {
     switch (type) {
       case 'create-user':
-        const newUser: User = {
-          id: `user-${Date.now()}`,
-          email: data.email,
-          full_name: data.full_name,
-          subscription_plan: data.subscription_plan,
-          subscription_status: 'active',
-          created_at: new Date().toISOString(),
-          aiUsage: 0,
-        };
-        setUsers(prev => [newUser, ...prev]);
-        notifications.success('User created successfully');
+        try {
+          // Create user in Supabase via API
+          const result = await adminApi.createUser({
+            email: data.email,
+            password: data.password,
+            full_name: data.full_name,
+            subscription_plan: data.subscription_plan,
+          });
+          
+          const newUser: User = {
+            id: result.user?.id || `user-${Date.now()}`,
+            email: data.email,
+            full_name: data.full_name,
+            subscription_plan: data.subscription_plan,
+            subscription_status: 'active',
+            created_at: new Date().toISOString(),
+            aiUsage: 0,
+          };
+          setUsers(prev => [newUser, ...prev]);
+          notifications.success('User created successfully in Supabase');
+        } catch (error: any) {
+          console.error('Error creating user:', error);
+          notifications.error(error.message || 'Failed to create user');
+        }
         break;
       case 'edit-user':
-        setUsers(prev => prev.map(u => u.id === data.id ? { ...u, ...data } : u));
-        notifications.success('User updated');
+        try {
+          await adminApi.updateUser(data.id, {
+            full_name: data.full_name,
+            subscription_plan: data.subscription_plan,
+          });
+          setUsers(prev => prev.map(u => u.id === data.id ? { ...u, ...data } : u));
+          notifications.success('User updated');
+        } catch (error: any) {
+          notifications.error(error.message || 'Failed to update user');
+        }
         break;
       case 'create-template':
         const newTemplate: Template = {
