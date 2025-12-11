@@ -1,8 +1,19 @@
 /**
  * Smart Ad Copy Generator
  * Generates Google Ads compliant ad copy based on keywords
- * Follows Google Ads policies and differentiates between products and services
+ * 
+ * GUARDRAILS: Follows official Google Search Ads policies
+ * - RSA: Headlines 30 chars, Descriptions 90 chars
+ * - All headlines must be substantially different (no near-duplicates)
+ * - Proper title case and formatting per Google guidelines
  */
+
+import {
+  CHARACTER_LIMITS,
+  formatHeadline,
+  formatDescription,
+  areHeadlinesSimilar
+} from './googleAdsRules';
 
 // Product indicators
 const PRODUCT_KEYWORDS = [

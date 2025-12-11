@@ -1,7 +1,24 @@
 /**
  * Ad Validation Utilities
  * Ensures ads meet Google Ads requirements before CSV export
+ * 
+ * GUARDRAILS: Follows official Google Search Ads policies (RSA, DKI, Call-Only)
+ * - RSA: 3-15 headlines (30 chars), 2-4 descriptions (90 chars)
+ * - Call-Only: 2 headlines, 2 descriptions, 25 char business name
+ * - DKI: Proper {KeyWord:Default} syntax validation
  */
+
+import {
+  CHARACTER_LIMITS,
+  validateRSA,
+  validateCallOnlyAd,
+  validateDKISyntax,
+  formatHeadline,
+  formatDescription,
+  ensureUniqueHeadlines,
+  ensureUniqueDescriptions,
+  areHeadlinesSimilar
+} from './googleAdsRules';
 
 export interface Ad {
   type?: 'rsa' | 'dki' | 'callonly';

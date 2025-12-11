@@ -5,7 +5,23 @@
  * 1. Ad Type (Responsive Search Ads, Expanded Text Ads, Call-Only Ads)
  * 2. User Intent (Service, Product, Information, Local, Emergency)
  * 3. Filters Selected (Industry, Location, Match Type, Campaign Structure)
+ * 
+ * GUARDRAILS: All ads follow official Google Search Ads policies (RSA, DKI, Call-Only)
+ * See googleAdsRules.ts for complete validation rules
  */
+
+import {
+  CHARACTER_LIMITS,
+  ensureUniqueHeadlines,
+  ensureUniqueDescriptions,
+  formatHeadline,
+  formatDescription,
+  validateRSA,
+  validateCallOnlyAd,
+  validateDKISyntax,
+  BEST_PRACTICES,
+  areHeadlinesSimilar
+} from './googleAdsRules';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -685,28 +701,37 @@ export function buildRSA(adCopy: AdCopyTemplates, input: AdGenerationInput): Res
     descriptions = descriptions.map(d => `${d} ${filters.callToAction}!`);
   }
   
-  // Finalize & validate
-  // Remove duplicates
-  headlines = [...new Set(headlines)];
-  descriptions = [...new Set(descriptions)];
+  // Finalize & validate using Google Ads Rules guardrails
+  // Remove duplicates and ensure uniqueness (per Google RSA requirements)
+  headlines = ensureUniqueHeadlines(headlines);
+  descriptions = ensureUniqueDescriptions(descriptions);
   
-  // Enforce character limits
-  headlines = headlines
-    .map(h => truncateHeadline(h, 30))
-    .filter(h => h.length > 0)
-    .slice(0, 15);
+  // Apply character limits (30 for headlines, 90 for descriptions)
+  headlines = headlines.slice(0, CHARACTER_LIMITS.RSA.HEADLINE_MAX_COUNT);
+  descriptions = descriptions.slice(0, CHARACTER_LIMITS.RSA.DESCRIPTION_MAX_COUNT);
   
-  descriptions = descriptions
-    .map(d => truncateHeadline(d, 90))
-    .filter(d => d.length > 0)
-    .slice(0, 4);
-  
-  // Ensure minimum requirements
-  while (headlines.length < 3) {
-    headlines.push(`${businessName} - Call Now`);
+  // Ensure minimum requirements (3 headlines, 2 descriptions per Google policy)
+  const fallbackHeadlines = [
+    `${businessName} - Call Now`,
+    `Professional ${input.industry}`,
+    `Trusted Local Experts`
+  ];
+  while (headlines.length < CHARACTER_LIMITS.RSA.HEADLINE_MIN_COUNT) {
+    const fallback = fallbackHeadlines[headlines.length] || `${businessName} Services`;
+    if (!headlines.some(h => areHeadlinesSimilar(h, fallback))) {
+      headlines.push(formatHeadline(fallback));
+    } else {
+      headlines.push(formatHeadline(`Quality ${input.industry} Service`));
+    }
   }
-  while (descriptions.length < 2) {
-    descriptions.push(`Contact ${businessName} today for professional ${input.industry} services${location ? ` in ${location}` : ''}.`);
+  
+  const fallbackDescriptions = [
+    `Contact ${businessName} today for professional ${input.industry} services${location ? ` in ${location}` : ''}. Licensed & insured.`,
+    `Get expert ${input.industry} help from trusted professionals. Free estimates available. Call now!`
+  ];
+  while (descriptions.length < CHARACTER_LIMITS.RSA.DESCRIPTION_MIN_COUNT) {
+    const fallback = fallbackDescriptions[descriptions.length] || fallbackDescriptions[0];
+    descriptions.push(formatDescription(fallback));
   }
   
   // Generate display path

@@ -24,6 +24,12 @@ Preferred communication style: Simple, everyday language.
 - **Edge Functions**: Supabase Edge Functions (Deno/TypeScript) for health checks, payment processing, and campaign history storage.
 - **Fallback Systems**: Python-based ad generator, local storage, and a three-tier save system (Edge Function → Database → localStorage).
 - **Business Logic**: Automatic business type detection, intent classification for ad copy, service/product-specific ad templates, and Dynamic Keyword Insertion (DKI).
+- **Ad Generation Guardrails**: All ad creation follows official Google Search Ads policies via `googleAdsRules.ts`:
+  - **RSA**: 3-15 headlines (30 chars each, all must be substantially different), 2-4 descriptions (90 chars each), display paths (15 chars)
+  - **DKI**: Proper `{KeyWord:Default}` syntax, single DKI per field, valid default text within limits
+  - **Call-Only**: Exactly 2 headlines, 2 descriptions, 25-char business name, valid phone number (no premium rates)
+  - **Uniqueness Check**: Levenshtein distance algorithm prevents near-duplicate headlines/descriptions
+  - **Ad Strength Calculation**: Scores based on headline count, description count, keyword inclusion, uniqueness
 
 ## Data Storage
 - **Primary Database**: Supabase (PostgreSQL) for user data, campaign history, subscriptions, and billing.
