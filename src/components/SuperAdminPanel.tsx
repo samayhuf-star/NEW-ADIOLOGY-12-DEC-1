@@ -1165,13 +1165,25 @@ function TemplatesPage({ templates, onRefresh, onCreate, onEdit, onDelete, onTog
   onDelete: (template: Template) => void;
   onToggle: (template: Template) => void;
 }) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  
+  const categories = ['all', ...new Set(templates.map(t => t.vertical))];
+  
+  const filteredTemplates = templates.filter(t => {
+    const matchesSearch = t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (t.description || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = categoryFilter === 'all' || t.vertical === categoryFilter;
+    return matchesSearch && matchesCategory;
+  });
+
   return (
     <div className="space-y-4">
-      <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-lg text-xs text-purple-700">
-        <strong>Tables:</strong> admin_templates • email_templates
-      </div>
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Templates</h3>
+        <div>
+          <h3 className="text-lg font-semibold">Web Templates</h3>
+          <span className="text-sm text-gray-500">{templates.length} templates available</span>
+        </div>
         <div className="flex items-center gap-2">
           <button onClick={onRefresh} className="p-2 border rounded-md hover:bg-gray-50">
             <IconRefresh />
@@ -1182,35 +1194,78 @@ function TemplatesPage({ templates, onRefresh, onCreate, onEdit, onDelete, onTog
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {templates.map(t => (
-          <div key={t.id} className="p-4 bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="font-medium text-lg">{t.name}</div>
-                <div className="text-sm text-gray-500">{t.vertical} • v{t.version}</div>
-                {t.description && <p className="text-sm text-gray-600 mt-2">{t.description}</p>}
-              </div>
-              <span className={`text-xs px-2 py-1 rounded-full ${t.enabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                {t.enabled ? 'Active' : 'Disabled'}
-              </span>
-            </div>
-            <div className="mt-4 pt-3 border-t flex items-center justify-between">
-              <span className="text-xs text-gray-500">Created: {t.created}</span>
-              <div className="flex items-center gap-1">
-                <button onClick={() => onEdit(t)} className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded">
-                  <IconEdit />
-                </button>
-                <button onClick={() => onToggle(t)} className={`px-2 py-1 text-xs rounded ${t.enabled ? 'bg-yellow-50 text-yellow-700' : 'bg-green-50 text-green-700'}`}>
-                  {t.enabled ? 'Disable' : 'Enable'}
-                </button>
-                <button onClick={() => onDelete(t)} className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded">
-                  <IconTrash />
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
+      <div className="flex items-center gap-4">
+        <div className="flex-1">
+          <input
+            type="text"
+            placeholder="Search templates..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          />
+        </div>
+        <select
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+          className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+        >
+          {categories.map(cat => (
+            <option key={cat} value={cat}>{cat === 'all' ? 'All Categories' : cat}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-50 text-xs text-gray-500">
+            <tr>
+              <th className="px-4 py-3 text-left">Template Name</th>
+              <th className="px-4 py-3 text-left">Category</th>
+              <th className="px-4 py-3 text-left">Description</th>
+              <th className="px-4 py-3 text-left">Version</th>
+              <th className="px-4 py-3 text-left">Status</th>
+              <th className="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredTemplates.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                  {searchQuery ? 'No templates match your search' : 'No templates found'}
+                </td>
+              </tr>
+            ) : (
+              filteredTemplates.map(t => (
+                <tr key={t.id} className="border-t hover:bg-gray-50">
+                  <td className="px-4 py-3 font-medium">{t.name}</td>
+                  <td className="px-4 py-3">
+                    <span className="text-xs px-2 py-1 rounded-md bg-gray-100">{t.vertical}</span>
+                  </td>
+                  <td className="px-4 py-3 text-gray-600 max-w-xs truncate">{t.description}</td>
+                  <td className="px-4 py-3 text-gray-500">v{t.version}</td>
+                  <td className="px-4 py-3">
+                    <span className={`text-xs px-2 py-1 rounded-full ${t.enabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                      {t.enabled ? 'Active' : 'Disabled'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <button onClick={() => onEdit(t)} className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded">
+                        <IconEdit />
+                      </button>
+                      <button onClick={() => onToggle(t)} className={`px-2 py-1 text-xs rounded ${t.enabled ? 'bg-yellow-50 text-yellow-700' : 'bg-green-50 text-green-700'}`}>
+                        {t.enabled ? 'Disable' : 'Enable'}
+                      </button>
+                      <button onClick={() => onDelete(t)} className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded">
+                        <IconTrash />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );
@@ -2110,7 +2165,7 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onBackToLandin
 
   const loadTemplates = async () => {
     try {
-      // Use built-in web templates (hardcoded in WebTemplates.tsx)
+      // All web templates from WebTemplates.tsx
       const builtInTemplates: Template[] = [
         { id: 'lawn-care', name: 'GreenEdge Lawn Care', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Professional lawn care and landscaping business template' },
         { id: 'plumbing', name: 'AquaFlow Plumbing', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Professional plumbing services template' },
@@ -2119,14 +2174,31 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onBackToLandin
         { id: 'cleaning', name: 'SparkleClean House Cleaning', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'House cleaning services template' },
         { id: 'painting', name: 'ColorWorks Home Painting', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Professional house painting template' },
         { id: 'roofing', name: 'SkyGuard Roofing', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Roofing services template' },
-        { id: 'landscaping', name: 'NatureScape Landscaping', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Landscaping design template' },
-        { id: 'pest-control', name: 'BugShield Pest Control', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Pest control services template' },
-        { id: 'moving', name: 'SwiftMove Moving Services', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Moving and relocation template' },
-        { id: 'auto-repair', name: 'AutoCare Mechanics', vertical: 'Automotive', version: '1.0', enabled: true, created: '2025-01-01', description: 'Auto repair shop template' },
-        { id: 'dental', name: 'BrightSmile Dental', vertical: 'Healthcare', version: '1.0', enabled: true, created: '2025-01-01', description: 'Dental practice template' },
-        { id: 'fitness', name: 'FitLife Gym', vertical: 'Health & Fitness', version: '1.0', enabled: true, created: '2025-01-01', description: 'Fitness center template' },
-        { id: 'restaurant', name: 'Gourmet Kitchen', vertical: 'Food & Dining', version: '1.0', enabled: true, created: '2025-01-01', description: 'Restaurant template' },
-        { id: 'real-estate', name: 'PrimeRealty Homes', vertical: 'Real Estate', version: '1.0', enabled: true, created: '2025-01-01', description: 'Real estate agency template' },
+        { id: 'carpentry', name: 'CraftWood Carpentry', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Expert carpentry with custom cabinetry and deck building' },
+        { id: 'pest-control', name: 'BugShield Pest Control', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Pest control with termite, rodent, and insect treatment' },
+        { id: 'home-inspection', name: 'InspectPro Home Inspections', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Professional home inspection with pest and radon testing' },
+        { id: 'handyman', name: 'FixIt Pro Handyman', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Local handyman with general repairs and maintenance' },
+        { id: 'dentist', name: 'BrightSmile Dental Clinic', vertical: 'Healthcare', version: '1.0', enabled: true, created: '2025-01-01', description: 'Modern dental clinic with appointment booking' },
+        { id: 'flooring', name: 'FloorCraft Flooring', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Flooring installation with hardwood, vinyl, and tile' },
+        { id: 'windows', name: 'ClearView Windows & Doors', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Window replacement and repair with energy-efficient solutions' },
+        { id: 'movers', name: 'SwiftMove Movers & Packers', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Full-service moving for local and long-distance' },
+        { id: 'pool-services', name: 'AquaCare Pool Services', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Pool maintenance, repair, and renovation' },
+        { id: 'travel-agency', name: 'Wanderlust Travel Agency', vertical: 'Travel', version: '1.0', enabled: true, created: '2025-01-01', description: 'Travel agency with vacation packages and trip planning' },
+        { id: 'flight-booking', name: 'SkyWay Flights', vertical: 'Travel', version: '1.0', enabled: true, created: '2025-01-01', description: 'Flight booking comparing prices across airlines' },
+        { id: 'cruise-booking', name: 'OceanVoyage Cruises', vertical: 'Travel', version: '1.0', enabled: true, created: '2025-01-01', description: 'Luxury cruise booking for Caribbean and Mediterranean' },
+        { id: 'car-rental', name: 'DriveEasy Car Rentals', vertical: 'Travel', version: '1.0', enabled: true, created: '2025-01-01', description: 'Car rental with economy to luxury vehicles' },
+        { id: 'locksmith', name: 'SecureLock Locksmith', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: '24/7 emergency locksmith for homes and vehicles' },
+        { id: 'garage-door', name: 'DoorPro Garage Services', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Garage door repair, installation, and opener services' },
+        { id: 'appliance-repair', name: 'ApplianceFix Pro', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Repair for refrigerators, washers, dryers, and appliances' },
+        { id: 'pressure-washing', name: 'PowerWash Pro', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Pressure washing for driveways, homes, and decks' },
+        { id: 'gutter-cleaning', name: 'GutterGuard Services', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Gutter cleaning, repair, and guard installation' },
+        { id: 'fence-install', name: 'FenceBuilders Pro', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Fence installation for wood, vinyl, and chain link' },
+        { id: 'concrete', name: 'SolidGround Concrete', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Concrete work for driveways, patios, and sidewalks' },
+        { id: 'tree-service', name: 'TreeCare Arborists', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Tree trimming, removal, and stump grinding' },
+        { id: 'solar', name: 'SunPower Solar', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Solar panel installation for homes and businesses' },
+        { id: 'home-security', name: 'SafeHome Security', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Home security systems with 24/7 monitoring' },
+        { id: 'insulation', name: 'InsulPro Insulation', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Insulation installation for attics and walls' },
+        { id: 'chimney', name: 'ChimneyCare Services', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Chimney cleaning, repair, and inspection' },
       ];
       
       setTemplates(builtInTemplates);
