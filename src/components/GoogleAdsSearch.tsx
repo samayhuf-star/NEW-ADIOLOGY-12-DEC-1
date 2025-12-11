@@ -8,6 +8,7 @@ interface GoogleAdsSearchProps {
 interface SearchRequest {
   id: number;
   keywords: string[];
+  name: string | null;
   status: string;
   created_at: string;
   processed_at: string | null;
@@ -16,6 +17,7 @@ interface SearchRequest {
 
 export function GoogleAdsSearch({ user }: GoogleAdsSearchProps) {
   const [activeTab, setActiveTab] = useState<'new' | 'saved'>('new');
+  const [searchName, setSearchName] = useState('');
   const [keywords, setKeywords] = useState<string[]>(['']);
   const [dateRange, setDateRange] = useState('30');
   const [loading, setLoading] = useState(false);
@@ -78,7 +80,8 @@ export function GoogleAdsSearch({ user }: GoogleAdsSearchProps) {
         body: JSON.stringify({ 
           keywords: validKeywords, 
           dateRange,
-          userId: user?.id 
+          userId: user?.id,
+          name: searchName.trim() || undefined
         }),
       });
 
@@ -195,6 +198,19 @@ export function GoogleAdsSearch({ user }: GoogleAdsSearchProps) {
         {/* New Search Tab */}
         {activeTab === 'new' && (
           <div className="p-6">
+            {/* Search Name */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Search Name</label>
+              <input
+                type="text"
+                value={searchName}
+                onChange={(e) => setSearchName(e.target.value)}
+                placeholder="e.g., Competitor Analysis Q4 2025"
+                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">Give your search a memorable name (optional)</p>
+            </div>
+
             <h3 className="font-semibold mb-4">Search Keywords</h3>
             
             <div className="space-y-4">
@@ -311,8 +327,11 @@ export function GoogleAdsSearch({ user }: GoogleAdsSearchProps) {
                     className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 border border-gray-200"
                   >
                     <div className="flex-1">
-                      <p className="font-medium text-gray-900">{req.keywords.join(', ')}</p>
-                      <p className="text-sm text-gray-500 mt-1">
+                      <p className="font-medium text-gray-900">{req.name || req.keywords.join(', ')}</p>
+                      {req.name && (
+                        <p className="text-sm text-gray-600 mt-0.5">{req.keywords.join(', ')}</p>
+                      )}
+                      <p className="text-xs text-gray-400 mt-1">
                         {new Date(req.created_at).toLocaleString()}
                       </p>
                     </div>
