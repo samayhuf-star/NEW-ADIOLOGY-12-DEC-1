@@ -2096,33 +2096,30 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onBackToLandin
 
   const loadTemplates = async () => {
     try {
-      // Load from admin_templates
-      const { data, error } = await supabase
-        .from('admin_templates')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.warn('Error loading admin_templates:', error);
-        setTemplates([]);
-        return;
-      }
+      // Use built-in web templates (hardcoded in WebTemplates.tsx)
+      const builtInTemplates: Template[] = [
+        { id: 'lawn-care', name: 'GreenEdge Lawn Care', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Professional lawn care and landscaping business template' },
+        { id: 'plumbing', name: 'AquaFlow Plumbing', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Professional plumbing services template' },
+        { id: 'electrical', name: 'ElectroMax Electrical', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Licensed electrical services template' },
+        { id: 'hvac', name: 'ComfortZone HVAC', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Professional HVAC template' },
+        { id: 'cleaning', name: 'SparkleClean House Cleaning', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'House cleaning services template' },
+        { id: 'painting', name: 'ColorWorks Home Painting', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Professional house painting template' },
+        { id: 'roofing', name: 'SkyGuard Roofing', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Roofing services template' },
+        { id: 'landscaping', name: 'NatureScape Landscaping', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Landscaping design template' },
+        { id: 'pest-control', name: 'BugShield Pest Control', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Pest control services template' },
+        { id: 'moving', name: 'SwiftMove Moving Services', vertical: 'Home Services', version: '1.0', enabled: true, created: '2025-01-01', description: 'Moving and relocation template' },
+        { id: 'auto-repair', name: 'AutoCare Mechanics', vertical: 'Automotive', version: '1.0', enabled: true, created: '2025-01-01', description: 'Auto repair shop template' },
+        { id: 'dental', name: 'BrightSmile Dental', vertical: 'Healthcare', version: '1.0', enabled: true, created: '2025-01-01', description: 'Dental practice template' },
+        { id: 'fitness', name: 'FitLife Gym', vertical: 'Health & Fitness', version: '1.0', enabled: true, created: '2025-01-01', description: 'Fitness center template' },
+        { id: 'restaurant', name: 'Gourmet Kitchen', vertical: 'Food & Dining', version: '1.0', enabled: true, created: '2025-01-01', description: 'Restaurant template' },
+        { id: 'real-estate', name: 'PrimeRealty Homes', vertical: 'Real Estate', version: '1.0', enabled: true, created: '2025-01-01', description: 'Real estate agency template' },
+      ];
       
-      const templates = (data || []).map((t: any) => ({
-        id: t.id,
-        name: t.name || 'Unnamed',
-        vertical: t.vertical || 'General',
-        version: t.version || '1.0',
-        enabled: t.enabled !== false,
-        created: t.created_at ? new Date(t.created_at).toISOString().split('T')[0] : '',
-        description: t.description || '',
-      }));
-      
-      setTemplates(templates);
-      console.log('📋 Templates loaded:', templates.length, 'from admin_templates');
+      setTemplates(builtInTemplates);
+      console.log('📋 Web templates loaded:', builtInTemplates.length, 'built-in templates');
     } catch (error) {
       console.error('Error loading templates:', error);
-      setTemplates([]);
+      setTemplates(defaultTemplates);
     }
   };
 
