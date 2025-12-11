@@ -2197,15 +2197,28 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                     <span className="text-sm font-semibold text-slate-700">Call-To-Action:</span>
                     <span className="text-lg font-bold text-green-600">{campaignData.cta}</span>
                   </div>
-                  <div className="flex items-center justify-between py-2">
-                    <span className="text-sm font-semibold text-slate-700">Seed Keywords:</span>
-                    <span className="text-sm text-slate-600">{campaignData.seedKeywords.length} keywords</span>
+                  <div className="py-2">
+                    <span className="text-sm font-semibold text-slate-700 block mb-3">Seed Keywords:</span>
+                    {campaignData.seedKeywords.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {campaignData.seedKeywords.slice(0, 5).map((keyword, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-sm"
+                          >
+                            {keyword}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-slate-500 italic">No seed keywords generated. You can add them manually in the next step.</p>
+                    )}
                   </div>
                 </div>
               </div>
-              <div className="bg-indigo-100 border border-indigo-300 rounded-lg p-3">
-                <p className="text-sm text-indigo-800">
-                  <strong>✓ Saved:</strong> This analysis has been saved to your database. You can reuse these insights for future campaigns.
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                <p className="text-sm text-green-800">
+                  <strong>✓ Ready:</strong> Analysis complete! Click below to proceed with these seed keywords.
                 </p>
               </div>
             </div>
@@ -4135,7 +4148,7 @@ async function generateSeedKeywords(
   intent: IntentResult
 ): Promise<string[]> {
   try {
-    // Use AI to intelligently generate 3-4 seed keywords based on landing page content
+    // Use AI to intelligently generate 4-5 seed keywords based on landing page content
     const pageContent = [
       landingData.title || '',
       landingData.h1 || '',
@@ -4151,7 +4164,7 @@ async function generateSeedKeywords(
       dangerouslyAllowBrowser: true
     });
 
-    const prompt = `You are a Google Ads keyword expert. Analyze this landing page and generate exactly 3-4 highly relevant seed keywords.
+    const prompt = `You are a Google Ads keyword expert. Analyze this landing page and generate exactly 4-5 highly relevant seed keywords.
 
 Page Content:
 ${pageContent}
@@ -4161,11 +4174,12 @@ Intent: ${intent.intentLabel || 'General'}
 Domain: ${landingData.domain}
 
 Rules:
-1. Generate EXACTLY 3-4 keywords (no more, no less)
-2. Each keyword: 1-3 words, specific to the business
-3. No generic placeholders
-4. Include search intent variations
-5. Return ONLY a JSON array: ["keyword1", "keyword2", "keyword3", "keyword4"]
+1. Generate EXACTLY 4-5 keywords (no more, no less)
+2. Each keyword: 1-4 words, specific to the business
+3. No generic placeholders like "service", "product", etc.
+4. Include search intent variations (informational, commercial, transactional)
+5. Make keywords actionable for Google Ads campaigns
+6. Return ONLY a JSON array: ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"]
 
 Response:`;
 
@@ -4174,7 +4188,7 @@ Response:`;
       messages: [
         {
           role: 'system',
-          content: 'You are a Google Ads keyword expert. Return ONLY a JSON array of 3-4 keywords. No explanation.'
+          content: 'You are a Google Ads keyword expert. Return ONLY a JSON array of 4-5 keywords. No explanation.'
         },
         {
           role: 'user',
@@ -4182,7 +4196,7 @@ Response:`;
         }
       ],
       temperature: 0.7,
-      max_tokens: 100
+      max_tokens: 150
     });
 
     const content = response.choices[0]?.message?.content || '[]';
@@ -4190,8 +4204,8 @@ Response:`;
     const keywords = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
     
     if (Array.isArray(keywords) && keywords.length > 0) {
-      console.log('✅ AI generated seed keywords:', keywords.slice(0, 4));
-      return keywords.slice(0, 4);
+      console.log('✅ AI generated seed keywords:', keywords.slice(0, 5));
+      return keywords.slice(0, 5);
     }
   } catch (error) {
     console.warn('AI seed keyword generation failed, using fallback:', error);
@@ -4199,28 +4213,43 @@ Response:`;
 
   // Fallback: Generate keywords from landing page content if AI fails
   const keywords: string[] = [];
+  const domain = landingData.domain?.replace(/^www\./, '').split('.')[0] || '';
+  
   const mainTerms = [
     landingData.title,
     landingData.h1,
-    ...landingData.services.slice(0, 2),
+    ...landingData.services.slice(0, 3),
   ].filter(Boolean);
 
+  // Extract meaningful keywords from terms
   mainTerms.forEach(term => {
-    if (term && keywords.length < 4) {
-      keywords.push(term.toLowerCase());
+    if (term && keywords.length < 5) {
+      const cleanTerm = term.toLowerCase().trim();
+      if (cleanTerm.length >= 3 && cleanTerm.length <= 50) {
+        keywords.push(cleanTerm);
+      }
     }
   });
 
   // Add intent-based keywords
-  if (mainTerms[0]) {
+  const baseTerm = mainTerms[0]?.toLowerCase() || domain;
+  if (baseTerm && keywords.length < 5) {
     if (intent.intentId === IntentId.CALL) {
-      keywords.push(`${mainTerms[0]} near me`);
+      keywords.push(`${baseTerm} phone number`);
     } else if (intent.intentId === IntentId.LEAD) {
-      keywords.push(`${mainTerms[0]} quote`);
+      keywords.push(`${baseTerm} quote`);
+    } else {
+      keywords.push(`${baseTerm} near me`);
     }
   }
 
-  return keywords.slice(0, 4);
+  // Add domain-based fallback if still not enough
+  if (keywords.length < 4 && domain) {
+    keywords.push(domain);
+    keywords.push(`${domain} services`);
+  }
+
+  return keywords.slice(0, 5);
 }
 
 function rankCampaignStructures(intent: IntentResult, vertical: string): { id: string; score: number }[] {
