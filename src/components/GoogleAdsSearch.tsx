@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Clock, CheckCircle, AlertCircle, RefreshCw, Plus, FolderOpen, Trash2, Eye } from 'lucide-react';
+import { Search, Clock, CheckCircle, AlertCircle, RefreshCw, Plus, FolderOpen, Trash2, Eye, Link2, Globe, MapPin, Calendar, Image as ImageIcon, ExternalLink } from 'lucide-react';
 
 interface GoogleAdsSearchProps {
   user: any;
@@ -15,8 +15,27 @@ interface SearchRequest {
   result_count: number;
 }
 
+interface AdData {
+  success: boolean;
+  advertiserId: string;
+  creativeId: string;
+  firstShown: string | null;
+  lastShown: string | null;
+  format: string;
+  url: string;
+  creativeRegions: { regionCode: string; regionName: string }[];
+  regionStats: any[];
+  variations: {
+    destinationUrl: string;
+    headline: string;
+    description: string;
+    allText?: string;
+    imageUrl?: string;
+  }[];
+}
+
 export function GoogleAdsSearch({ user }: GoogleAdsSearchProps) {
-  const [activeTab, setActiveTab] = useState<'new' | 'saved'>('new');
+  const [activeTab, setActiveTab] = useState<'new' | 'url' | 'saved'>('url');
   const [searchName, setSearchName] = useState('');
   const [keywords, setKeywords] = useState<string[]>(['']);
   const [dateRange, setDateRange] = useState('30');
@@ -27,6 +46,8 @@ export function GoogleAdsSearch({ user }: GoogleAdsSearchProps) {
   const [statusMessage, setStatusMessage] = useState('');
   const [requestId, setRequestId] = useState<number | null>(null);
   const [previousRequests, setPreviousRequests] = useState<SearchRequest[]>([]);
+  const [adUrl, setAdUrl] = useState('');
+  const [adData, setAdData] = useState<AdData | null>(null);
 
   useEffect(() => {
     fetchPreviousRequests();
@@ -148,6 +169,43 @@ export function GoogleAdsSearch({ user }: GoogleAdsSearchProps) {
     }
   };
 
+  const fetchAdByUrl = async () => {
+    if (!adUrl.trim()) {
+      setError('Please enter a Google Ads Transparency URL');
+      return;
+    }
+
+    if (!adUrl.includes('adstransparency.google.com')) {
+      setError('Please enter a valid Google Ads Transparency Center URL');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setAdData(null);
+
+    try {
+      const response = await fetch('/api/google-ads/fetch-ad', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adUrl: adUrl.trim() }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        setError(data.error || 'Failed to fetch ad data');
+        return;
+      }
+
+      setAdData(data.data);
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch ad data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -167,6 +225,17 @@ export function GoogleAdsSearch({ user }: GoogleAdsSearchProps) {
       <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
         <div className="flex border-b">
           <button
+            onClick={() => setActiveTab('url')}
+            className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 font-medium transition-colors ${
+              activeTab === 'url'
+                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <Link2 className="w-4 h-4" />
+            URL Lookup
+          </button>
+          <button
             onClick={() => setActiveTab('new')}
             className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 font-medium transition-colors ${
               activeTab === 'new'
@@ -175,7 +244,7 @@ export function GoogleAdsSearch({ user }: GoogleAdsSearchProps) {
             }`}
           >
             <Plus className="w-4 h-4" />
-            New Search
+            Keyword Search
           </button>
           <button
             onClick={() => setActiveTab('saved')}
@@ -186,7 +255,7 @@ export function GoogleAdsSearch({ user }: GoogleAdsSearchProps) {
             }`}
           >
             <FolderOpen className="w-4 h-4" />
-            Saved Searches
+            History
             {previousRequests.length > 0 && (
               <span className="ml-1 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-600">
                 {previousRequests.length}
@@ -194,6 +263,58 @@ export function GoogleAdsSearch({ user }: GoogleAdsSearchProps) {
             )}
           </button>
         </div>
+
+        {/* URL Lookup Tab */}
+        {activeTab === 'url' && (
+          <div className="p-6">
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Google Ads Transparency URL</label>
+              <input
+                type="text"
+                value={adUrl}
+                onChange={(e) => setAdUrl(e.target.value)}
+                placeholder="https://adstransparency.google.com/advertiser/AR.../creative/CR..."
+                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">Paste a URL from Google Ads Transparency Center</p>
+            </div>
+
+            <button
+              onClick={fetchAdByUrl}
+              disabled={loading}
+              className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <RefreshCw className="w-5 h-5 animate-spin" />
+                  Fetching Ad Data...
+                </>
+              ) : (
+                <>
+                  <Search className="w-5 h-5" />
+                  Fetch Ad Details
+                </>
+              )}
+            </button>
+
+            {error && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {error}
+              </div>
+            )}
+
+            <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h4 className="font-medium text-blue-800 mb-2">How to use URL Lookup</h4>
+              <ul className="text-sm text-blue-700 space-y-1">
+                <li>1. Visit <a href="https://adstransparency.google.com" target="_blank" rel="noopener noreferrer" className="underline">adstransparency.google.com</a></li>
+                <li>2. Search for an advertiser or browse ads</li>
+                <li>3. Click on any ad to view its details</li>
+                <li>4. Copy the URL from your browser and paste it above</li>
+                <li>5. Get instant access to headlines, descriptions, regions, and more!</li>
+              </ul>
+            </div>
+          </div>
+        )}
 
         {/* New Search Tab */}
         {activeTab === 'new' && (
@@ -407,6 +528,127 @@ export function GoogleAdsSearch({ user }: GoogleAdsSearchProps) {
                 </button>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ad Data from URL Lookup */}
+      {adData && (
+        <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+          <div className="p-6 border-b bg-gradient-to-r from-green-50 to-blue-50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-6 h-6 text-green-600" />
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Ad Details Retrieved</h3>
+                  <p className="text-sm text-gray-600">Data from Google Ads Transparency Center</p>
+                </div>
+              </div>
+              <a 
+                href={adData.url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 flex items-center gap-1"
+              >
+                <ExternalLink className="w-4 h-4" />
+                View Original
+              </a>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-6">
+            {/* Ad Info Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-xs text-gray-500 mb-1">Format</p>
+                <p className="font-semibold text-gray-900 capitalize">{adData.format || 'Text'}</p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-xs text-gray-500 mb-1">Advertiser ID</p>
+                <p className="font-mono text-sm text-gray-900">{adData.advertiserId}</p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-xs text-gray-500 mb-1">Creative ID</p>
+                <p className="font-mono text-sm text-gray-900">{adData.creativeId}</p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-xs text-gray-500 mb-1">Last Shown</p>
+                <p className="text-sm text-gray-900">
+                  {adData.lastShown ? new Date(adData.lastShown).toLocaleDateString() : 'Unknown'}
+                </p>
+              </div>
+            </div>
+
+            {/* Regions */}
+            {adData.creativeRegions && adData.creativeRegions.length > 0 && (
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-blue-600" />
+                  Target Regions
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {adData.creativeRegions.map((region, idx) => (
+                    <span key={idx} className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full">
+                      {region.regionName}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Ad Variations */}
+            {adData.variations && adData.variations.length > 0 && (
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3">
+                  Ad Variations ({adData.variations.length})
+                </h4>
+                <div className="space-y-4">
+                  {adData.variations.map((variation, idx) => (
+                    <div key={idx} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="flex items-start gap-4">
+                        {variation.imageUrl && (
+                          <div className="flex-shrink-0">
+                            <img 
+                              src={variation.imageUrl} 
+                              alt="Ad preview" 
+                              className="w-24 h-24 object-cover rounded border"
+                              onError={(e) => (e.currentTarget.style.display = 'none')}
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1 space-y-2">
+                          {variation.headline && (
+                            <div>
+                              <p className="text-xs text-gray-500 mb-0.5">Headline</p>
+                              <p className="font-semibold text-blue-600">{variation.headline}</p>
+                            </div>
+                          )}
+                          {variation.description && (
+                            <div>
+                              <p className="text-xs text-gray-500 mb-0.5">Description</p>
+                              <p className="text-sm text-gray-700">{variation.description}</p>
+                            </div>
+                          )}
+                          {variation.destinationUrl && (
+                            <div>
+                              <p className="text-xs text-gray-500 mb-0.5">Landing URL</p>
+                              <a 
+                                href={`https://${variation.destinationUrl}`} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-sm text-blue-600 hover:underline break-all"
+                              >
+                                {variation.destinationUrl}
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

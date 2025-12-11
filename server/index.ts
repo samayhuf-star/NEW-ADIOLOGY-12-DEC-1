@@ -1722,6 +1722,94 @@ app.post('/api/google-ads/trigger-scraper', async (c) => {
   }
 });
 
+// RapidAPI - Fetch ad details from Google Ads Transparency Center
+app.post('/api/google-ads/fetch-ad', async (c) => {
+  try {
+    const { adUrl } = await c.req.json();
+    
+    if (!adUrl) {
+      return c.json({ error: 'No ad URL provided' }, 400);
+    }
+
+    const rapidApiKey = process.env.RAPIDAPI_KEY;
+    if (!rapidApiKey) {
+      return c.json({ error: 'RapidAPI key not configured' }, 500);
+    }
+
+    const encodedUrl = encodeURIComponent(adUrl);
+    const response = await fetch(
+      `https://google-ads-library-scraper-api.p.rapidapi.com/ad?url=${encodedUrl}`,
+      {
+        method: 'GET',
+        headers: {
+          'x-rapidapi-host': 'google-ads-library-scraper-api.p.rapidapi.com',
+          'x-rapidapi-key': rapidApiKey,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('RapidAPI error:', errorText);
+      return c.json({ error: 'Failed to fetch ad data', details: errorText }, 400);
+    }
+
+    const data = await response.json();
+    return c.json({ success: true, data });
+
+  } catch (error: any) {
+    console.error('Error fetching ad from RapidAPI:', error);
+    return c.json({ error: error.message, success: false }, 500);
+  }
+});
+
+// RapidAPI - Search ads by advertiser
+app.post('/api/google-ads/search-advertiser', async (c) => {
+  try {
+    const { advertiserId, query } = await c.req.json();
+    
+    const rapidApiKey = process.env.RAPIDAPI_KEY;
+    if (!rapidApiKey) {
+      return c.json({ error: 'RapidAPI key not configured' }, 500);
+    }
+
+    let apiUrl = 'https://google-ads-library-scraper-api.p.rapidapi.com/ads';
+    const params = new URLSearchParams();
+    
+    if (advertiserId) {
+      params.append('advertiserId', advertiserId);
+    }
+    if (query) {
+      params.append('query', query);
+    }
+    
+    if (params.toString()) {
+      apiUrl += '?' + params.toString();
+    }
+
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'x-rapidapi-host': 'google-ads-library-scraper-api.p.rapidapi.com',
+        'x-rapidapi-key': rapidApiKey,
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('RapidAPI error:', errorText);
+      return c.json({ error: 'Failed to search ads', details: errorText }, 400);
+    }
+
+    const data = await response.json();
+    return c.json({ success: true, data });
+
+  } catch (error: any) {
+    console.error('Error searching ads from RapidAPI:', error);
+    return c.json({ error: error.message, success: false }, 500);
+  }
+});
+
 // Push campaign to Google Ads account
 app.post('/api/google-ads/push-campaign', async (c) => {
   try {
