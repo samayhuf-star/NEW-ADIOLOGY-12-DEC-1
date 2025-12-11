@@ -29,12 +29,13 @@ export async function scrapeGoogleAdsTransparency(keywords: string[]): Promise<A
     console.log('[Scraper] Launching browser...');
     browser = await chromium.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
     });
 
     const context = await browser.newContext({
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      viewport: { width: 1920, height: 1080 }
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+      viewport: { width: 1920, height: 1080 },
+      locale: 'en-US'
     });
 
     const page = await context.newPage();
@@ -48,71 +49,98 @@ export async function scrapeGoogleAdsTransparency(keywords: string[]): Promise<A
         const encodedKeyword = encodeURIComponent(keyword.trim());
         const url = `https://adstransparency.google.com/?region=US&text=${encodedKeyword}`;
         
-        await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
         
-        await page.waitForTimeout(3000);
+        // Wait longer for dynamic content to load
+        await page.waitForTimeout(5000);
+        
+        // Scroll to trigger lazy loading
+        await page.evaluate(() => window.scrollTo(0, 500));
+        await page.waitForTimeout(2000);
 
         const adsData = await page.evaluate(() => {
           const ads: any[] = [];
           
-          const adElements = document.querySelectorAll('[data-creative-id], .creative-card, [role="listitem"]');
+          // Try multiple selector strategies for the current page structure
+          // Strategy 1: Look for creative preview cards (common structure)
+          const creativeCards = document.querySelectorAll('creative-preview, [class*="creative"], [class*="card"], [data-creative]');
+          console.log('Strategy 1 - creative cards:', creativeCards.length);
           
-          adElements.forEach((el) => {
-            try {
-              const advertiserEl = el.querySelector('[class*="advertiser"], .advertiser-name, a[href*="/advertiser/"]');
-              const headlineEl = el.querySelector('[class*="headline"], .ad-headline, h3, h4');
-              const descriptionEl = el.querySelector('[class*="description"], .ad-description, p');
-              const linkEl = el.querySelector('a[href*="http"]');
-              const platformEl = el.querySelector('[class*="platform"], .platform-icon');
-              const dateEl = el.querySelector('[class*="date"], .date-range, time');
-
-              const advertiser = advertiserEl?.textContent?.trim() || 'Unknown Advertiser';
-              const headline = headlineEl?.textContent?.trim() || '';
-              const description = descriptionEl?.textContent?.trim() || '';
-              const url = linkEl?.getAttribute('href') || '';
-              const platform = platformEl?.textContent?.trim() || 'Search';
-              const dateRange = dateEl?.textContent?.trim() || '';
-
-              if (headline || description || advertiser !== 'Unknown Advertiser') {
+          // Strategy 2: Look for any links to advertisers
+          const advertiserLinks = document.querySelectorAll('a[href*="/advertiser/"]');
+          console.log('Strategy 2 - advertiser links:', advertiserLinks.length);
+          
+          // Strategy 3: Look for material design cards or list items
+          const mdCards = document.querySelectorAll('mat-card, .mat-card, [role="article"], [role="listitem"], .mdc-card');
+          console.log('Strategy 3 - MD cards:', mdCards.length);
+          
+          // Strategy 4: Look for any container with text content that looks like an ad
+          const allDivs = document.querySelectorAll('div[class]');
+          let potentialAds = 0;
+          
+          allDivs.forEach((div) => {
+            const text = div.textContent || '';
+            const hasAdvertiserLink = div.querySelector('a[href*="/advertiser/"]');
+            if (hasAdvertiserLink && text.length > 50 && text.length < 1000) {
+              potentialAds++;
+              const advertiser = hasAdvertiserLink.textContent?.trim() || 'Unknown';
+              const allText = text.replace(advertiser, '').trim();
+              
+              // Extract headline (usually first significant text)
+              const textParts = allText.split('\n').filter(t => t.trim().length > 5);
+              const headline = textParts[0]?.trim() || '';
+              const description = textParts.slice(1, 3).join(' ').trim() || '';
+              
+              if (headline && !ads.find(a => a.headline === headline)) {
                 ads.push({
                   advertiser,
-                  headline,
-                  description,
-                  url,
-                  platform,
-                  dateRange,
+                  headline: headline.substring(0, 100),
+                  description: description.substring(0, 200),
+                  url: hasAdvertiserLink.getAttribute('href') || '',
+                  platform: 'Search',
+                  dateRange: '',
                   format: 'text'
                 });
               }
-            } catch (err) {
-              console.error('Error parsing ad element:', err);
+            }
+          });
+          console.log('Strategy 4 - potential ads:', potentialAds);
+          
+          // Strategy 5: Parse any embedded JSON data
+          const scripts = document.querySelectorAll('script');
+          scripts.forEach((script) => {
+            const content = script.textContent || '';
+            if (content.includes('advertiser') && content.includes('creative')) {
+              try {
+                // Try to find JSON objects in the script
+                const jsonMatch = content.match(/\{[^{}]*"advertiser"[^{}]*\}/g);
+                if (jsonMatch) {
+                  jsonMatch.forEach((match) => {
+                    try {
+                      const data = JSON.parse(match);
+                      if (data.advertiser || data.headline) {
+                        ads.push({
+                          advertiser: data.advertiser?.name || data.advertiserName || 'Unknown',
+                          headline: data.headline || data.title || '',
+                          description: data.description || '',
+                          url: data.url || data.destinationUrl || '',
+                          platform: 'Search',
+                          dateRange: '',
+                          format: 'text',
+                          raw: data
+                        });
+                      }
+                    } catch (e) {}
+                  });
+                }
+              } catch (e) {}
             }
           });
 
-          const scriptData = document.querySelector('script[type="application/json"]')?.textContent;
-          if (scriptData) {
-            try {
-              const jsonData = JSON.parse(scriptData);
-              if (jsonData.creatives || jsonData.ads) {
-                const creatives = jsonData.creatives || jsonData.ads || [];
-                creatives.forEach((creative: any) => {
-                  ads.push({
-                    advertiser: creative.advertiser?.name || creative.advertiserName || 'Unknown',
-                    headline: creative.headline || creative.title || '',
-                    description: creative.description || creative.bodyText || '',
-                    url: creative.destinationUrl || creative.finalUrl || '',
-                    platform: creative.platform || 'Search',
-                    dateRange: `${creative.firstShown || ''} - ${creative.lastShown || ''}`,
-                    format: creative.format || 'text',
-                    raw: creative
-                  });
-                });
-              }
-            } catch (e) {
-              // Ignore JSON parse errors
-            }
-          }
-
+          // Log page info for debugging
+          console.log('Page title:', document.title);
+          console.log('Body text length:', document.body?.textContent?.length);
+          
           return ads;
         });
 
