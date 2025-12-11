@@ -5,7 +5,7 @@ integrations = ["javascript_openai_ai_integrations:1.0.0", "stripe:2.0.0"]
 
 [nix]
 channel = "stable-25_05"
-packages = ["imagemagick_light", "mailutils", "psmisc"]
+packages = ["imagemagick_light", "mailutils", "psmisc", "glib", "nspr", "nss", "dbus", "at-spi2-atk", "cups", "xorg.libxcb", "libxkbcommon", "at-spi2-core", "xorg.libX11", "xorg.libXcomposite", "xorg.libXdamage", "xorg.libXext", "xorg.libXfixes", "xorg.libXrandr", "mesa", "cairo", "pango", "alsa-lib", "libgbm"]
 
 [workflows]
 runButton = "Project"
