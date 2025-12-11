@@ -483,16 +483,27 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
     fetchGoogleAdsAccount();
   }, []);
 
-  // Generate default campaign name: Search-date-time
+  // Generate smart campaign name from URL domain when user hasn't specified one
   useEffect(() => {
-    if (!campaignData.campaignName && campaignData.url) {
-      const now = new Date();
-      const dateStr = now.toISOString().split('T')[0].replace(/-/g, '');
-      const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '').substring(0, 4);
-      setCampaignData(prev => ({
-        ...prev,
-        campaignName: `Search-${dateStr}-${timeStr}`
-      }));
+    if (!campaignData.campaignName && campaignData.url && campaignData.url.trim()) {
+      try {
+        const domain = extractDomain(campaignData.url);
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const domainName = domain.split('.')[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        setCampaignData(prev => ({
+          ...prev,
+          campaignName: `${domainName} - Search Campaign ${dateStr}`
+        }));
+      } catch {
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0].replace(/-/g, '');
+        const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '').substring(0, 4);
+        setCampaignData(prev => ({
+          ...prev,
+          campaignName: `Search-${dateStr}-${timeStr}`
+        }));
+      }
     }
   }, [campaignData.url]);
 
@@ -2155,22 +2166,38 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
 
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Website URL</CardTitle>
-          <CardDescription>Enter the landing page URL for your campaign</CardDescription>
+          <CardTitle>Campaign Details</CardTitle>
+          <CardDescription>Enter your campaign name and landing page URL</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="flex gap-4">
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="campaignName" className="text-sm font-medium text-slate-700 mb-1.5 block">Campaign Name</Label>
             <Input
-              type="url"
-              placeholder="https://www.example.com"
-              value={campaignData.url}
-              onChange={(e) => setCampaignData(prev => ({ ...prev, url: e.target.value }))}
-              className="flex-1"
+              id="campaignName"
+              type="text"
+              placeholder="e.g., Summer Sale Campaign, Local Services Campaign"
+              value={campaignData.campaignName}
+              onChange={(e) => setCampaignData(prev => ({ ...prev, campaignName: e.target.value }))}
+              className="w-full"
             />
-            <Button onClick={handleUrlSubmit} disabled={loading}>
-              {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
-              Analyze
-            </Button>
+            <p className="text-xs text-slate-500 mt-1">Give your campaign a unique, descriptive name</p>
+          </div>
+          <div>
+            <Label htmlFor="websiteUrl" className="text-sm font-medium text-slate-700 mb-1.5 block">Website URL</Label>
+            <div className="flex gap-4">
+              <Input
+                id="websiteUrl"
+                type="url"
+                placeholder="https://www.example.com"
+                value={campaignData.url}
+                onChange={(e) => setCampaignData(prev => ({ ...prev, url: e.target.value }))}
+                className="flex-1"
+              />
+              <Button onClick={handleUrlSubmit} disabled={loading}>
+                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
+                Analyze
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -876,12 +876,19 @@ export const CampaignHistoryView: React.FC<CampaignHistoryViewProps> = ({ onLoad
                           {index + 1}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <CardTitle 
-                            className="text-base sm:text-lg font-semibold leading-tight line-clamp-2 break-words" 
-                            title={campaignName}
-                          >
-                            {baseName}
-                          </CardTitle>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <CardTitle 
+                              className="text-base sm:text-lg font-semibold leading-tight line-clamp-2 break-words" 
+                              title={campaignName}
+                            >
+                              {baseName}
+                            </CardTitle>
+                            {index === 0 && (
+                              <Badge className="bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs font-bold px-2 py-0.5 border-0 shadow-sm">
+                                Latest
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </div>
                       <div className="flex-shrink-0 mt-0.5">
@@ -1054,9 +1061,16 @@ export const CampaignHistoryView: React.FC<CampaignHistoryViewProps> = ({ onLoad
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-base font-semibold text-slate-900 truncate" title={campaignName}>
-                            {baseName}
-                          </h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-base font-semibold text-slate-900 truncate" title={campaignName}>
+                              {baseName}
+                            </h3>
+                            {index === 0 && (
+                              <Badge className="bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs font-bold px-2 py-0.5 border-0 shadow-sm">
+                                Latest
+                              </Badge>
+                            )}
+                          </div>
                           <div className="flex items-center gap-1.5 text-sm text-slate-500 mt-0.5">
                             <Clock className="w-3.5 h-3.5 text-slate-400" />
                             <span>{timestamp.toLocaleString('en-GB', { 
