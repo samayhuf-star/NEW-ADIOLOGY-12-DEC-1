@@ -152,8 +152,9 @@ function buildCampaignRow(data: CampaignRow): Record<string, string> {
   row['Desktop Bid adj.'] = '-100%';
   row['Mobile Bid adj.'] = '0%';
   row['Tablet Bid adj.'] = '-100%';
-  row['Start Date'] = data.startDate || '';
-  row['End Date'] = data.endDate || '';
+  // Format dates as MM/DD/YYYY for Google Ads Editor
+  row['Start Date'] = formatDateForGoogleAds(data.startDate || '');
+  row['End Date'] = formatDateForGoogleAds(data.endDate || '');
   return row;
 }
 
@@ -187,6 +188,30 @@ function buildNegativeKeywordRow(data: NegativeKeywordRow): Record<string, strin
   return row;
 }
 
+// Helper to ensure URL has proper protocol
+function ensureHttpsProtocol(url: string): string {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  return `https://${url}`;
+}
+
+// Helper to format date as MM/DD/YYYY for Google Ads Editor
+function formatDateForGoogleAds(dateStr: string): string {
+  if (!dateStr) return '';
+  
+  // Try to parse the date
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr; // Return original if invalid
+  
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const year = date.getFullYear();
+  
+  return `${month}/${day}/${year}`;
+}
+
 function buildRSAAdRow(data: RSAAdRow): Record<string, string> {
   const row = createEmptyRow();
   row['Campaign'] = data.campaignName;
@@ -204,8 +229,8 @@ function buildRSAAdRow(data: RSAAdRow): Record<string, string> {
       return `{KeyWord:${formattedKeyword}}`;
     });
   };
-  // Add Final URL - required for RSA ads
-  row['Final URL'] = data.finalUrl || '';
+  // Add Final URL - required for RSA ads, ensure https:// protocol
+  row['Final URL'] = ensureHttpsProtocol(data.finalUrl || '');
   row['Headline 1'] = fixDKIFormat(data.headlines[0] || '').substring(0, 30);
   row['Headline 2'] = fixDKIFormat(data.headlines[1] || '').substring(0, 30);
   row['Headline 3'] = fixDKIFormat(data.headlines[2] || '').substring(0, 30);
@@ -221,13 +246,13 @@ function buildCallOnlyAdRow(data: CallOnlyAdRow): Record<string, string> {
   row['Campaign'] = data.campaignName;
   row['Ad Group'] = data.adGroupName;
   row['Ad Type'] = 'Call only ad';
-  row['Final URL'] = data.verificationUrl || '';
+  row['Final URL'] = ensureHttpsProtocol(data.verificationUrl || '');
   row['Headline 1'] = (data.headlines[0] || '').substring(0, 30);
   row['Headline 2'] = (data.headlines[1] || '').substring(0, 30);
   row['Description 1'] = (data.descriptions[0] || '').substring(0, 90);
   row['Description 2'] = (data.descriptions[1] || '').substring(0, 90);
   row['PhoneNumber'] = data.phoneNumber || '';
-  row['VerificationURL'] = data.verificationUrl || '';
+  row['VerificationURL'] = ensureHttpsProtocol(data.verificationUrl || '');
   return row;
 }
 
@@ -240,11 +265,7 @@ function buildSitelinkRow(data: SitelinkRow): Record<string, string> {
   row['Sitelink Description 1'] = (data.description1 || '').substring(0, 35);
   row['Sitelink Description 2'] = (data.description2 || '').substring(0, 35);
   // Ensure Final URL has proper protocol
-  let finalUrl = data.finalUrl || '';
-  if (finalUrl && !finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
-    finalUrl = `https://${finalUrl}`;
-  }
-  row['Sitelink Final URL'] = finalUrl;
+  row['Sitelink Final URL'] = ensureHttpsProtocol(data.finalUrl || '');
   return row;
 }
 
