@@ -99,6 +99,35 @@ export interface ValidationResult {
 }
 
 // ============================================================================
+// KEYWORD CLEANING UTILITIES
+// ============================================================================
+
+/**
+ * Remove match type brackets from keywords
+ * Converts [keyword] (exact), "keyword" (phrase), +keyword (modified broad) to clean keyword
+ */
+function cleanKeyword(keyword: string): string {
+  if (!keyword) return '';
+  return keyword
+    .replace(/^\[(.+)\]$/, '$1')  // Remove exact match brackets [keyword]
+    .replace(/^"(.+)"$/, '$1')     // Remove phrase match quotes "keyword"
+    .replace(/^\+/, '')            // Remove modified broad +keyword
+    .trim();
+}
+
+/**
+ * Clean all keywords in an array - removes match type formatting
+ */
+export function cleanKeywords(keywords: string[]): string[] {
+  return keywords.map(kw => cleanKeyword(kw)).filter(kw => kw.length > 0);
+}
+
+/**
+ * Export cleanKeyword for use in other modules
+ */
+export { cleanKeyword };
+
+// ============================================================================
 // INTENT DETECTION
 // ============================================================================
 
@@ -106,7 +135,9 @@ export interface ValidationResult {
  * Detect user intent from keywords and industry
  */
 export function detectUserIntent(keywords: string[], industry: string): UserIntent {
-  const keywordString = keywords.join(' ').toLowerCase();
+  // Clean keywords before processing (remove match type brackets)
+  const cleanedKeywords = cleanKeywords(keywords);
+  const keywordString = cleanedKeywords.join(' ').toLowerCase();
   
   // Emergency signals
   const emergencySignals = ['emergency', '24/7', 'urgent', 'now', 'immediate', 'asap', 'tonight', 'today'];
@@ -164,7 +195,9 @@ export function detectUserIntent(keywords: string[], industry: string): UserInte
  * Generate ad copy templates based on user intent
  */
 export function generateAdCopyByIntent(intent: UserIntent, input: AdGenerationInput): AdCopyTemplates {
-  const { keywords, businessName, location, industry, filters } = input;
+  const { businessName, location, industry, filters } = input;
+  // CRITICAL: Clean keywords from match type brackets before using in ad copy
+  const keywords = cleanKeywords(input.keywords);
   const mainKeyword = keywords[0] || industry;
   
   switch (intent) {
@@ -608,7 +641,9 @@ function generateFinalUrl(businessName: string, baseUrl?: string): string {
  * Build Responsive Search Ad
  */
 export function buildRSA(adCopy: AdCopyTemplates, input: AdGenerationInput): ResponsiveSearchAd {
-  const { filters, keywords, businessName, location } = input;
+  const { filters, businessName, location } = input;
+  // CRITICAL: Clean keywords from match type brackets before using in ads
+  const keywords = cleanKeywords(input.keywords);
   let headlines = [...adCopy.headlines];
   let descriptions = [...adCopy.descriptions];
   
@@ -768,7 +803,9 @@ function applyDKISyntax(text: string, mainKeyword: string): string {
  */
 export function buildETA(adCopy: AdCopyTemplates, input: AdGenerationInput): ExpandedTextAd {
   const rsa = buildRSA(adCopy, input);
-  const mainKeyword = input.keywords[0] || 'service';
+  // CRITICAL: Clean the main keyword from match type brackets before DKI insertion
+  const cleanedKeywords = cleanKeywords(input.keywords);
+  const mainKeyword = cleanedKeywords[0] || 'service';
   
   // Apply DKI syntax to headlines - replace keyword with {KeyWord:...}
   const h1 = applyDKISyntax(rsa.headlines[0] || '', mainKeyword);
