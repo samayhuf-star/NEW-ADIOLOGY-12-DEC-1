@@ -164,6 +164,12 @@ function IconAdsResearch() {
   );
 }
 
+function IconSearch() {
+  return (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+  );
+}
+
 function IconPlus() {
   return (
     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"/></svg>
@@ -402,6 +408,113 @@ function DashboardPage({ users, deployments, expenses }: { users: User[]; deploy
   );
 }
 
+// Ads Research Page - Shows ad search requests and results from the database
+function AdsResearchPage() {
+  const [requests, setRequests] = useState<any[]>([]);
+  const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadAdsData();
+  }, []);
+
+  const loadAdsData = async () => {
+    setLoading(true);
+    try {
+      const [reqRes, resRes] = await Promise.all([
+        supabase.from('ad_search_requests').select('*').order('created_at', { ascending: false }).limit(50),
+        supabase.from('ad_search_results').select('*').order('created_at', { ascending: false }).limit(100)
+      ]);
+      setRequests(reqRes.data || []);
+      setResults(resRes.data || []);
+      console.log('🔍 Ads data loaded:', { requests: reqRes.data?.length || 0, results: resRes.data?.length || 0 });
+    } catch (error) {
+      console.error('Error loading ads data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="flex items-center justify-center py-12"><div className="animate-spin w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full"></div></div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold">Ads Research Data</h2>
+        <button onClick={loadAdsData} className="flex items-center gap-2 px-3 py-2 border rounded-md hover:bg-gray-50">
+          <IconRefresh /> Refresh
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Kpi label="Search Requests" value={requests.length} icon={<IconSearch />} />
+        <Kpi label="Ad Results" value={results.length} icon={<IconAI />} />
+      </div>
+
+      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+        <div className="p-4 border-b bg-gray-50">
+          <h3 className="font-semibold">Recent Search Requests</h3>
+        </div>
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-50 text-xs text-gray-500">
+            <tr>
+              <th className="px-4 py-3 text-left">ID</th>
+              <th className="px-4 py-3 text-left">Keywords</th>
+              <th className="px-4 py-3 text-left">Status</th>
+              <th className="px-4 py-3 text-left">Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            {requests.length === 0 ? (
+              <tr><td colSpan={4} className="px-4 py-8 text-center text-gray-500">No search requests found</td></tr>
+            ) : requests.slice(0, 20).map((r: any) => (
+              <tr key={r.id} className="border-t hover:bg-gray-50">
+                <td className="px-4 py-3 font-mono text-xs">{r.id}</td>
+                <td className="px-4 py-3">{r.keywords || r.keyword || 'N/A'}</td>
+                <td className="px-4 py-3">
+                  <span className={`px-2 py-1 text-xs rounded-full ${r.status === 'completed' ? 'bg-green-100 text-green-700' : r.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700'}`}>
+                    {r.status || 'Unknown'}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-gray-500">{r.created_at ? new Date(r.created_at).toLocaleString() : 'N/A'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+        <div className="p-4 border-b bg-gray-50">
+          <h3 className="font-semibold">Recent Ad Results</h3>
+        </div>
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-50 text-xs text-gray-500">
+            <tr>
+              <th className="px-4 py-3 text-left">ID</th>
+              <th className="px-4 py-3 text-left">Request ID</th>
+              <th className="px-4 py-3 text-left">Advertiser</th>
+              <th className="px-4 py-3 text-left">Ad Text</th>
+            </tr>
+          </thead>
+          <tbody>
+            {results.length === 0 ? (
+              <tr><td colSpan={4} className="px-4 py-8 text-center text-gray-500">No ad results found</td></tr>
+            ) : results.slice(0, 20).map((r: any) => (
+              <tr key={r.id} className="border-t hover:bg-gray-50">
+                <td className="px-4 py-3 font-mono text-xs">{r.id}</td>
+                <td className="px-4 py-3 font-mono text-xs">{r.request_id}</td>
+                <td className="px-4 py-3">{r.advertiser_name || 'Unknown'}</td>
+                <td className="px-4 py-3 truncate max-w-xs">{r.ad_text || r.headline || 'N/A'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
 
 // Users Page with CRUD
 function UsersPage({ users, onRefresh, onCreate, onEdit, onDelete, onImpersonate, onBlock }: {
@@ -2015,22 +2128,41 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onBackToLandin
 
   const loadDeployments = async () => {
     try {
-      const allHistory = await historyService.getAll();
-      console.log('📊 Campaigns loaded:', allHistory?.length);
+      // Query admin_deployments table directly
+      const { data, error } = await supabase
+        .from('admin_deployments')
+        .select('*')
+        .order('created_at', { ascending: false });
       
-      const campaigns = allHistory.filter((item: any) => {
-        const type = (item.type || '').toLowerCase();
-        return type.includes('campaign') || type.includes('builder');
-      });
+      if (error) {
+        console.warn('admin_deployments table not found, trying campaign_history:', error.message);
+        // Fallback to campaign_history
+        const { data: historyData } = await supabase
+          .from('campaign_history')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        setDeployments((historyData || []).map((d: any) => ({
+          id: d.id,
+          site: d.campaign_name || d.name || 'Campaign',
+          user: d.user_id || 'unknown',
+          status: d.step >= 5 ? 'Published' : 'Draft',
+          url: d.url || '',
+          created: d.created_at || new Date().toISOString(),
+        })));
+        console.log('📊 Deployments loaded from campaign_history:', historyData?.length || 0);
+        return;
+      }
       
-      setDeployments(campaigns.map((d: any) => ({
+      setDeployments((data || []).map((d: any) => ({
         id: d.id,
-        site: d.name || d.data?.campaignName || 'Campaign',
-        user: d.user_id || 'unknown',
-        status: d.status || (d.data?.step >= 5 ? 'Published' : 'Draft'),
-        url: '',
-        created: d.timestamp || d.created_at || new Date().toISOString(),
+        site: d.site || d.name || 'Deployment',
+        user: d.user_email || d.user || 'unknown',
+        status: d.status || 'Pending',
+        url: d.url || '',
+        created: d.created_at || new Date().toISOString(),
       })));
+      console.log('📊 Deployments loaded:', data?.length || 0);
     } catch (error) {
       console.error('Error loading deployments:', error);
       setDeployments([]);
@@ -2039,20 +2171,27 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onBackToLandin
 
   const loadWebsites = async () => {
     try {
+      // Query admin_websites table directly
       const { data, error } = await supabase
-        .from('campaign_history')
+        .from('admin_websites')
         .select('*')
-        .eq('type', 'builder-2-campaign')
         .order('created_at', { ascending: false });
-      if (error) throw error;
+      
+      if (error) {
+        console.warn('admin_websites table not found:', error.message);
+        setWebsites([]);
+        return;
+      }
+      
       setWebsites((data || []).map((w: any) => ({
         id: w.id,
         name: w.name || 'Website',
-        user: w.user_id || 'unknown',
-        status: 'Published',
+        user: w.user_email || w.user || 'unknown',
+        status: w.status || 'Draft',
         created: w.created_at ? new Date(w.created_at).toISOString().split('T')[0] : '',
-        domain: '',
+        domain: w.domain || '',
       })));
+      console.log('🌐 Websites loaded:', data?.length || 0);
     } catch (error) {
       console.error('Error loading websites:', error);
       setWebsites([]);
@@ -2065,16 +2204,23 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onBackToLandin
         .from('support_tickets')
         .select('*')
         .order('created_at', { ascending: false });
-      if (error) throw error;
+      
+      if (error) {
+        console.warn('support_tickets table error:', error.message);
+        setTickets([]);
+        return;
+      }
+      
       setTickets((data || []).map((t: any) => ({
         id: t.id,
         subject: t.subject || 'No subject',
-        user: t.user_id || t.email || 'unknown',
+        user: t.user_email || t.email || t.user_id || 'unknown',
         status: t.status || 'Open',
         priority: t.priority || 'Medium',
-        created: t.created_at || new Date().toISOString(),
-        message: t.description || t.message || '',
+        created: t.created_at ? formatRelativeTime(t.created_at) : 'Unknown',
+        message: t.message || t.description || '',
       })));
+      console.log('🎫 Tickets loaded:', data?.length || 0);
     } catch (error) {
       console.error('Error loading tickets:', error);
       setTickets([]);
@@ -2083,43 +2229,72 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onBackToLandin
 
   const loadStructures = async () => {
     try {
+      // Query campaign_structures table directly
       const { data, error } = await supabase
-        .from('campaign_history')
-        .select('type, name')
+        .from('campaign_structures')
+        .select('*')
         .order('created_at', { ascending: false });
-      if (error) throw error;
-      const typeCount: Record<string, { count: number, name: string }> = {};
-      (data || []).forEach((c: any) => {
-        const type = c.type || 'unknown';
-        if (!typeCount[type]) {
-          typeCount[type] = { count: 0, name: type };
-        }
-        typeCount[type].count++;
-      });
-      setStructures(Object.entries(typeCount).map(([type, info], idx) => ({
-        id: `str-${idx}`,
-        name: info.name,
-        description: `Campaign type: ${type}`,
-        usage: info.count,
-        active: true,
+      
+      if (error) {
+        console.warn('campaign_structures table error:', error.message);
+        // Fall back to defaults if table doesn't exist
+        setStructures(defaultStructures);
+        return;
+      }
+      
+      if (!data || data.length === 0) {
+        console.log('📋 No campaign structures in DB, using defaults');
+        setStructures(defaultStructures);
+        return;
+      }
+      
+      setStructures((data || []).map((s: any) => ({
+        id: s.id,
+        name: s.name || 'Unknown',
+        description: s.description || '',
+        usage: s.usage_count || 0,
+        active: s.active !== false,
       })));
+      console.log('📋 Campaign structures loaded:', data?.length || 0);
     } catch (error) {
       console.error('Error loading structures:', error);
-      setStructures([]);
+      setStructures(defaultStructures);
     }
   };
 
   const loadExpenses = async () => {
     try {
-      console.log('💰 Loading real expenses from APIs and services...');
+      console.log('💰 Loading expenses...');
+      
+      // Try admin_expenses table first
+      const { data, error } = await supabase
+        .from('admin_expenses')
+        .select('*')
+        .order('expense_date', { ascending: false });
+      
+      if (!error && data && data.length > 0) {
+        setExpenses(data.map((e: any) => ({
+          id: e.id,
+          service: e.service || 'Unknown',
+          category: e.category || 'other',
+          amount: Math.abs(parseFloat(e.amount) || 0),
+          date: e.expense_date || e.created_at || new Date().toISOString().split('T')[0],
+          description: e.description || '',
+          status: e.status || 'paid',
+        })));
+        console.log(`✅ Loaded ${data.length} expenses from admin_expenses`);
+        return;
+      }
+      
+      // Fallback to real expenses loader
       const realExpenses = await loadRealExpenses();
       setExpenses(realExpenses.map((e: any) => ({
         id: e.id,
-        service: e.source || e.description,
+        service: e.source || e.description || 'Unknown',
         category: e.category || 'other',
         amount: Math.abs(parseFloat(e.amount) || 0),
         date: e.date,
-        description: e.description,
+        description: e.description || '',
         status: e.status || 'paid',
       })));
       console.log(`✅ Loaded ${realExpenses.length} real expenses`);
@@ -2129,46 +2304,46 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onBackToLandin
     }
   };
 
+  // Helper for relative time formatting
+  const formatRelativeTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 60) return `${diffMins} min ago`;
+    if (diffHours < 24) return `${diffHours} hours ago`;
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return date.toLocaleDateString();
+  };
+
   const loadUsers = async () => {
     try {
       setLoading(true);
-      // Try profiles table first (common Supabase pattern)
-      let { data, error } = await supabase
-        .from('profiles')
+      // Query users table directly
+      const { data, error } = await supabase
+        .from('users')
         .select('*')
         .order('created_at', { ascending: false });
       
-      // If profiles is empty or error, try user_profiles
-      if ((!data || data.length === 0) && !error) {
-        const result = await supabase
-          .from('user_profiles')
-          .select('*')
-          .order('created_at', { ascending: false });
-        data = result.data;
-        error = result.error;
-      }
-      
-      // If still empty, try users table
-      if ((!data || data.length === 0) && !error) {
-        const result = await supabase
-          .from('users')
-          .select('*')
-          .order('created_at', { ascending: false });
-        data = result.data;
-        error = result.error;
+      if (error) {
+        console.warn('Error loading users:', error.message);
+        setUsers([]);
+        return;
       }
       
       console.log('👥 Users loaded:', data?.length || 0);
-      if (error) throw error;
       setUsers((data || []).map((u: any) => ({
         id: u.id,
         email: u.email || '',
-        full_name: u.full_name || u.display_name || u.name || u.email?.split('@')[0] || 'N/A',
-        subscription_plan: u.subscription_plan || u.plan || u.tier || 'free',
-        subscription_status: u.subscription_status || u.status || 'active',
+        full_name: u.full_name || u.email?.split('@')[0] || 'N/A',
+        subscription_plan: u.subscription_plan || 'free',
+        subscription_status: u.subscription_status || 'active',
         created_at: u.created_at,
-        aiUsage: u.ai_usage || u.usage_count || u.credits_used || 0,
-        role: u.role || u.user_role || 'user',
+        aiUsage: u.ai_usage || 0,
+        role: u.role || 'user',
       })));
     } catch (error) {
       console.error('Error loading users:', error);
