@@ -2536,6 +2536,18 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
           </CardContent>
         </Card>
       )}
+
+      {/* Inline Navigation */}
+      <div className="flex justify-between items-center pt-4 border-t border-slate-200">
+        <Button variant="outline" onClick={() => setCurrentStep(1)}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+        <Button onClick={() => setCurrentStep(3)} disabled={!campaignData.selectedStructure}>
+          Next Step
+          <ArrowRight className="w-4 h-4 ml-2" />
+        </Button>
+      </div>
     </div>
   );
 
@@ -2800,6 +2812,18 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
             </Card>
         </>
       )}
+
+      {/* Inline Navigation */}
+      <div className="flex justify-between items-center pt-4 mt-6 border-t border-slate-200">
+        <Button variant="outline" onClick={() => setCurrentStep(2)}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+        <Button onClick={() => setCurrentStep(4)} disabled={campaignData.selectedKeywords.length === 0}>
+          Next Step
+          <ArrowRight className="w-4 h-4 ml-2" />
+        </Button>
+      </div>
     </div>
   );
 
@@ -3431,6 +3455,18 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
       )}
           </div>
         </div>
+
+      {/* Inline Navigation */}
+      <div className="flex justify-between items-center pt-4 mt-6 border-t border-slate-200">
+        <Button variant="outline" onClick={() => setCurrentStep(3)}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+        <Button onClick={() => setCurrentStep(5)} disabled={campaignData.ads.length === 0}>
+          Next Step
+          <ArrowRight className="w-4 h-4 ml-2" />
+        </Button>
+      </div>
     </div>
   );
   };
@@ -3811,6 +3847,18 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
               </div>
             </CardContent>
           </Card>
+
+          {/* Inline Navigation */}
+          <div className="flex justify-between items-center pt-4 mt-6 border-t border-slate-200">
+            <Button variant="outline" onClick={() => setCurrentStep(4)}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
+            <Button onClick={() => setCurrentStep(6)}>
+              Next Step
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -3935,6 +3983,18 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
               </div>
             </CardContent>
           </Card>
+
+        {/* Inline Navigation */}
+        <div className="flex justify-between items-center pt-4 mt-6 border-t border-slate-200">
+          <Button variant="outline" onClick={() => setCurrentStep(5)}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+          <Button onClick={() => setCurrentStep(7)}>
+            Next Step
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        </div>
         </div>
       </div>
     );
@@ -4275,6 +4335,18 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
           </CardContent>
         </Card>
       )}
+
+      {/* Inline Navigation */}
+      <div className="flex justify-between items-center pt-4 mt-6 border-t border-slate-200">
+        <Button variant="outline" onClick={() => setCurrentStep(6)}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+        <Button onClick={handleGenerateCSV} disabled={loading || !!campaignData.csvData}>
+          {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <FileSpreadsheet className="w-4 h-4 mr-2" />}
+          {campaignData.csvData ? 'CSV Generated' : 'Generate CSV'}
+        </Button>
+      </div>
     </div>
   );
 
@@ -4495,26 +4567,6 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
         {currentStep === 8 && renderStep8()}
       </div>
 
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4">
-        <div className="max-w-7xl mx-auto flex justify-between">
-            <Button
-              variant="outline"
-            onClick={handleBackStep}
-            disabled={currentStep === 1}
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-            <Button
-              onClick={handleNextStep}
-            disabled={loading || currentStep === 8}
-          >
-            {currentStep === 7 ? 'Save & Finish' : currentStep === 8 ? 'Download CSV' : 'Next Step'}
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </div>
-        </div>
         
         {/* Export Dialog */}
         <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
