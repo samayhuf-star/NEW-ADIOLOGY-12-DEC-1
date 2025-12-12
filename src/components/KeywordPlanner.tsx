@@ -333,7 +333,7 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
             
             try {
                 // Use the server-side comprehensive page analyzer
-                const apiResponse = await fetch('/api/analyze-page', {
+                const apiResponse = await fetch('/api/analyze-url', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ url, extractionDepth: 'comprehensive' })
