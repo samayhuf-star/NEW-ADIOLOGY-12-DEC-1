@@ -282,19 +282,27 @@ interface CampaignBuilder3Props {
 }
 
 export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData }) => {
+  const generateDefaultCampaignName = () => {
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    return `Campaign-Search-${dateStr} ${timeStr}`;
+  };
+
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [campaignSaved, setCampaignSaved] = useState(false);
   const [showAnalysisResults, setShowAnalysisResults] = useState(false);
   const [locationSearchTerm, setLocationSearchTerm] = useState({ countries: '', states: '', cities: '', zipCodes: '' });
   const [editingAdId, setEditingAdId] = useState<string | null>(null);
+  const [editingCampaignName, setEditingCampaignName] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [seedKeywordsText, setSeedKeywordsText] = useState('');
   const [keywordDataSource, setKeywordDataSource] = useState<'google_ads_api' | 'fallback' | 'estimated' | 'local'>('local');
   const [googleAdsCustomerId, setGoogleAdsCustomerId] = useState<string | null>(null);
   const [campaignData, setCampaignData] = useState<CampaignData>({
     url: '',
-    campaignName: '',
+    campaignName: generateDefaultCampaignName(),
     intent: null,
     vertical: null,
     cta: null,
@@ -2172,15 +2180,28 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
         <CardContent className="space-y-4">
           <div>
             <Label htmlFor="campaignName" className="text-sm font-medium text-slate-700 mb-1.5 block">Campaign Name</Label>
-            <Input
-              id="campaignName"
-              type="text"
-              placeholder="e.g., Summer Sale Campaign, Local Services Campaign"
-              value={campaignData.campaignName}
-              onChange={(e) => setCampaignData(prev => ({ ...prev, campaignName: e.target.value }))}
-              className="w-full"
-            />
-            <p className="text-xs text-slate-500 mt-1">Give your campaign a unique, descriptive name</p>
+            <div className="flex items-center gap-2">
+              <Input
+                id="campaignName"
+                type="text"
+                placeholder="Campaign-Search-Dec 12, 2025 4:30 PM"
+                value={campaignData.campaignName}
+                onChange={(e) => setCampaignData(prev => ({ ...prev, campaignName: e.target.value }))}
+                disabled={!editingCampaignName}
+                className={`flex-1 ${!editingCampaignName ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''}`}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => setEditingCampaignName(!editingCampaignName)}
+                className={`shrink-0 ${editingCampaignName ? 'border-indigo-500 text-indigo-600' : 'text-slate-500'}`}
+                title={editingCampaignName ? 'Done editing' : 'Edit campaign name'}
+              >
+                {editingCampaignName ? <Check className="w-4 h-4" /> : <Edit3 className="w-4 h-4" />}
+              </Button>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">Auto-generated name. Click edit icon to customize.</p>
           </div>
           <div>
             <Label htmlFor="websiteUrl" className="text-sm font-medium text-slate-700 mb-1.5 block">Website URL</Label>
@@ -4113,9 +4134,10 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
       return;
     }
     
+    setEditingCampaignName(false);
     setCampaignData({
       url: '',
-      campaignName: '',
+      campaignName: generateDefaultCampaignName(),
       intent: null,
       vertical: null,
       cta: null,
