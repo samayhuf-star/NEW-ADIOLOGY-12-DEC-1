@@ -2328,49 +2328,44 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
     }
   };
 
-  // Calculate export statistics from CSV rows
+  // Calculate export statistics from campaign data (same source as success page)
   const getExportStatistics = () => {
     if (!campaignData.csvData) return null;
     
     try {
-      // Parse the CSV data to get statistics
+      // Parse the CSV only to get total rows count
       const csvText = campaignData.csvData.replace(/^\uFEFF/, ''); // Remove BOM
       const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+      const totalRows = parsed.data?.length || 0;
       
-      if (!parsed.data || parsed.data.length === 0) return null;
-
-      const rows = parsed.data as any[];
+      // Calculate locations count from campaignData
+      const { cities, zipCodes, states, countries } = campaignData.locations;
+      const locationsCount = cities.length + zipCodes.length + states.length + countries.length;
       
-      // Detect row types based on which columns are populated (Google Ads Editor CSV format)
+      // Count total ads across all ad groups
+      const totalAds = campaignData.adGroups.reduce((sum, group) => {
+        return sum + (group.ads?.length || 0);
+      }, 0) || campaignData.ads.length;
+      
+      // Count total keywords across all ad groups
+      const totalKeywords = campaignData.adGroups.reduce((sum, group) => {
+        return sum + (group.keywords?.length || 0);
+      }, 0) || campaignData.selectedKeywords.length;
+      
+      // Count extensions from ads
+      const totalExtensions = campaignData.ads.reduce((sum, ad) => {
+        return sum + (ad.extensions?.length || 0);
+      }, 0);
+      
       const stats = {
-        campaigns: new Set(rows.map(r => r['Campaign']).filter(Boolean)).size,
-        adGroups: new Set(rows.map(r => r['Ad Group']).filter(Boolean)).size,
-        // Keywords: rows with Keyword column populated and non-negative Criterion Type
-        keywords: rows.filter(r => 
-          r['Keyword'] && 
-          r['Criterion Type'] && 
-          !r['Criterion Type'].toLowerCase().includes('negative')
-        ).length,
-        // Negative Keywords: rows with Keyword column and negative Criterion Type
-        negativeKeywords: rows.filter(r => 
-          r['Keyword'] && 
-          r['Criterion Type'] && 
-          r['Criterion Type'].toLowerCase().includes('negative')
-        ).length,
-        // Ads: rows with Ad Type column populated
-        ads: rows.filter(r => r['Ad Type'] && r['Ad Type'].trim() !== '').length,
-        // Extensions: rows with sitelink, callout, snippet, image asset, or promotion columns populated
-        extensions: rows.filter(r => 
-          (r['Sitelink Text'] && r['Sitelink Text'].trim() !== '') ||
-          (r['Callout Text'] && r['Callout Text'].trim() !== '') ||
-          (r['Structured Snippet Header'] && r['Structured Snippet Header'].trim() !== '') ||
-          (r['Price Extension Item Header'] && r['Price Extension Item Header'].trim() !== '') ||
-          (r['Promotion Target'] && r['Promotion Target'].trim() !== '') ||
-          (r['Image Asset Name'] && r['Image Asset Name'].trim() !== '')
-        ).length,
-        // Locations: rows with Location column populated
-        locations: rows.filter(r => r['Location'] && r['Location'].trim() !== '').length,
-        totalRows: rows.length,
+        campaigns: 1,
+        adGroups: campaignData.adGroups.length,
+        keywords: totalKeywords,
+        negativeKeywords: campaignData.negativeKeywords.length,
+        ads: totalAds,
+        extensions: totalExtensions,
+        locations: locationsCount || 1, // At least 1 for country-level targeting
+        totalRows: totalRows,
       };
       
       return stats;
