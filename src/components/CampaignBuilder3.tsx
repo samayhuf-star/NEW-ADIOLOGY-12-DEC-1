@@ -303,6 +303,9 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
   const [googleAdsCustomerId, setGoogleAdsCustomerId] = useState<string | null>(null);
   const [comprehensiveAnalysis, setComprehensiveAnalysis] = useState<any>(null);
   const [analysisExpanded, setAnalysisExpanded] = useState<{ [key: string]: boolean }>({});
+  const [analysisLogs, setAnalysisLogs] = useState<{ timestamp: string; message: string; type: 'info' | 'success' | 'step' | 'data' | 'ai' }[]>([]);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const analysisLogsRef = React.useRef<HTMLDivElement>(null);
   const [campaignData, setCampaignData] = useState<CampaignData>({
     url: '',
     campaignName: generateDefaultCampaignName(),
@@ -544,6 +547,18 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
     return url;
   };
 
+  // Helper function to add analysis log entries
+  const addAnalysisLog = (message: string, type: 'info' | 'success' | 'step' | 'data' | 'ai' = 'info') => {
+    const timestamp = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    setAnalysisLogs(prev => [...prev, { timestamp, message, type }]);
+    // Auto-scroll to bottom
+    setTimeout(() => {
+      if (analysisLogsRef.current) {
+        analysisLogsRef.current.scrollTop = analysisLogsRef.current.scrollHeight;
+      }
+    }, 50);
+  };
+
   // Step 1: URL Input & AI Analysis
   const handleUrlSubmit = async () => {
     if (!campaignData.url || !campaignData.url.trim()) {
@@ -552,15 +567,22 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
     }
 
     setLoading(true);
+    setIsAnalyzing(true);
+    setAnalysisLogs([]);
     setComprehensiveAnalysis(null);
     
     try {
       // Format URL properly
       const formattedUrl = formatUrl(campaignData.url.trim());
       
+      addAnalysisLog(`Starting comprehensive analysis for: ${formattedUrl}`, 'step');
+      addAnalysisLog('Initializing Playwright browser...', 'info');
+      
       // Try comprehensive server-side analysis first
       let comprehensiveData: any = null;
       try {
+        addAnalysisLog('Connecting to target website...', 'info');
+        
         const response = await fetch('/api/analyze-url', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -571,12 +593,59 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
           comprehensiveData = await response.json();
           if (comprehensiveData.success) {
             setComprehensiveAnalysis(comprehensiveData);
-            console.log('✅ Comprehensive analysis complete:', comprehensiveData);
+            
+            // Log extracted data
+            const data = comprehensiveData.data;
+            addAnalysisLog('Page loaded successfully', 'success');
+            addAnalysisLog('Extracting DOM elements...', 'step');
+            
+            if (data.seoSignals?.title) {
+              addAnalysisLog(`Title: "${data.seoSignals.title}"`, 'data');
+            }
+            if (data.headings?.length > 0) {
+              addAnalysisLog(`Found ${data.headings.length} headings`, 'data');
+              const h1 = data.headings.find((h: any) => h.level === 'h1');
+              if (h1) addAnalysisLog(`H1: "${h1.text}"`, 'data');
+            }
+            if (data.ctaElements?.length > 0) {
+              addAnalysisLog(`Found ${data.ctaElements.length} call-to-action elements`, 'data');
+            }
+            if (data.forms?.length > 0) {
+              addAnalysisLog(`Found ${data.forms.length} forms`, 'data');
+            }
+            if (data.services?.length > 0) {
+              addAnalysisLog(`Detected ${data.services.length} services/products`, 'data');
+            }
+            if (data.contactInfo?.phones?.length > 0) {
+              addAnalysisLog(`Found ${data.contactInfo.phones.length} phone numbers`, 'data');
+            }
+            if (data.contactInfo?.emails?.length > 0) {
+              addAnalysisLog(`Found ${data.contactInfo.emails.length} email addresses`, 'data');
+            }
+            if (data.seoSignals?.wordCount) {
+              addAnalysisLog(`Page content: ${data.seoSignals.wordCount} words`, 'data');
+            }
+            
+            // AI insights
+            if (comprehensiveData.aiInsights) {
+              addAnalysisLog('Running AI analysis...', 'step');
+              const ai = comprehensiveData.aiInsights;
+              if (ai.businessType) addAnalysisLog(`Business Type: ${ai.businessType}`, 'ai');
+              if (ai.primaryIntent) addAnalysisLog(`Primary Intent: ${ai.primaryIntent}`, 'ai');
+              if (ai.targetAudience) addAnalysisLog(`Target Audience: ${ai.targetAudience}`, 'ai');
+              if (ai.uniqueValueProposition) addAnalysisLog(`Value Proposition: ${ai.uniqueValueProposition}`, 'ai');
+              if (ai.suggestedKeywords?.length > 0) {
+                addAnalysisLog(`Suggested Keywords: ${ai.suggestedKeywords.join(', ')}`, 'ai');
+              }
+            }
           }
         }
       } catch (serverError) {
+        addAnalysisLog('Server analysis unavailable, using fallback...', 'info');
         console.warn('Server-side analysis failed, using client-side fallback:', serverError);
       }
+      
+      addAnalysisLog('Processing extracted data...', 'step');
       
       // Build landing data from comprehensive analysis or fallback to client extraction
       let landingData: LandingPageExtractionResult;
@@ -597,10 +666,13 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
           extractionMethod: 'crawl',
           extractedAt: new Date().toISOString(),
         };
+        addAnalysisLog('Landing page data structured', 'success');
       } else {
         // Fallback to client-side extraction
+        addAnalysisLog('Using client-side extraction...', 'info');
         try {
           landingData = await extractLandingPageContent(formattedUrl);
+          addAnalysisLog('Client extraction complete', 'success');
         } catch (extractError: any) {
           console.warn('Landing page extraction failed, using fallback:', extractError);
           landingData = {
@@ -618,8 +690,11 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
             extractionMethod: 'fallback',
             extractedAt: new Date().toISOString(),
           };
+          addAnalysisLog('Using minimal fallback data', 'info');
         }
       }
+      
+      addAnalysisLog('Detecting campaign intent...', 'step');
       
       // Use AI insights if available, otherwise detect manually
       let intentResult: IntentResult;
@@ -640,8 +715,13 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
         vertical = ai.businessType || detectVertical(landingData);
         cta = ai.conversionGoal || detectCTA(landingData, vertical);
         seedKeywords = ai.suggestedKeywords?.slice(0, 5) || await generateSeedKeywords(landingData, intentResult);
+        
+        addAnalysisLog(`Intent detected: ${intentResult.intentLabel}`, 'success');
+        addAnalysisLog(`Vertical: ${vertical}`, 'success');
+        addAnalysisLog(`CTA: ${cta}`, 'success');
       } else {
         // Fallback to manual detection
+        addAnalysisLog('Using rule-based detection...', 'info');
         intentResult = mapGoalToIntent(
           (landingData?.title || landingData?.h1 || '').trim(),
           { ...landingData, url: formattedUrl, tokens: landingData.page_text_tokens || [] } as any,
@@ -650,7 +730,14 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
         vertical = detectVertical(landingData);
         cta = detectCTA(landingData, vertical);
         seedKeywords = await generateSeedKeywords(landingData, intentResult);
+        
+        addAnalysisLog(`Intent detected: ${intentResult.intentLabel}`, 'success');
+        addAnalysisLog(`Vertical: ${vertical}`, 'success');
+        addAnalysisLog(`CTA: ${cta}`, 'success');
       }
+      
+      addAnalysisLog('Generating seed keywords...', 'step');
+      addAnalysisLog(`Generated ${seedKeywords.length} seed keywords`, 'success');
 
       setCampaignData(prev => ({
         ...prev,
@@ -663,14 +750,17 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
       setSeedKeywordsText(seedKeywords.join('\n'));
 
       // Auto-select best campaign structures
+      addAnalysisLog('Ranking campaign structures...', 'step');
       const rankings = rankCampaignStructures(intentResult, vertical);
       setCampaignData(prev => ({
         ...prev,
         structureRankings: rankings,
         selectedStructure: rankings[0]?.id || 'skag',
       }));
+      addAnalysisLog(`Recommended structure: ${rankings[0]?.name || 'SKAG'}`, 'success');
 
       // Save analysis to database
+      addAnalysisLog('Saving analysis to database...', 'step');
       analysisService.saveAnalysis({
         url: formattedUrl,
         domain: extractDomain(formattedUrl),
@@ -684,6 +774,8 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
       });
 
       setShowAnalysisResults(true);
+      addAnalysisLog('Analysis complete! Ready to proceed.', 'success');
+      
       notifications.success('URL analyzed successfully', {
         title: 'Comprehensive Analysis Complete',
         description: `Detected: ${intentResult.intentLabel} intent, ${vertical} vertical`
@@ -691,12 +783,14 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
 
     } catch (error) {
       console.error('URL analysis error:', error);
+      addAnalysisLog(`Error: ${error instanceof Error ? error.message : 'Analysis failed'}`, 'info');
       notifications.error('Failed to analyze URL', {
         title: 'Analysis Error',
         description: 'Please check the URL and try again'
       });
     } finally {
       setLoading(false);
+      setIsAnalyzing(false);
     }
   };
 
@@ -2281,273 +2375,110 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
         </CardContent>
       </Card>
 
-      {/* Analysis Results - Show after analysis complete */}
-      {campaignData.intent && (
-        <Card className="mb-6 border-indigo-200 bg-gradient-to-br from-indigo-50 to-blue-50">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-green-500" />
-              Comprehensive Analysis Complete
-            </CardTitle>
-            <CardDescription>
-              {comprehensiveAnalysis ? 'Deep website analysis with AI insights' : 'Website analysis results saved'}
-            </CardDescription>
+      {/* Live Analysis Logs - Terminal Style */}
+      {(isAnalyzing || analysisLogs.length > 0) && (
+        <Card className="mb-6 border-slate-700 bg-slate-900 shadow-xl">
+          <CardHeader className="pb-2 border-b border-slate-700">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                  <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                </div>
+                <span className="text-slate-400 text-sm font-mono">Website Analysis Console</span>
+              </div>
+              {isAnalyzing && (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 text-green-400 animate-spin" />
+                  <span className="text-green-400 text-xs font-mono">Analyzing...</span>
+                </div>
+              )}
+              {!isAnalyzing && analysisLogs.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-400" />
+                  <span className="text-green-400 text-xs font-mono">Complete</span>
+                </div>
+              )}
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {/* Primary Analysis Results */}
-              <div className="bg-white rounded-lg p-4 border border-indigo-100">
-                <div className="font-semibold text-sm text-slate-600 mb-3">Core Analysis:</div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-3 bg-indigo-50 rounded-lg">
-                    <span className="text-xs font-semibold text-slate-500 uppercase">Intent</span>
-                    <p className="text-lg font-bold text-indigo-600">{campaignData.intent?.intentLabel}</p>
+          <CardContent className="p-0">
+            <div 
+              ref={analysisLogsRef}
+              className="font-mono text-sm max-h-80 overflow-y-auto p-4 space-y-1"
+              style={{ scrollBehavior: 'smooth' }}
+            >
+              {analysisLogs.map((log, idx) => (
+                <div key={idx} className="flex items-start gap-3">
+                  <span className="text-slate-500 text-xs shrink-0">[{log.timestamp}]</span>
+                  <span className={`
+                    ${log.type === 'step' ? 'text-cyan-400 font-semibold' : ''}
+                    ${log.type === 'success' ? 'text-green-400' : ''}
+                    ${log.type === 'data' ? 'text-yellow-300' : ''}
+                    ${log.type === 'ai' ? 'text-purple-400' : ''}
+                    ${log.type === 'info' ? 'text-slate-400' : ''}
+                  `}>
+                    {log.type === 'step' && <span className="text-cyan-500 mr-1">{'>'}</span>}
+                    {log.type === 'success' && <span className="text-green-500 mr-1">✓</span>}
+                    {log.type === 'data' && <span className="text-yellow-500 mr-1">•</span>}
+                    {log.type === 'ai' && <span className="text-purple-500 mr-1">★</span>}
+                    {log.type === 'info' && <span className="text-slate-500 mr-1">→</span>}
+                    {log.message}
+                  </span>
+                </div>
+              ))}
+              {isAnalyzing && (
+                <div className="flex items-center gap-2 text-green-400">
+                  <span className="animate-pulse">_</span>
+                </div>
+              )}
+            </div>
+            
+            {/* Analysis Summary - Shows after complete */}
+            {!isAnalyzing && campaignData.intent && (
+              <div className="border-t border-slate-700 p-4 bg-slate-800/50">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+                  <div className="bg-slate-700/50 rounded-lg p-3 border border-slate-600">
+                    <span className="text-xs text-slate-400 uppercase block mb-1">Intent</span>
+                    <p className="text-lg font-bold text-cyan-400">{campaignData.intent?.intentLabel}</p>
                   </div>
-                  <div className="p-3 bg-purple-50 rounded-lg">
-                    <span className="text-xs font-semibold text-slate-500 uppercase">Vertical</span>
-                    <p className="text-lg font-bold text-purple-600">{campaignData.vertical}</p>
+                  <div className="bg-slate-700/50 rounded-lg p-3 border border-slate-600">
+                    <span className="text-xs text-slate-400 uppercase block mb-1">Vertical</span>
+                    <p className="text-lg font-bold text-purple-400">{campaignData.vertical}</p>
                   </div>
-                  <div className="p-3 bg-green-50 rounded-lg">
-                    <span className="text-xs font-semibold text-slate-500 uppercase">CTA</span>
-                    <p className="text-lg font-bold text-green-600">{campaignData.cta}</p>
+                  <div className="bg-slate-700/50 rounded-lg p-3 border border-slate-600">
+                    <span className="text-xs text-slate-400 uppercase block mb-1">CTA</span>
+                    <p className="text-lg font-bold text-green-400">{campaignData.cta}</p>
+                  </div>
+                  <div className="bg-slate-700/50 rounded-lg p-3 border border-slate-600">
+                    <span className="text-xs text-slate-400 uppercase block mb-1">Keywords</span>
+                    <p className="text-lg font-bold text-yellow-400">{campaignData.seedKeywords.length}</p>
                   </div>
                 </div>
-              </div>
-
-              {/* Seed Keywords */}
-              <div className="bg-white rounded-lg p-4 border border-indigo-100">
-                <div className="font-semibold text-sm text-slate-600 mb-3">AI-Generated Seed Keywords:</div>
-                {campaignData.seedKeywords.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {campaignData.seedKeywords.slice(0, 5).map((keyword, idx) => (
-                      <span key={idx} className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-sm">
-                        {keyword}
-                      </span>
-                    ))}
+                
+                {/* Seed Keywords */}
+                {campaignData.seedKeywords.length > 0 && (
+                  <div className="mb-4">
+                    <span className="text-xs text-slate-400 uppercase block mb-2">Seed Keywords:</span>
+                    <div className="flex flex-wrap gap-2">
+                      {campaignData.seedKeywords.slice(0, 5).map((keyword, idx) => (
+                        <span key={idx} className="px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+                          {keyword}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                ) : (
-                  <p className="text-sm text-slate-500 italic">No seed keywords generated. Add manually in Step 3.</p>
                 )}
+                
+                <Button 
+                  onClick={() => setCurrentStep(2)}
+                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold"
+                >
+                  Next: Select Campaign Structure →
+                </Button>
               </div>
-
-              {/* Comprehensive Analysis Details */}
-              {comprehensiveAnalysis?.data && (
-                <>
-                  {/* SEO & Technical Summary */}
-                  <div className="bg-white rounded-lg p-4 border border-slate-200">
-                    <button 
-                      onClick={() => setAnalysisExpanded(prev => ({ ...prev, seo: !prev.seo }))}
-                      className="flex items-center justify-between w-full text-left"
-                    >
-                      <span className="font-semibold text-sm text-slate-700 flex items-center gap-2">
-                        <Search className="w-4 h-4 text-blue-500" />
-                        SEO & Technical Signals
-                      </span>
-                      {analysisExpanded.seo ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                    </button>
-                    {analysisExpanded.seo && (
-                      <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                        <div className="p-2 bg-slate-50 rounded">
-                          <span className="text-xs text-slate-500">Word Count</span>
-                          <p className="font-bold">{comprehensiveAnalysis.data.seoSignals?.wordCount || 0}</p>
-                        </div>
-                        <div className="p-2 bg-slate-50 rounded">
-                          <span className="text-xs text-slate-500">Headings</span>
-                          <p className="font-bold">{comprehensiveAnalysis.data.headings?.length || 0}</p>
-                        </div>
-                        <div className="p-2 bg-slate-50 rounded">
-                          <span className="text-xs text-slate-500">CTAs Found</span>
-                          <p className="font-bold">{comprehensiveAnalysis.data.ctaElements?.length || 0}</p>
-                        </div>
-                        <div className="p-2 bg-slate-50 rounded">
-                          <span className="text-xs text-slate-500">Forms</span>
-                          <p className="font-bold">{comprehensiveAnalysis.data.forms?.length || 0}</p>
-                        </div>
-                        {comprehensiveAnalysis.data.seoSignals?.metaDescription && (
-                          <div className="col-span-full p-2 bg-slate-50 rounded">
-                            <span className="text-xs text-slate-500">Meta Description</span>
-                            <p className="text-sm">{comprehensiveAnalysis.data.seoSignals.metaDescription.slice(0, 160)}</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Headings Structure */}
-                  {comprehensiveAnalysis.data.headings?.length > 0 && (
-                    <div className="bg-white rounded-lg p-4 border border-slate-200">
-                      <button 
-                        onClick={() => setAnalysisExpanded(prev => ({ ...prev, headings: !prev.headings }))}
-                        className="flex items-center justify-between w-full text-left"
-                      >
-                        <span className="font-semibold text-sm text-slate-700 flex items-center gap-2">
-                          <Type className="w-4 h-4 text-purple-500" />
-                          Heading Structure ({comprehensiveAnalysis.data.headings.length})
-                        </span>
-                        {analysisExpanded.headings ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                      </button>
-                      {analysisExpanded.headings && (
-                        <div className="mt-3 space-y-1 max-h-48 overflow-y-auto">
-                          {comprehensiveAnalysis.data.headings.slice(0, 15).map((h: any, idx: number) => (
-                            <div key={idx} className={`text-sm flex items-center gap-2 ${h.level === 'h1' ? 'font-bold text-indigo-700' : h.level === 'h2' ? 'font-semibold text-slate-700 pl-2' : 'text-slate-600 pl-4'}`}>
-                              <Badge variant="outline" className="text-xs">{h.level}</Badge>
-                              <span className="truncate">{h.text}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* CTAs Found */}
-                  {comprehensiveAnalysis.data.ctaElements?.length > 0 && (
-                    <div className="bg-white rounded-lg p-4 border border-slate-200">
-                      <button 
-                        onClick={() => setAnalysisExpanded(prev => ({ ...prev, ctas: !prev.ctas }))}
-                        className="flex items-center justify-between w-full text-left"
-                      >
-                        <span className="font-semibold text-sm text-slate-700 flex items-center gap-2">
-                          <MousePointerClick className="w-4 h-4 text-green-500" />
-                          Call-to-Action Buttons ({comprehensiveAnalysis.data.ctaElements.length})
-                        </span>
-                        {analysisExpanded.ctas ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                      </button>
-                      {analysisExpanded.ctas && (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {comprehensiveAnalysis.data.ctaElements.slice(0, 12).map((cta: any, idx: number) => (
-                            <span key={idx} className="px-3 py-1 bg-green-50 text-green-700 text-sm rounded-full border border-green-200">
-                              {cta.text}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Services/Products Detected */}
-                  {comprehensiveAnalysis.data.services?.length > 0 && (
-                    <div className="bg-white rounded-lg p-4 border border-slate-200">
-                      <button 
-                        onClick={() => setAnalysisExpanded(prev => ({ ...prev, services: !prev.services }))}
-                        className="flex items-center justify-between w-full text-left"
-                      >
-                        <span className="font-semibold text-sm text-slate-700 flex items-center gap-2">
-                          <Briefcase className="w-4 h-4 text-orange-500" />
-                          Services/Products Detected ({comprehensiveAnalysis.data.services.length})
-                        </span>
-                        {analysisExpanded.services ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                      </button>
-                      {analysisExpanded.services && (
-                        <div className="mt-3 flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-                          {comprehensiveAnalysis.data.services.slice(0, 20).map((svc: string, idx: number) => (
-                            <span key={idx} className="px-2 py-1 bg-orange-50 text-orange-700 text-xs rounded border border-orange-200">
-                              {svc}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Contact Info */}
-                  {(comprehensiveAnalysis.data.contactInfo?.phones?.length > 0 || comprehensiveAnalysis.data.contactInfo?.emails?.length > 0) && (
-                    <div className="bg-white rounded-lg p-4 border border-slate-200">
-                      <button 
-                        onClick={() => setAnalysisExpanded(prev => ({ ...prev, contact: !prev.contact }))}
-                        className="flex items-center justify-between w-full text-left"
-                      >
-                        <span className="font-semibold text-sm text-slate-700 flex items-center gap-2">
-                          <Phone className="w-4 h-4 text-blue-500" />
-                          Contact Information
-                        </span>
-                        {analysisExpanded.contact ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                      </button>
-                      {analysisExpanded.contact && (
-                        <div className="mt-3 space-y-2">
-                          {comprehensiveAnalysis.data.contactInfo.phones?.length > 0 && (
-                            <div className="flex items-center gap-2 text-sm">
-                              <Phone className="w-4 h-4 text-slate-400" />
-                              <span>{comprehensiveAnalysis.data.contactInfo.phones.join(', ')}</span>
-                            </div>
-                          )}
-                          {comprehensiveAnalysis.data.contactInfo.emails?.length > 0 && (
-                            <div className="flex items-center gap-2 text-sm">
-                              <Mail className="w-4 h-4 text-slate-400" />
-                              <span>{comprehensiveAnalysis.data.contactInfo.emails.join(', ')}</span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* AI Insights */}
-                  {comprehensiveAnalysis.aiInsights && (
-                    <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-200">
-                      <button 
-                        onClick={() => setAnalysisExpanded(prev => ({ ...prev, ai: !prev.ai }))}
-                        className="flex items-center justify-between w-full text-left"
-                      >
-                        <span className="font-semibold text-sm text-purple-700 flex items-center gap-2">
-                          <Sparkles className="w-4 h-4" />
-                          AI Marketing Insights
-                        </span>
-                        {analysisExpanded.ai ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                      </button>
-                      {analysisExpanded.ai && (
-                        <div className="mt-3 space-y-3 text-sm">
-                          {comprehensiveAnalysis.aiInsights.targetAudience && (
-                            <div>
-                              <span className="text-xs font-semibold text-purple-600 uppercase">Target Audience</span>
-                              <p className="text-slate-700">{comprehensiveAnalysis.aiInsights.targetAudience}</p>
-                            </div>
-                          )}
-                          {comprehensiveAnalysis.aiInsights.uniqueValueProposition && (
-                            <div>
-                              <span className="text-xs font-semibold text-purple-600 uppercase">Value Proposition</span>
-                              <p className="text-slate-700">{comprehensiveAnalysis.aiInsights.uniqueValueProposition}</p>
-                            </div>
-                          )}
-                          {comprehensiveAnalysis.aiInsights.adCopyAngle && (
-                            <div>
-                              <span className="text-xs font-semibold text-purple-600 uppercase">Recommended Ad Angle</span>
-                              <p className="text-slate-700">{comprehensiveAnalysis.aiInsights.adCopyAngle}</p>
-                            </div>
-                          )}
-                          {comprehensiveAnalysis.aiInsights.competitiveAdvantages?.length > 0 && (
-                            <div>
-                              <span className="text-xs font-semibold text-purple-600 uppercase">Competitive Advantages</span>
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {comprehensiveAnalysis.aiInsights.competitiveAdvantages.map((adv: string, idx: number) => (
-                                  <span key={idx} className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded">
-                                    {adv}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                <p className="text-sm text-green-800">
-                  <strong>✓ Ready:</strong> Comprehensive analysis complete! Click below to proceed.
-                </p>
-              </div>
-            </div>
+            )}
           </CardContent>
-          <div className="border-t border-indigo-200 pt-4 px-6 pb-4">
-            <Button 
-              onClick={() => setCurrentStep(2)}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold"
-            >
-              Next: Select Campaign Structure →
-            </Button>
-          </div>
         </Card>
       )}
 
