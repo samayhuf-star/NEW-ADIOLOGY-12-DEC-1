@@ -17,7 +17,8 @@ export default function TemplateEditorBuilder({ savedWebsite, onClose, onUpdate 
   const [exportedCss, setExportedCss] = useState<string>('');
   const [isPublishing, setIsPublishing] = useState(false);
   const [showNameDialog, setShowNameDialog] = useState(false);
-  const [publishName, setPublishName] = useState(savedWebsite.name);
+  const [dialogMode, setDialogMode] = useState<'save' | 'publish'>('save');
+  const [inputName, setInputName] = useState(savedWebsite.name);
   const [currentName, setCurrentName] = useState(savedWebsite.name);
   
   console.log('📝 TemplateEditorBuilder loaded with:', {
@@ -36,18 +37,30 @@ export default function TemplateEditorBuilder({ savedWebsite, onClose, onUpdate 
     setHasUnsavedChanges(true);
   }, []);
 
-  const handleSave = async () => {
+  const handleSaveClick = () => {
+    setInputName(currentName);
+    setDialogMode('save');
+    setShowNameDialog(true);
+  };
+
+  const handleSaveConfirm = () => {
+    const finalName = inputName.trim() || savedWebsite.name;
+    setShowNameDialog(false);
+    
     const updatedData = {
       ...templateData,
       rawHtml: exportedHtml || templateData.rawHtml,
       rawCss: exportedCss || templateData.rawCss,
     };
     setTemplateData(updatedData);
-    const updated = updateSavedWebsite(savedWebsite.id, { data: updatedData });
+    setCurrentName(finalName);
+    
+    const updated = updateSavedWebsite(savedWebsite.id, { data: updatedData, name: finalName });
     if (updated) {
       onUpdate(updated);
     }
     setHasUnsavedChanges(false);
+    alert('Website saved as: ' + finalName);
   };
 
   const handleDownload = () => {
@@ -82,12 +95,13 @@ ${exportedHtml}
   };
 
   const handlePublishClick = () => {
-    setPublishName(currentName);
+    setInputName(currentName);
+    setDialogMode('publish');
     setShowNameDialog(true);
   };
 
   const handlePublishConfirm = async () => {
-    const finalName = publishName.trim() || savedWebsite.name;
+    const finalName = inputName.trim() || savedWebsite.name;
     setShowNameDialog(false);
     setIsPublishing(true);
     
@@ -159,7 +173,9 @@ ${exportedHtml}
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Publish Website</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                {dialogMode === 'save' ? 'Save Website' : 'Publish Website'}
+              </h3>
               <button
                 onClick={() => setShowNameDialog(false)}
                 className="p-1 hover:bg-gray-100 rounded-lg"
@@ -173,8 +189,8 @@ ${exportedHtml}
               </label>
               <input
                 type="text"
-                value={publishName}
-                onChange={(e) => setPublishName(e.target.value)}
+                value={inputName}
+                onChange={(e) => setInputName(e.target.value)}
                 placeholder="Enter website name..."
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
                 autoFocus
@@ -191,10 +207,10 @@ ${exportedHtml}
                 Cancel
               </button>
               <button
-                onClick={handlePublishConfirm}
+                onClick={dialogMode === 'save' ? handleSaveConfirm : handlePublishConfirm}
                 className="px-4 py-2 bg-purple-600 text-white rounded-lg font-medium text-sm hover:bg-purple-700"
               >
-                Publish
+                {dialogMode === 'save' ? 'Save' : 'Publish'}
               </button>
             </div>
           </div>
@@ -205,7 +221,7 @@ ${exportedHtml}
         <VisualSectionsEditor
           templateData={templateData}
           onUpdate={handleBuilderUpdate}
-          onSave={handleSave}
+          onSave={handleSaveClick}
           onExport={handleDownload}
         />
       </div>
