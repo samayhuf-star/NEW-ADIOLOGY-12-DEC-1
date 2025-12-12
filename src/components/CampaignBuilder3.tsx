@@ -2440,7 +2440,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
       }, 'completed');
 
       setCampaignSaved(true);
-      setCurrentStep(8); // Show success screen
+      setCurrentStep(7); // Show success screen
     } catch (error) {
       console.error('Save error:', error);
       notifications.error('Failed to save campaign', {
@@ -3970,7 +3970,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
-            <Button onClick={() => setCurrentStep(6)}>
+            <Button onClick={() => { setCurrentStep(6); autoSaveDraft(); }}>
               Next Step
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
@@ -3979,7 +3979,9 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
       </div>
     );
   };
-  const renderStep6 = () => (
+
+  // Step 6 Review removed - was redundant CSV preview screen
+  const _renderStep6_REMOVED = () => (
     <div className="max-w-6xl mx-auto p-6">
       <div className="mb-8 flex items-center justify-end">
         <div className="text-sm text-slate-500 mr-4">Review step - no inputs to fill</div>
@@ -4454,7 +4456,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
 
       {/* Inline Navigation */}
       <div className="flex justify-between items-center pt-4 mt-6 border-t border-slate-200">
-        <Button variant="outline" onClick={() => setCurrentStep(6)}>
+        <Button variant="outline" onClick={() => setCurrentStep(5)}>
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
         </Button>
@@ -4473,8 +4475,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
     { id: 3, label: 'Keywords' },
     { id: 4, label: 'Ads & Extensions' },
     { id: 5, label: 'Geo Target' },
-    { id: 6, label: 'Review' },
-    { id: 7, label: 'CSV' },
+    { id: 6, label: 'CSV' },
   ];
 
   // Reset campaign function
@@ -4551,13 +4552,9 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
       autoSaveDraft();
     }
     else if (currentStep === 6) {
-      setCurrentStep(7);
-      autoSaveDraft();
-    }
-    else if (currentStep === 7) {
       handleSaveCampaign();
     }
-    else if (currentStep === 8) {
+    else if (currentStep === 7) {
       // Success screen - no action needed
     }
   };
@@ -4594,11 +4591,11 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
               </Button>
               <Button
                 onClick={handleNextStep}
-                disabled={loading || currentStep === 8}
+                disabled={loading || currentStep === 7}
                 size="sm"
                 className="bg-indigo-600 hover:bg-indigo-700 text-white"
               >
-                {currentStep === 7 ? 'Save & Finish' : currentStep === 8 ? 'Download CSV' : 'Next Step'}
+                {currentStep === 6 ? 'Save & Finish' : currentStep === 7 ? 'Download CSV' : 'Next Step'}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
@@ -4662,10 +4659,10 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
           </span>
             <Button
               onClick={handleNextStep}
-              disabled={loading || currentStep === 8}
+              disabled={loading || currentStep === 7}
             size="sm"
             >
-            {currentStep === 7 ? 'Save & Finish' : currentStep === 8 ? 'Download CSV' : 'Next Step'}
+            {currentStep === 6 ? 'Save & Finish' : currentStep === 7 ? 'Download CSV' : 'Next Step'}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
@@ -4678,9 +4675,8 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
         {currentStep === 3 && renderStep3()}
         {currentStep === 4 && renderStep4()}
         {currentStep === 5 && renderStep5()}
-        {currentStep === 6 && renderStep6()}
-        {currentStep === 7 && renderStep7()}
-        {currentStep === 8 && renderStep8()}
+        {currentStep === 6 && renderStep7()}
+        {currentStep === 7 && renderStep8()}
       </div>
 
         
