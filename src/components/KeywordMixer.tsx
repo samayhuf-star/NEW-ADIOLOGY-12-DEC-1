@@ -7,6 +7,7 @@ import { Button } from './ui/button';
 import { historyService } from '../utils/historyService';
 import { notifications } from '../utils/notifications';
 import { DEFAULT_MIXER_KEYWORDS } from '../utils/defaultExamples';
+import { exportKeywordsToCSV } from '../utils/googleAdsEditorCSVExporter';
 
 // Plumbing service keywords for sample data
 const PLUMBING_KEYWORDS = {
@@ -220,7 +221,6 @@ export const KeywordMixer = ({ initialData }: { initialData?: any }) => {
 
     const exportToCSV = async () => {
         try {
-            const { exportKeywordsToCSV } = await import('../utils/googleAdsEditorCSVExporter');
             const filename = `keywords_google_ads_editor_${new Date().toISOString().split('T')[0]}.csv`;
             
             const validation = exportKeywordsToCSV(

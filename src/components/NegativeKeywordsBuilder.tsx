@@ -27,6 +27,7 @@ import {
     type NegativeKeyword,
     type NegativeKeywordCategory
 } from '../utils/negativeKeywordsGenerator';
+import { exportNegativeKeywordsToCSV } from '../utils/googleAdsEditorCSVExporter';
 
 interface GeneratedKeyword {
     id: number;
@@ -695,7 +696,6 @@ export const NegativeKeywordsBuilder = ({ initialData }: { initialData?: any }) 
         try {
             if (format === 'google-ads-editor') {
                 // Use new Google Ads Editor format
-                const { exportNegativeKeywordsToCSV } = await import('../utils/googleAdsEditorCSVExporter');
                 filename = `negative_keywords_google_ads_editor_${new Date().toISOString().split('T')[0]}.csv`;
                 
                 const validation = exportNegativeKeywordsToCSV(

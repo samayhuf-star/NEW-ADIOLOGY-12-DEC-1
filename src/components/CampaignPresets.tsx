@@ -5,6 +5,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { notifications } from '../utils/notifications';
 import { historyService } from '../utils/historyService';
+import { exportCampaignToGoogleAdsEditorCSV, validateCSVRows, campaignStructureToCSVRows } from '../utils/googleAdsEditorCSVExporter';
 
 interface CampaignPresetsProps {
   onLoadPreset: (presetData: any) => void;
@@ -197,7 +198,6 @@ export const CampaignPresets: React.FC<CampaignPresetsProps> = ({ onLoadPreset }
     try {
       // Convert preset to CampaignStructure format
       const { presetToCampaignStructure } = await import('../utils/csvGeneratorV3');
-      const { exportCampaignToGoogleAdsEditorCSV, validateCSVRows, campaignStructureToCSVRows } = await import('../utils/googleAdsEditorCSVExporter');
       const structure = presetToCampaignStructure(exportPreset);
       
       // Convert to CSV rows and validate

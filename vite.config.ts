@@ -56,6 +56,7 @@
     outDir: 'build',
     minify: 'esbuild',
     sourcemap: false,
+    chunkSizeWarningLimit: 2000,
     modulePreload: {
       polyfill: false,
     },
@@ -64,6 +65,12 @@
         entryFileNames: `assets/[name]-[hash].js`,
         chunkFileNames: `assets/[name]-[hash].js`,
         assetFileNames: `assets/[name]-[hash].[ext]`,
+        manualChunks: {
+          'csv-exporter': ['./src/utils/googleAdsEditorCSVExporter.ts', './src/utils/googleAdsEditorCSVExporterV5.ts'],
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-ui': ['@radix-ui/react-dialog', '@radix-ui/react-popover', '@radix-ui/react-select', '@radix-ui/react-tabs'],
+          'vendor-charts': ['recharts'],
+        },
       },
     },
   },

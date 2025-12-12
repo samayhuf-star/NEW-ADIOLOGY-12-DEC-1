@@ -61,8 +61,8 @@ externalPort = 3003
 
 [deployment]
 deploymentTarget = "vm"
-run = ["bash", "-c", "npx tsx server/index.ts & npm run preview"]
-build = ["bash", "-c", "npm install && npx playwright install chromium && npm run build"]
+run = ["npm", "run", "start"]
+build = ["npm", "run", "build"]
 
 [userenv]
 
