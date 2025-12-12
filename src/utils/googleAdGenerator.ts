@@ -286,10 +286,10 @@ function generateServiceAdCopy(
   }
 
   const descriptions: string[] = [
-    `Professional ${kw1} services you can trust. ${businessName} offers expert solutions for all your ${keyword1} needs. Licensed, insured & satisfaction guaranteed.`,
-    `Looking for reliable ${kw1}? We provide fast, affordable ${keyword1} services${location ? ` in ${location}` : ''}. Free estimates. Call now or book online!`,
-    `${businessName}: Your local ${kw1} experts. From ${keyword1} to ${keyword2 || keyword1}, we handle it all. 5-star rated. Available 7 days a week.`,
-    `Expert ${kw1} at fair prices. Our certified technicians deliver quality ${keyword1} workmanship. Same-day service available. Get your free quote today!`
+    `Professional ${kw1} services you can trust. ${businessName} offers expert solutions for all your ${keyword1} needs. Licensed, insured and satisfaction guaranteed.`,
+    `Looking for reliable ${kw1}. We provide fast, affordable ${keyword1} services${location ? ` in ${location}` : ''}. Free estimates. Call now or book online.`,
+    `${businessName} - Your local ${kw1} experts. From ${keyword1} to ${keyword2 || keyword1}, we handle it all. 5-star rated. Available 7 days a week.`,
+    `Expert ${kw1} at fair prices. Our certified technicians deliver quality ${keyword1} workmanship. Same-day service available. Get your free quote today.`
   ];
 
   return {
@@ -337,10 +337,10 @@ function generateProductAdCopy(
   ];
 
   const descriptions: string[] = [
-    `Shop ${mainKeyword} at ${businessName}. Best prices guaranteed. Free shipping on orders over $50. Easy returns. Buy with confidence today!`,
-    `Looking for ${mainKeyword}? Browse our huge selection at unbeatable prices. Customer reviews, fast delivery & hassle-free returns. Shop now!`,
-    `${businessName} - Your trusted ${mainKeyword} destination. Compare models, read reviews & find the perfect fit. Price match guarantee available.`,
-    `Get the best ${mainKeyword} deals online. Quality products, verified sellers, secure checkout. Order now & save up to 30%!`
+    `Shop ${mainKeyword} at ${businessName}. Best prices guaranteed. Free shipping on orders over $50. Easy returns. Buy with confidence today.`,
+    `Looking for ${mainKeyword}. Browse our huge selection at unbeatable prices. Customer reviews, fast delivery and hassle-free returns. Shop now.`,
+    `${businessName} - Your trusted ${mainKeyword} destination. Compare models, read reviews and find the perfect fit. Price match guarantee available.`,
+    `Get the best ${mainKeyword} deals online. Quality products, verified sellers, secure checkout. Order now and save up to 30 percent.`
   ];
 
   return {
@@ -370,7 +370,7 @@ function generateEmergencyAdCopy(
   
   const headlines: string[] = [
     // Urgency-focused (use actual keywords)
-    `24/7 Emergency ${kw1}`,
+    `24 Hour Emergency ${kw1}`,
     `${kw1} - Open Now`,
     `Urgent ${kw1} Help`,
     
@@ -380,25 +380,25 @@ function generateEmergencyAdCopy(
     `Same Hour ${kw1} Service`,
     
     // Availability
-    `${kw1} Available 24/7`,
+    `${kw1} Available Now`,
     `Night & Weekend ${kw1}`,
     `Holiday ${kw1} Service`,
     
     // Problem-solution
     `Emergency ${kw1} Fix`,
-    `${kw1} Crisis? Call Now`,
+    `${kw1} Crisis - Call Now`,
     `Immediate ${kw1} Help`,
     
     // Trust in emergency
     `Licensed Emergency ${kw1}`,
-    `Trusted 24/7 ${kw1}`
+    `Trusted 24 Hour ${kw1}`
   ];
 
   const descriptions: string[] = [
-    `${kw1} emergency? We're here 24/7! ${businessName} offers rapid response for all urgent ${keyword1} issues. Call now - we're on our way!`,
-    `Don't panic! Our emergency ${kw1} team is available around the clock. Fast arrival, expert repairs, fair pricing. Call us immediately!`,
-    `24/7 emergency ${keyword1} services${location ? ` in ${location}` : ''}. We understand urgency - that's why we respond in 30 minutes or less. Call now!`,
-    `${kw1} emergency? ${businessName} has you covered day or night. Licensed professionals ready to solve your ${keyword1} crisis. No extra fees!`
+    `${kw1} emergency - We are here around the clock. ${businessName} offers rapid response for all urgent ${keyword1} issues. Call now.`,
+    `Our emergency ${kw1} team is available around the clock. Fast arrival, expert repairs, fair pricing. Call us immediately.`,
+    `24 hour emergency ${keyword1} services${location ? ` in ${location}` : ''}. We understand urgency - that is why we respond in 30 minutes or less.`,
+    `${kw1} emergency - ${businessName} has you covered day or night. Licensed professionals ready to solve your ${keyword1} crisis.`
   ];
 
   return {
@@ -443,15 +443,15 @@ function generateLocalAdCopy(
     `We Know ${location}`,
     
     // Reviews/reputation
-    `#1 ${industry} in ${location}`,
+    `Top ${industry} in ${location}`,
     `5-Star ${location} ${industry}`
   ];
 
   const descriptions: string[] = [
-    `${businessName} - proudly serving ${location} for over X years. Local ${industry} experts who understand your community's needs. Call your neighbors' favorite!`,
-    `Looking for ${industry} in ${location}? We're right around the corner! Fast response times, local expertise, community pricing. Book now!`,
-    `${location}'s most trusted ${industry}. We live here, we work here, we care. ${businessName} offers reliable ${mainKeyword} services with a personal touch.`,
-    `Why call an out-of-town ${industry}? ${businessName} is your local ${location} expert. Quick arrival, fair prices, community reputation. Call today!`
+    `${businessName} - proudly serving ${location} for over X years. Local ${industry} experts who understand your community needs. Call your neighbors favorite.`,
+    `Looking for ${industry} in ${location}. We are right around the corner. Fast response times, local expertise, community pricing. Book now.`,
+    `${location} most trusted ${industry}. We live here, we work here, we care. ${businessName} offers reliable ${mainKeyword} services with a personal touch.`,
+    `Why call an out-of-town ${industry}. ${businessName} is your local ${location} expert. Quick arrival, fair prices, community reputation. Call today.`
   ];
 
   return {
@@ -492,10 +492,10 @@ function generateInformationalAdCopy(
   ];
 
   const descriptions: string[] = [
-    `Got ${mainKeyword} questions? ${businessName} has answers! Browse our expert guides, tips & advice. Learn when to DIY and when to call a pro.`,
-    `Understanding ${mainKeyword} doesn't have to be hard. Our free resources help you make informed decisions. Questions? Our experts are here to help!`,
-    `${businessName} education center: Learn everything about ${mainKeyword}. Free guides, how-tos, and expert advice. Empower yourself with knowledge!`,
-    `Not sure what you need? Our ${mainKeyword} resources help you understand your options. And when you're ready, we're here to help!`
+    `Got ${mainKeyword} questions. ${businessName} has answers. Browse our expert guides, tips and advice. Learn when to DIY and when to call a pro.`,
+    `Understanding ${mainKeyword} does not have to be hard. Our free resources help you make informed decisions. Our experts are here to help.`,
+    `${businessName} education center - Learn everything about ${mainKeyword}. Free guides, how-tos, and expert advice. Empower yourself with knowledge.`,
+    `Not sure what you need. Our ${mainKeyword} resources help you understand your options. And when you are ready, we are here to help.`
   ];
 
   return {
@@ -766,8 +766,8 @@ export function buildRSA(adCopy: AdCopyTemplates, input: AdGenerationInput): Res
   }
   
   const fallbackDescriptions = [
-    `Contact ${businessName} today for professional ${input.industry} services${location ? ` in ${location}` : ''}. Licensed & insured.`,
-    `Get expert ${input.industry} help from trusted professionals. Free estimates available. Call now!`
+    `Contact ${businessName} today for professional ${input.industry} services${location ? ` in ${location}` : ''}. Licensed and insured.`,
+    `Get expert ${input.industry} help from trusted professionals. Free estimates available. Call now.`
   ];
   while (descriptions.length < CHARACTER_LIMITS.RSA.DESCRIPTION_MIN_COUNT) {
     const fallback = fallbackDescriptions[descriptions.length] || fallbackDescriptions[0];

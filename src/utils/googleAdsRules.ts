@@ -675,6 +675,70 @@ export const BEST_PRACTICES = {
 } as const;
 
 // ============================================================================
+// AD TEXT SANITIZATION - Google Ads Policy Compliance
+// ============================================================================
+
+/**
+ * Sanitize ad text to comply with Google Ads policies
+ * Removes prohibited special characters and fixes common issues
+ * 
+ * Google Ads Policy prohibits:
+ * - Excessive punctuation (multiple !, ?, etc.)
+ * - Special characters at beginning of headlines
+ * - Most special symbols (@ # $ % ^ * < > { } [ ] | \ ~ `)
+ * - Misleading symbols or formatting
+ */
+export function sanitizeAdText(text: string): string {
+  if (!text) return '';
+  
+  let sanitized = text.trim();
+  
+  // 1. Replace "24/7" patterns with "24-7" (slashes not allowed in certain contexts)
+  sanitized = sanitized.replace(/(\d+)\/(\d+)/g, '$1-$2');
+  
+  // 2. Remove DKI syntax {KeyWord:...} - should not appear in final ad text shown to users
+  sanitized = sanitized.replace(/\{(keyword|Keyword|KeyWord|KEYWord):[^}]*\}/gi, '');
+  
+  // 3. Remove prohibited special characters (keep allowed: . , - ' : ; & $ % ! ?)
+  // Prohibited: @ # ^ * < > { } [ ] | \ ~ ` = + _ " /
+  sanitized = sanitized.replace(/[@#^*<>{}\[\]|\\~`=+_"\/]/g, '');
+  
+  // 4. Remove excessive exclamation marks (only 1 allowed per ad field)
+  const exclamationCount = (sanitized.match(/!/g) || []).length;
+  if (exclamationCount > 1) {
+    // Keep only the last exclamation mark
+    let found = false;
+    sanitized = sanitized.split('').reverse().map(char => {
+      if (char === '!') {
+        if (found) return '';
+        found = true;
+      }
+      return char;
+    }).reverse().join('');
+  }
+  
+  // 5. Remove exclamation at the beginning of text
+  sanitized = sanitized.replace(/^[!?.,;:]+\s*/, '');
+  
+  // 6. Remove multiple consecutive punctuation (e.g., "!!" or "??")
+  sanitized = sanitized.replace(/([!?.,;:])\1+/g, '$1');
+  
+  // 7. Remove punctuation followed by punctuation (e.g., "!?" or ".!")
+  sanitized = sanitized.replace(/([!?])([!?.,;:])/g, '$1');
+  
+  // 8. Clean up multiple spaces
+  sanitized = sanitized.replace(/\s+/g, ' ').trim();
+  
+  // 9. Remove trailing punctuation that's not period, exclamation, or question
+  sanitized = sanitized.replace(/[,;:]+$/, '');
+  
+  // 10. Ensure text doesn't start with a symbol
+  sanitized = sanitized.replace(/^[-&]+\s*/, '');
+  
+  return sanitized;
+}
+
+// ============================================================================
 // HELPER FUNCTIONS FOR AD GENERATION
 // ============================================================================
 
@@ -697,17 +761,23 @@ export function truncateToLimit(text: string, limit: number): string {
 }
 
 /**
- * Ensure headline fits 30 character limit
+ * Ensure headline fits 30 character limit and complies with Google Ads policies
  */
 export function formatHeadline(text: string): string {
-  return truncateToLimit(text.trim(), CHARACTER_LIMITS.RSA.HEADLINE);
+  // First sanitize to remove prohibited characters
+  const sanitized = sanitizeAdText(text);
+  // Then truncate to fit character limit
+  return truncateToLimit(sanitized, CHARACTER_LIMITS.RSA.HEADLINE);
 }
 
 /**
- * Ensure description fits 90 character limit
+ * Ensure description fits 90 character limit and complies with Google Ads policies
  */
 export function formatDescription(text: string): string {
-  return truncateToLimit(text.trim(), CHARACTER_LIMITS.RSA.DESCRIPTION);
+  // First sanitize to remove prohibited characters
+  const sanitized = sanitizeAdText(text);
+  // Then truncate to fit character limit
+  return truncateToLimit(sanitized, CHARACTER_LIMITS.RSA.DESCRIPTION);
 }
 
 /**
