@@ -15,12 +15,25 @@ Preferred communication style: Simple, everyday language.
 - **Campaign Builder (CampaignBuilder3)**: Step 1: URL Analysis with AI-powered intent detection, vertical classification, CTA identification, and seed keyword generation. Analysis results displayed with detailed logs before user clicks Next button. Analysis automatically saved to database for future reference. Steps 2-5 support SKAG, STAG, Intent-Based, and Alpha-Beta campaign structures with automated naming, keyword generation (410-710 keywords), ad generation, and geo-targeting. Geo-targeting is simplified to country-level selection.
 - **Saved Campaigns (CampaignHistoryView)**: Displays all saved campaigns with grid/list view toggle, search, and filtering by structure type, status, and step. Features Google Ads OAuth integration for direct campaign push. Users can connect their Google Ads account, select an account from dropdown, and push campaigns directly to Google Ads (campaigns are created as PAUSED for safety). Backend endpoints: `/api/google-ads/status`, `/api/google-ads/accounts`, `/api/google-ads/auth-url`, `/api/google-ads/push-campaign`. Database table: google_ads_tokens for OAuth token storage.
 - **Web Template Editor**: Sections-based visual editor for website customization (SectionsEditor.tsx). Features 13 built-in section types (Hero, Features, Services, Testimonials, Team, FAQ, Pricing, Gallery, Blog, Partners, CTA, Contact, About). Users add/remove sections with visual buttons, edit content through modal dialogs, and customize text, headings, colors, and background. No drag-and-drop - clean, intuitive interface. Includes save and HTML export functionality.
-- **Data Export**: Generates Google Ads Editor compatible CSVs with UTF-8 BOM encoding and CRLF line endings. Full support for:
-  - **RSA & DKI Ads**: Responsive Search Ads with headlines, descriptions, paths, and Final URL
-  - **Call Only Ads**: PhoneNumber and VerificationURL fields for call-only campaigns
-  - **Geo Targeting**: Individual rows for countries, states, cities, and zip codes (each location on its own row)
-  - **Assets**: Sitelinks (text, descriptions, URLs), Callouts, Structured Snippets (header/values), Price Extensions (type, qualifier, item header, price, URL), and Image Assets (name, URL)
-  - Validation, truncation, and proper field limits per Google Ads policies
+- **Data Export**: Master 183-column Google Ads Editor CSV format (googleAdsEditorCSVExporterV5.ts). Full compatibility for immediate import. Includes:
+  - **Campaign Level (18 cols)**: Campaign, Daily Budget, Type, Bid Strategy, Networks, EU Political Ads, Device Bid Adjustments, Dates, Status, Labels
+  - **Ad Group Level (5 cols)**: Ad Group, Max CPC, Status, Labels, Default Max CPC
+  - **Keywords (12 cols)**: Keyword, Criterion Type, Status, Max CPC Bid, Labels, Bid Modifier, Negative Keywords
+  - **Audience Targeting (6 cols)**: Audience ID, Name, Type, Status, Bid Modifier, Exclusion Status
+  - **Location Targeting (12 cols)**: Location, Type, Status, Bid Adjustment, City, State/Region, Postal Code, Country Code, Lat/Long, Radius
+  - **RSA Ads (23 cols)**: Headlines 1-15, Descriptions 1-4, Path 1-2, Final URL, Mobile URL, Tracking
+  - **Call Extensions (5 cols)**: PhoneNumber, VerificationURL, Status, Scheduling, Call Only Ads
+  - **Sitelink Extensions (28 cols)**: 4 Sitelinks with Text, Description 1-2, Final URL, Status, Start/End Date
+  - **Callout Extensions (16 cols)**: 4 Callouts with Text, Status, Start/End Date
+  - **Structured Snippets (6 cols)**: Header, Values, Status for multiple snippets
+  - **Price Extensions (19 cols)**: Type, Qualifier, up to 4 Items with Header, Price, Final URL
+  - **Promotion Extensions (14 cols)**: Target, Discount Modifier, Percent/Amount Off, Final URL, Status, Dates
+  - **App Extensions (5 cols)**: App ID, Store, Link Text, Final URL, Status
+  - **Message Extensions (6 cols)**: Text, Final URL, Business Name, Country Code, Phone Number, Status
+  - **Lead Form Extensions (6 cols)**: ID, Name, Headline, Description, Call-to-action, Status
+  - **Image/Video Assets (7 cols)**: Image/Video Asset Name, URL, Status
+  - **Business Profile (5 cols)**: Location, Name, Address, Phone, Website
+  - Master CSV template stored at: src/utils/masterCSVTemplate.csv
 
 ## Backend
 - **Primary API**: FastAPI (Python) for ad generation and CSV export, using Pydantic for validation.

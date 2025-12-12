@@ -2112,76 +2112,154 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
   };
 
 
-  // Step 6: CSV Generation & Validation
+  // Step 6: CSV Generation & Validation - Using Master 183-Column Format
   const handleGenerateCSV = async () => {
     setLoading(true);
     try {
-      const adGroups = campaignData.adGroups || [];
       const campaignNameValue = campaignData.campaignName || 'Campaign 1';
       
-      // Build location list
-      const locationList: string[] = [];
-      if (campaignData.locations.countries && campaignData.locations.countries.length > 0) {
-        locationList.push(...campaignData.locations.countries);
-      }
-      if (campaignData.locations.states && campaignData.locations.states.length > 0) {
-        locationList.push(...campaignData.locations.states);
-      }
-      if (campaignData.locations.cities && campaignData.locations.cities.length > 0) {
-        locationList.push(...campaignData.locations.cities);
-      }
-      if (campaignData.locations.zipCodes && campaignData.locations.zipCodes.length > 0) {
-        locationList.push(...campaignData.locations.zipCodes);
-      }
-      if (campaignData.targetCountry && locationList.length === 0) {
-        locationList.push(campaignData.targetCountry);
-      }
+      // Import the new V5 Master CSV exporter with all 183 columns
+      const { generateMasterCSV, convertToV5Format } = await import('../utils/googleAdsEditorCSVExporterV5');
       
       // Collect all extensions from ads
-      const allExtensions: any[] = [];
+      const sitelinks: any[] = [];
+      const callouts: any[] = [];
+      const snippets: any[] = [];
+      
       (campaignData.ads || []).forEach((ad: any) => {
         if (ad.extensions && Array.isArray(ad.extensions)) {
-          allExtensions.push(...ad.extensions);
+          ad.extensions.forEach((ext: any) => {
+            if (ext.type === 'sitelink') {
+              sitelinks.push({
+                text: ext.text || ext.linkText || '',
+                description1: ext.description1 || ext.descriptionLine1 || '',
+                description2: ext.description2 || ext.descriptionLine2 || '',
+                finalUrl: ext.finalUrl || ext.url || campaignData.url || '',
+                status: 'Enabled'
+              });
+            } else if (ext.type === 'callout') {
+              callouts.push({
+                text: ext.text || '',
+                status: 'Enabled'
+              });
+            } else if (ext.type === 'snippet') {
+              snippets.push({
+                header: ext.header || '',
+                values: ext.values || '',
+                status: 'Enabled'
+              });
+            }
+          });
         }
       });
       
-      // Convert to Google Ads Editor format using new utility
-      const editorData = convertBuilderDataToEditorFormat(
-        campaignNameValue,
-        adGroups.map((group: any) => ({
-          name: group.name,
-          keywords: group.keywords || [],
-          negativeKeywords: group.negativeKeywords || []
+      // Build the V5 campaign data structure with all 183 columns
+      const v5CampaignData: any = {
+        campaignName: campaignNameValue,
+        dailyBudget: 100,
+        campaignType: 'Search',
+        bidStrategy: 'Maximize Conversions',
+        networks: 'Google search',
+        startDate: campaignData.startDate || '',
+        endDate: campaignData.endDate || '',
+        status: 'Enabled',
+        url: campaignData.url || '',
+        adGroups: (campaignData.adGroups || []).map((group: any) => ({
+          name: group.name || 'Ad Group',
+          maxCpc: 2.00,
+          status: 'Enabled',
+          keywords: (group.keywords || []).map((kw: any) => {
+            const kwText = typeof kw === 'string' ? kw : (kw.text || kw.keyword || '');
+            let matchType: 'Broad' | 'Phrase' | 'Exact' = 'Broad';
+            if (typeof kw === 'object' && kw.matchType) {
+              matchType = kw.matchType;
+            } else if (typeof kw === 'string') {
+              if (kw.startsWith('[') && kw.endsWith(']')) matchType = 'Exact';
+              else if (kw.startsWith('"') && kw.endsWith('"')) matchType = 'Phrase';
+            }
+            return {
+              text: kwText.replace(/^\[|\]$|^"|"$/g, ''),
+              matchType,
+              status: 'Enabled',
+              finalUrl: campaignData.url || ''
+            };
+          }),
+          ads: []
         })),
-        campaignData.ads || [],
-        locationList.length > 0 ? locationList : undefined,
-        allExtensions.length > 0 ? allExtensions : undefined,
-        {
-          dailyBudget: '100',
-          bidStrategyType: 'Maximize Conversions',
-          maxCpc: '2.00',
-          baseUrl: campaignData.url || 'https://www.example.com',
-          negativeKeywords: campaignData.negativeKeywords || [],
-          startDate: campaignData.startDate,
-          endDate: campaignData.endDate
+        negativeKeywords: campaignData.negativeKeywords || [],
+        locations: {
+          countries: campaignData.locations?.countries || [],
+          states: campaignData.locations?.states || [],
+          cities: campaignData.locations?.cities || [],
+          zipCodes: campaignData.locations?.zipCodes || [],
+          countryCode: campaignData.targetCountry === 'United States' ? 'US' : 
+                       campaignData.targetCountry === 'Canada' ? 'CA' :
+                       campaignData.targetCountry === 'United Kingdom' ? 'GB' :
+                       campaignData.targetCountry === 'Australia' ? 'AU' : 'US'
+        },
+        sitelinks: sitelinks.slice(0, 4),
+        callouts: callouts.slice(0, 4),
+        snippets: snippets.slice(0, 2)
+      };
+      
+      // Add ads to their respective ad groups
+      (campaignData.ads || []).forEach((ad: any) => {
+        const adGroupName = ad.adGroup || 'Ad Group 1';
+        let targetGroup = v5CampaignData.adGroups.find((ag: any) => ag.name === adGroupName);
+        
+        if (!targetGroup && v5CampaignData.adGroups.length > 0) {
+          targetGroup = v5CampaignData.adGroups[0];
         }
-      );
+        
+        if (targetGroup) {
+          targetGroup.ads.push({
+            type: ad.type === 'call_only' ? 'CallOnly' : 
+                  ad.type === 'dki' ? 'DKI' : 'RSA',
+            headlines: [
+              ad.headline1 || '',
+              ad.headline2 || '',
+              ad.headline3 || '',
+              ad.headline4 || '',
+              ad.headline5 || ''
+            ].filter((h: string) => h),
+            descriptions: [
+              ad.description1 || '',
+              ad.description2 || ''
+            ].filter((d: string) => d),
+            path1: ad.path1 || '',
+            path2: ad.path2 || '',
+            finalUrl: ad.finalUrl || campaignData.url || '',
+            phoneNumber: ad.phoneNumber || '',
+            verificationUrl: ad.verificationUrl || '',
+            businessName: ad.businessName || ''
+          });
+        }
+      });
       
-      // Generate CSV content using the utility
-      const { generateGoogleAdsEditorCSV } = await import('../utils/googleAdsEditorCSV');
-      const csvContent = generateGoogleAdsEditorCSV(editorData);
+      // If no specific locations, add the target country
+      if (!v5CampaignData.locations?.countries?.length && 
+          !v5CampaignData.locations?.states?.length && 
+          !v5CampaignData.locations?.cities?.length && 
+          !v5CampaignData.locations?.zipCodes?.length) {
+        v5CampaignData.locations = {
+          ...v5CampaignData.locations,
+          countries: [campaignData.targetCountry || 'United States']
+        };
+      }
       
-      // Store CSV data in state with BOM for Excel compatibility
-      const csvWithBOM = '\uFEFF' + csvContent;
+      // Generate the master CSV with all 183 columns
+      const csvContent = generateMasterCSV(v5CampaignData);
+      
+      // Store CSV data in state (already includes BOM)
       setCampaignData(prev => ({
         ...prev,
-        csvData: csvWithBOM,
+        csvData: csvContent,
         csvErrors: [],
       }));
       
-      notifications.success('CSV generated successfully!', {
+      notifications.success('Master CSV generated with 183 columns!', {
         title: 'CSV Ready',
-        description: `Your campaign "${campaignNameValue}" CSV is ready. Click "Download CSV" to export.`
+        description: `Your campaign "${campaignNameValue}" is ready for Google Ads Editor import.`
       });
     } catch (error) {
       console.error('CSV generation error:', error);
