@@ -217,17 +217,17 @@ function buildRSAAdRow(data: RSAAdRow): Record<string, string> {
   row['Campaign'] = data.campaignName;
   row['Ad Group'] = data.adGroupName;
   row['Ad Type'] = 'Responsive search ad';
-  // Fix DKI format: convert [keyword] to {KeyWord:keyword} if needed
+  // Fix DKI format: remove square brackets entirely (they shouldn't be in ads)
+  // Square brackets are for keyword match types, NOT for ad copy
   const fixDKIFormat = (text: string): string => {
     if (!text) return '';
-    // Replace [keyword] format with {KeyWord:keyword} format for DKI
-    return text.replace(/\[([^\]]+)\]/g, (match, keyword) => {
-      // Capitalize first letter of each word for DKI default text
-      const formattedKeyword = keyword.split(' ').map((w: string) => 
-        w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
-      ).join(' ');
-      return `{KeyWord:${formattedKeyword}}`;
-    });
+    // CRITICAL: Remove all square brackets from ad text
+    // Brackets are only for keyword match types, they should NEVER appear in ad copy
+    return text
+      .replace(/\[([^\]]*)\]/g, '$1')  // Remove complete [text] and keep text inside
+      .replace(/\[([^\]]*)/g, '$1')     // Remove orphan opening brackets [text
+      .replace(/([^\[]*)\]/g, '$1')     // Remove orphan closing brackets text]
+      .trim();
   };
   // Add Final URL - required for RSA ads, ensure https:// protocol
   row['Final URL'] = ensureHttpsProtocol(data.finalUrl || '');

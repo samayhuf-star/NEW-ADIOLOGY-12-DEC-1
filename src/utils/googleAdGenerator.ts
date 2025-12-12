@@ -230,10 +230,12 @@ function generateServiceAdCopy(
   industry: string,
   filters: AdGenerationInput['filters']
 ): AdCopyTemplates {
+  // CRITICAL: Clean keywords from match type brackets before using in ad copy
+  const cleanedKeywords = cleanKeywords(input.keywords);
   // Use multiple keywords for variety
-  const keyword1 = input.keywords[0] || mainKeyword;
-  const keyword2 = input.keywords[1] || keyword1;
-  const keyword3 = input.keywords[2] || keyword1;
+  const keyword1 = cleanedKeywords[0] || mainKeyword;
+  const keyword2 = cleanedKeywords[1] || keyword1;
+  const keyword3 = cleanedKeywords[2] || keyword1;
   
   // Format keywords for headlines (capitalize, truncate)
   const formatKeyword = (kw: string, maxLen: number = 20) => {
@@ -356,8 +358,10 @@ function generateEmergencyAdCopy(
   industry: string,
   filters: AdGenerationInput['filters']
 ): AdCopyTemplates {
-  const keyword1 = input.keywords[0] || mainKeyword;
-  const keyword2 = input.keywords[1] || keyword1;
+  // CRITICAL: Clean keywords from match type brackets before using in ad copy
+  const cleanedKeywords = cleanKeywords(input.keywords);
+  const keyword1 = cleanedKeywords[0] || mainKeyword;
+  const keyword2 = cleanedKeywords[1] || keyword1;
   const formatKeyword = (kw: string, maxLen: number = 20) => {
     const formatted = kw.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     return formatted.length > maxLen ? formatted.substring(0, maxLen) : formatted;

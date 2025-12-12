@@ -178,6 +178,21 @@ export function ensureTwoDescriptions(ad: Ad): { ad: Ad; fixed: boolean; fixes: 
 }
 
 /**
+ * Remove square brackets from ad text - they should NOT appear in Google Ads
+ * Square brackets are only for keyword match types, not ad copy
+ */
+function removeSquareBrackets(text: string): string {
+  if (!text) return '';
+  // Remove square brackets and their content that looks like match type formatting
+  // Also remove orphan brackets like "[keyword" or "keyword]"
+  return text
+    .replace(/\[([^\]]*)\]/g, '$1')  // Remove complete [text] and keep text inside
+    .replace(/\[([^\]]*)/g, '$1')     // Remove orphan opening brackets [text
+    .replace(/([^\[]*)\]/g, '$1')     // Remove orphan closing brackets text]
+    .trim();
+}
+
+/**
  * Validates and fixes an ad to meet Google Ads requirements
  * Returns the fixed ad and a report of what was changed
  */
@@ -188,6 +203,30 @@ export function validateAndFixAd(ad: Ad, adIndex: number = 0): { ad: Ad; report:
     fixes: [],
     warnings: []
   };
+
+  // CRITICAL: Remove square brackets from all ad text fields
+  // Square brackets are for keyword match types, not ad copy
+  for (let i = 1; i <= 15; i++) {
+    const headline = ad[`headline${i}`];
+    if (headline && (headline.includes('[') || headline.includes(']'))) {
+      ad[`headline${i}`] = removeSquareBrackets(headline);
+      report.fixes.push(`Removed brackets from headline ${i}`);
+    }
+  }
+  for (let i = 1; i <= 4; i++) {
+    const description = ad[`description${i}`];
+    if (description && (description.includes('[') || description.includes(']'))) {
+      ad[`description${i}`] = removeSquareBrackets(description);
+      report.fixes.push(`Removed brackets from description ${i}`);
+    }
+  }
+  // Also clean headlines/descriptions arrays
+  if (ad.headlines && Array.isArray(ad.headlines)) {
+    ad.headlines = ad.headlines.map((h: string) => removeSquareBrackets(h));
+  }
+  if (ad.descriptions && Array.isArray(ad.descriptions)) {
+    ad.descriptions = ad.descriptions.map((d: string) => removeSquareBrackets(d));
+  }
 
   // Validate headline lengths
   for (let i = 1; i <= 15; i++) {
