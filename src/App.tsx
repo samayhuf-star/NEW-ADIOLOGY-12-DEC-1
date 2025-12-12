@@ -28,9 +28,6 @@ import { KeywordSavedLists } from './components/KeywordSavedLists';
 import { BillingPanel } from './components/BillingPanel';
 import { SupportPanel } from './components/SupportPanel';
 import { HelpSupport } from './components/HelpSupport';
-import { SuperAdminLogin } from './components/SuperAdminLogin';
-import { SuperAdminLanding } from './components/SuperAdminLanding';
-import { SuperAdminPanel } from './components/SuperAdminPanel';
 import { CSVCompare } from './components/CSVCompare';
 import { Auth } from './components/Auth';
 import { EmailVerification } from './components/EmailVerification';
@@ -50,13 +47,13 @@ import { CookiePolicy } from './components/CookiePolicy';
 import { GDPRCompliance } from './components/GDPRCompliance';
 import { RefundPolicy } from './components/RefundPolicy';
 import { supabase } from './utils/supabase/client';
-import { getCurrentUserProfile, isAuthenticated, signOut, isSuperAdmin } from './utils/auth';
+import { getCurrentUserProfile, isAuthenticated, signOut } from './utils/auth';
 import { getUserPreferences, applyUserPreferences } from './utils/userPreferences';
 import CreativeMinimalistHomepage from './components/CreativeMinimalistHomepage';
 import { notifications as notificationService } from './utils/notifications';
 import { WebTemplates } from './components/WebTemplates';
 
-type AppView = 'homepage' | 'auth' | 'user' | 'admin-login' | 'admin-landing' | 'admin-panel' | 'verify-email' | 'reset-password' | 'payment' | 'payment-success' | 'privacy-policy' | 'terms-of-service' | 'cookie-policy' | 'gdpr-compliance' | 'refund-policy';
+type AppView = 'homepage' | 'auth' | 'user' | 'verify-email' | 'reset-password' | 'payment' | 'payment-success' | 'privacy-policy' | 'terms-of-service' | 'cookie-policy' | 'gdpr-compliance' | 'refund-policy';
 
 const App = () => {
   const { theme } = useTheme();
@@ -70,7 +67,6 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [sidebarHovered, setSidebarHovered] = useState(false);
-  const [adminIntentionallyInUserView, setAdminIntentionallyInUserView] = useState(false);
   const [previousView, setPreviousView] = useState<AppView>('homepage');
   
   // Load and apply user preferences on mount
@@ -119,13 +115,6 @@ const App = () => {
     }
   }, [sidebarOpen, sidebarHovered]);
 
-  // Route admin users to admin landing page (only if they didn't intentionally choose user view)
-  useEffect(() => {
-    if (user && user.role === 'admin' && appView === 'user' && !adminIntentionallyInUserView) {
-      console.log('🔐 Admin detected, routing to admin landing page');
-      setAppView('admin-landing');
-    }
-  }, [user?.role, appView, adminIntentionallyInUserView]);
 
   // Valid tab IDs - used for route validation
   const validTabIds = new Set([
@@ -611,23 +600,6 @@ const App = () => {
       });
     };
 
-    const handleSuperAdminRoute = () => {
-      if (!user) {
-        setView('admin-login');
-        return;
-      }
-      (async () => {
-        try {
-          const isAdmin = await isSuperAdmin();
-          if (!isActive) return;
-          setView(isAdmin ? 'admin-landing' : 'admin-login');
-        } catch (error) {
-          if (!isActive) return;
-          setView('admin-login');
-        }
-      })();
-    };
-
     const handleRoute = () => {
       if (bypassKey === 'adiology2025dev' || bypassKey === 'samay2025') {
         if (!user || user.id !== 'bypass-user-id') {
@@ -670,29 +642,6 @@ const App = () => {
           setAuthMode('login'); // Changed from 'signup' to 'login' - signups disabled
           setView('auth');
         }
-        return;
-      }
-
-      if (path.startsWith('/superadmin/db-admin')) {
-        if (!user) {
-          setView('admin-login');
-          return;
-        }
-        (async () => {
-          try {
-            const isAdmin = await isSuperAdmin();
-            if (!isActive) return;
-            setView(isAdmin ? 'admin-panel' : 'admin-login');
-          } catch (error) {
-            if (!isActive) return;
-            setView('admin-login');
-          }
-        })();
-        return;
-      }
-
-      if (path.startsWith('/superadmin')) {
-        handleSuperAdminRoute();
         return;
       }
 
@@ -747,30 +696,11 @@ const App = () => {
         return;
       }
       
-      if (path === '/superadmin' || path.startsWith('/superadmin/')) {
-        if (user) {
-          const isAdmin = await isSuperAdmin();
-          if (isAdmin) {
-              setAppView('admin-landing');
-          } else {
-            setAppView('admin-login');
-            }
-        } else {
-        setAppView('admin-login');
-        }
+      if (user) {
+        setAppView('user');
       } else {
-        if (user) {
-          const isAdmin = await isSuperAdmin();
-          if (isAdmin) {
-              window.history.pushState({}, '', '/superadmin');
-              setAppView('admin-landing');
-            } else {
-              setAppView('user');
-          }
-        } else {
-          // Show homepage for all paths when not logged in
-          setAppView('homepage');
-        }
+        // Show homepage for all paths when not logged in
+        setAppView('homepage');
       }
     };
 
@@ -1112,33 +1042,6 @@ const App = () => {
         initialMode={authMode}
         onLoginSuccess={async () => {
           try {
-            // Check if this is a test admin login by checking sessionStorage
-            const isTestAdmin = sessionStorage.getItem('test_admin_mode') === 'true';
-            const testAdminEmail = sessionStorage.getItem('test_admin_email');
-            
-            if (isTestAdmin && testAdminEmail) {
-              // Handle test admin login - create a minimal user object with admin role
-              const adminUser = { 
-                id: 'test-admin-' + Date.now(), 
-                email: testAdminEmail,
-                full_name: 'Super Admin',
-                role: 'admin' as const,
-                subscription_plan: 'enterprise',
-                subscription_status: 'active' as const,
-              };
-              
-              // Set user first
-              setUser(adminUser);
-              
-              // Then navigate to admin landing after user is set
-              // Use setTimeout to ensure state update happens first
-              setTimeout(() => {
-                setAppView('admin-landing');
-              }, 50);
-              
-              return;
-            }
-            
             // Get auth user immediately and set minimal user object FIRST
             const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
             
@@ -1192,67 +1095,6 @@ const App = () => {
     );
   }
 
-  if (appView === 'admin-login') {
-    return (
-      <SuperAdminLogin
-        onLoginSuccess={() => setAppView('admin-landing')}
-      />
-    );
-  }
-
-  if (appView === 'admin-landing') {
-    return (
-      <SuperAdminLanding
-        onSelectUserView={() => {
-          setAdminIntentionallyInUserView(true);
-          setAppView('user');
-        }}
-        onSelectAdminPanel={() => {
-          setAdminIntentionallyInUserView(false);
-          setAppView('admin-panel');
-        }}
-        onLogout={async () => {
-          // Bug_62, Bug_76: Ensure proper logout
-          try {
-            // Clear test admin mode if it exists
-            sessionStorage.removeItem('test_admin_mode');
-            sessionStorage.removeItem('test_admin_email');
-            
-            // Only sign out from Supabase if actually logged in (not test admin)
-            const testAdminMode = sessionStorage.getItem('test_admin_mode');
-            if (!testAdminMode) {
-              await signOut();
-            }
-            
-            setUser(null);
-            localStorage.removeItem('supabase.auth.token');
-            sessionStorage.clear();
-            setAdminIntentionallyInUserView(false);
-            window.location.href = '/';
-          } catch (error) {
-            console.error('Logout error:', error);
-            setUser(null);
-            localStorage.removeItem('supabase.auth.token');
-            sessionStorage.clear();
-            setAdminIntentionallyInUserView(false);
-            window.location.href = '/';
-          }
-        }}
-      />
-    );
-  }
-
-  if (appView === 'admin-panel') {
-    return (
-      <SuperAdminPanel
-        onBackToLanding={() => {
-          setAdminIntentionallyInUserView(false);
-          setAppView('admin-landing');
-        }}
-      />
-    );
-  }
-
   // Protect user view - require authentication (unless bypass)
   // Wait for user to load from auth listener - it should happen quickly after login
   if (!user && appView === 'user' && !loading) {
@@ -1279,7 +1121,7 @@ const App = () => {
   }
 
   // Fallback: If no user and not loading, ensure user view is shown
-  if (!user && !loading && appView === 'user' && !window.location.pathname.startsWith('/superadmin')) {
+  if (!user && !loading && appView === 'user') {
     // Only redirect to auth if we're on root path
     if (window.location.pathname === '/' || window.location.pathname === '') {
       setAppView('auth');
@@ -1503,27 +1345,6 @@ const App = () => {
 
         {/* Bottom Section - Billing & Logout */}
         <div className="mt-auto p-4 border-t border-slate-200/60 space-y-2">
-          {user?.role === 'admin' && (
-            <button
-              onClick={() => setActiveTabSafe('superadmin')}
-              className={`w-full flex items-center gap-2 py-2.5 rounded-xl transition-all duration-200 group cursor-pointer ${
-                !(sidebarOpen || (userPrefs.sidebarAutoClose && sidebarHovered)) 
-                  ? 'justify-center px-2' 
-                  : 'justify-start px-3'
-              } ${
-                activeTab === 'superadmin'
-                  ? `bg-purple-600 text-white shadow-lg`
-                  : `text-slate-700 hover:bg-purple-50`
-              }`}
-            >
-              <ArrowRight className={`w-5 h-5 shrink-0 ${activeTab === 'superadmin' ? 'text-white' : 'text-purple-600'}`} />
-              {(sidebarOpen || (userPrefs.sidebarAutoClose && sidebarHovered)) && (
-                <span className="font-medium whitespace-nowrap overflow-hidden text-ellipsis flex-1 text-left" style={{ fontSize: 'clamp(0.8125rem, 2.5vw, 0.9375rem)' }}>
-                  Switch to Admin
-                </span>
-              )}
-            </button>
-          )}
           <button
             onClick={() => setActiveTabSafe('billing')}
             className={`w-full flex items-center gap-2 py-2.5 rounded-xl transition-all duration-200 group cursor-pointer ${
@@ -1643,19 +1464,6 @@ const App = () => {
           </nav>
           
           <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200/60 bg-white/95 space-y-2">
-            {user?.role === 'admin' && (
-              <button
-                onClick={() => setActiveTabSafe('superadmin')}
-                className={`w-full flex items-center gap-2 py-2.5 px-3 rounded-xl transition-all ${
-                  activeTab === 'superadmin'
-                    ? 'bg-purple-600 text-white shadow-lg'
-                    : 'text-slate-700 hover:bg-purple-50'
-                }`}
-              >
-                <ArrowRight className={`w-5 h-5 ${activeTab === 'superadmin' ? 'text-white' : 'text-purple-600'}`} />
-                <span className="font-medium">Switch to Admin</span>
-              </button>
-            )}
             <button
               onClick={() => setActiveTabSafe('billing')}
               className={`w-full flex items-center gap-2 py-2.5 px-3 rounded-xl transition-all ${
