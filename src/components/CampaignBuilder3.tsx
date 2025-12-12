@@ -572,7 +572,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
       // Detect intent, CTA, and vertical (with null checks)
       const intentResult = mapGoalToIntent(
         (landingData?.title || landingData?.h1 || '').trim(),
-        landingData || {} as any,
+        { ...landingData, url: formattedUrl, tokens: landingData.page_text_tokens || [] } as any,
         landingData?.phones?.[0] || ''
       );
 
@@ -1779,8 +1779,8 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
         url: campaignData.url || '',
         keywords: campaignData.seedKeywords || [],
         vertical: campaignData.vertical || 'General',
-        intent: campaignData.intent?.intentLabel,
-        cta: campaignData.cta,
+        intent: campaignData.intent?.intentLabel || undefined,
+        cta: campaignData.cta || undefined,
         businessName: campaignData.campaignName || 'Business',
         ads: campaignData.ads,
       }, extensionType);
