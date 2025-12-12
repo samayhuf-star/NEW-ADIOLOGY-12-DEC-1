@@ -59,6 +59,35 @@ export interface ValidationReport {
 }
 
 /**
+ * Strip quotation marks from ad text
+ * Google Ads does not allow quotes in ad copy, especially around DKI syntax
+ * Wrong: "{KeyWord:Adiology Service}"
+ * Right: {KeyWord:Adiology Service}
+ */
+export function stripQuotesFromAdText(text: string): string {
+  if (!text) return '';
+  
+  // Remove double quotes from start and end
+  let cleaned = text.replace(/^["]+|["]+$/g, '');
+  
+  // Remove single quotes from start and end
+  cleaned = cleaned.replace(/^[']+|[']+$/g, '');
+  
+  // Remove quotes around DKI syntax specifically: "{KeyWord:...}" -> {KeyWord:...}
+  cleaned = cleaned.replace(/"(\{KeyWord:[^}]+\})"/g, '$1');
+  cleaned = cleaned.replace(/'(\{KeyWord:[^}]+\})'/g, '$1');
+  
+  // Remove any stray quotes that shouldn't be in ad text
+  // But be careful to preserve apostrophes in words like "don't" or "we're"
+  // Only remove quotes at word boundaries or that are clearly formatting
+  cleaned = cleaned.replace(/^"+|"+$/g, ''); // Quotes at start/end
+  cleaned = cleaned.replace(/\s"+|"+\s/g, ' '); // Quotes with spaces
+  cleaned = cleaned.replace(/^'+|'+$/g, ''); // Single quotes at start/end
+  
+  return cleaned.trim();
+}
+
+/**
  * Default headlines for RSA ads (Google Ads requires minimum 3)
  */
 const DEFAULT_HEADLINES = [
@@ -204,28 +233,45 @@ export function validateAndFixAd(ad: Ad, adIndex: number = 0): { ad: Ad; report:
     warnings: []
   };
 
-  // CRITICAL: Remove square brackets from all ad text fields
+  // CRITICAL: Remove square brackets and quotation marks from all ad text fields
   // Square brackets are for keyword match types, not ad copy
+  // Quotation marks are not allowed in Google Ads, especially around DKI syntax
   for (let i = 1; i <= 15; i++) {
     const headline = ad[`headline${i}`];
-    if (headline && (headline.includes('[') || headline.includes(']'))) {
-      ad[`headline${i}`] = removeSquareBrackets(headline);
-      report.fixes.push(`Removed brackets from headline ${i}`);
+    if (headline) {
+      let cleaned = headline;
+      if (headline.includes('[') || headline.includes(']')) {
+        cleaned = removeSquareBrackets(cleaned);
+        report.fixes.push(`Removed brackets from headline ${i}`);
+      }
+      if (headline.includes('"') || headline.includes("'")) {
+        cleaned = stripQuotesFromAdText(cleaned);
+        report.fixes.push(`Removed quotes from headline ${i}`);
+      }
+      ad[`headline${i}`] = cleaned;
     }
   }
   for (let i = 1; i <= 4; i++) {
     const description = ad[`description${i}`];
-    if (description && (description.includes('[') || description.includes(']'))) {
-      ad[`description${i}`] = removeSquareBrackets(description);
-      report.fixes.push(`Removed brackets from description ${i}`);
+    if (description) {
+      let cleaned = description;
+      if (description.includes('[') || description.includes(']')) {
+        cleaned = removeSquareBrackets(cleaned);
+        report.fixes.push(`Removed brackets from description ${i}`);
+      }
+      if (description.includes('"') || description.includes("'")) {
+        cleaned = stripQuotesFromAdText(cleaned);
+        report.fixes.push(`Removed quotes from description ${i}`);
+      }
+      ad[`description${i}`] = cleaned;
     }
   }
   // Also clean headlines/descriptions arrays
   if (ad.headlines && Array.isArray(ad.headlines)) {
-    ad.headlines = ad.headlines.map((h: string) => removeSquareBrackets(h));
+    ad.headlines = ad.headlines.map((h: string) => stripQuotesFromAdText(removeSquareBrackets(h)));
   }
   if (ad.descriptions && Array.isArray(ad.descriptions)) {
-    ad.descriptions = ad.descriptions.map((d: string) => removeSquareBrackets(d));
+    ad.descriptions = ad.descriptions.map((d: string) => stripQuotesFromAdText(removeSquareBrackets(d)));
   }
 
   // Validate headline lengths

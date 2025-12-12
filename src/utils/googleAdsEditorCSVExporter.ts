@@ -203,6 +203,36 @@ function formatMatchTypeForCSV(matchType: string, isNegative: boolean = false): 
 }
 
 /**
+ * Clean ad text (remove quotes from headlines/descriptions)
+ * Google Ads does not allow quotation marks in ad copy, especially around DKI syntax
+ * Wrong: "{KeyWord:Adiology Service}"
+ * Right: {KeyWord:Adiology Service}
+ */
+function cleanAdText(text: string): string {
+  if (!text) return '';
+  
+  let cleaned = text;
+  
+  // Remove quotes around DKI syntax: "{KeyWord:...}" -> {KeyWord:...}
+  cleaned = cleaned.replace(/"(\{KeyWord:[^}]+\})"/g, '$1');
+  cleaned = cleaned.replace(/'(\{KeyWord:[^}]+\})'/g, '$1');
+  
+  // Remove double quotes from start and end
+  cleaned = cleaned.replace(/^["]+|["]+$/g, '');
+  
+  // Remove single quotes from start and end (but preserve apostrophes in words)
+  cleaned = cleaned.replace(/^[']+|[']+$/g, '');
+  
+  // Remove stray quotes with spaces
+  cleaned = cleaned.replace(/\s"+|"+\s/g, ' ');
+  
+  // Remove square brackets (match type formatting)
+  cleaned = cleaned.replace(/\[|\]/g, '');
+  
+  return cleaned.trim();
+}
+
+/**
  * Clean keyword text (remove brackets/quotes)
  * Also removes any leading/trailing whitespace and normalizes spaces
  * Removes ALL quotes (single, double, triple) and brackets from the keyword text
@@ -575,24 +605,24 @@ export function campaignStructureToCSVRows(structure: CampaignStructure): CSVRow
             let headline3 = '';
             
             if (ad.headlines && Array.isArray(ad.headlines) && ad.headlines.length > 0) {
-              headline1 = (ad.headlines[0] || 'Professional Service').trim().substring(0, 30);
-              headline2 = (ad.headlines[1] || 'Expert Solutions').trim().substring(0, 30);
-              headline3 = (ad.headlines[2] || 'Quality Guaranteed').trim().substring(0, 30);
+              headline1 = cleanAdText(ad.headlines[0] || 'Professional Service').substring(0, 30);
+              headline2 = cleanAdText(ad.headlines[1] || 'Expert Solutions').substring(0, 30);
+              headline3 = cleanAdText(ad.headlines[2] || 'Quality Guaranteed').substring(0, 30);
             } else {
-              headline1 = (ad.headline1 || 'Professional Service').trim().substring(0, 30);
-              headline2 = (ad.headline2 || 'Expert Solutions').trim().substring(0, 30);
-              headline3 = (ad.headline3 || 'Quality Guaranteed').trim().substring(0, 30);
+              headline1 = cleanAdText(ad.headline1 || 'Professional Service').substring(0, 30);
+              headline2 = cleanAdText(ad.headline2 || 'Expert Solutions').substring(0, 30);
+              headline3 = cleanAdText(ad.headline3 || 'Quality Guaranteed').substring(0, 30);
             }
             
             let desc1 = '';
             let desc2 = '';
             
             if (ad.descriptions && Array.isArray(ad.descriptions) && ad.descriptions.length > 0) {
-              desc1 = (ad.descriptions[0] || 'Get professional service you can trust.').trim().substring(0, 90);
-              desc2 = (ad.descriptions[1] || 'Contact us today for expert assistance.').trim().substring(0, 90);
+              desc1 = cleanAdText(ad.descriptions[0] || 'Get professional service you can trust.').substring(0, 90);
+              desc2 = cleanAdText(ad.descriptions[1] || 'Contact us today for expert assistance.').substring(0, 90);
             } else {
-              desc1 = (ad.description1 || 'Get professional service you can trust.').trim().substring(0, 90);
-              desc2 = (ad.description2 || 'Contact us today for expert assistance.').trim().substring(0, 90);
+              desc1 = cleanAdText(ad.description1 || 'Get professional service you can trust.').substring(0, 90);
+              desc2 = cleanAdText(ad.description2 || 'Contact us today for expert assistance.').substring(0, 90);
             }
             const finalUrl = (ad.final_url || '').trim();
             
@@ -638,7 +668,7 @@ export function campaignStructureToCSVRows(structure: CampaignStructure): CSVRow
             if (ad.headlines && Array.isArray(ad.headlines)) {
               ad.headlines.forEach((headline: string, idx: number) => {
                 if (idx < 15 && headline && headline.trim()) {
-                  adRow[`Headline ${idx + 1}`] = headline.trim().substring(0, 30);
+                  adRow[`Headline ${idx + 1}`] = cleanAdText(headline).substring(0, 30);
                 }
               });
             } else {
@@ -646,33 +676,33 @@ export function campaignStructureToCSVRows(structure: CampaignStructure): CSVRow
               adRow['Headline 1'] = headline1;
               adRow['Headline 2'] = headline2;
               adRow['Headline 3'] = headline3;
-              if (ad.headline4) adRow['Headline 4'] = (ad.headline4 || '').trim().substring(0, 30);
-              if (ad.headline5) adRow['Headline 5'] = (ad.headline5 || '').trim().substring(0, 30);
-              if (ad.headline6) adRow['Headline 6'] = (ad.headline6 || '').trim().substring(0, 30);
-              if (ad.headline7) adRow['Headline 7'] = (ad.headline7 || '').trim().substring(0, 30);
-              if (ad.headline8) adRow['Headline 8'] = (ad.headline8 || '').trim().substring(0, 30);
-              if (ad.headline9) adRow['Headline 9'] = (ad.headline9 || '').trim().substring(0, 30);
-              if (ad.headline10) adRow['Headline 10'] = (ad.headline10 || '').trim().substring(0, 30);
-              if (ad.headline11) adRow['Headline 11'] = (ad.headline11 || '').trim().substring(0, 30);
-              if (ad.headline12) adRow['Headline 12'] = (ad.headline12 || '').trim().substring(0, 30);
-              if (ad.headline13) adRow['Headline 13'] = (ad.headline13 || '').trim().substring(0, 30);
-              if (ad.headline14) adRow['Headline 14'] = (ad.headline14 || '').trim().substring(0, 30);
-              if (ad.headline15) adRow['Headline 15'] = (ad.headline15 || '').trim().substring(0, 30);
+              if (ad.headline4) adRow['Headline 4'] = cleanAdText(ad.headline4 || '').substring(0, 30);
+              if (ad.headline5) adRow['Headline 5'] = cleanAdText(ad.headline5 || '').substring(0, 30);
+              if (ad.headline6) adRow['Headline 6'] = cleanAdText(ad.headline6 || '').substring(0, 30);
+              if (ad.headline7) adRow['Headline 7'] = cleanAdText(ad.headline7 || '').substring(0, 30);
+              if (ad.headline8) adRow['Headline 8'] = cleanAdText(ad.headline8 || '').substring(0, 30);
+              if (ad.headline9) adRow['Headline 9'] = cleanAdText(ad.headline9 || '').substring(0, 30);
+              if (ad.headline10) adRow['Headline 10'] = cleanAdText(ad.headline10 || '').substring(0, 30);
+              if (ad.headline11) adRow['Headline 11'] = cleanAdText(ad.headline11 || '').substring(0, 30);
+              if (ad.headline12) adRow['Headline 12'] = cleanAdText(ad.headline12 || '').substring(0, 30);
+              if (ad.headline13) adRow['Headline 13'] = cleanAdText(ad.headline13 || '').substring(0, 30);
+              if (ad.headline14) adRow['Headline 14'] = cleanAdText(ad.headline14 || '').substring(0, 30);
+              if (ad.headline15) adRow['Headline 15'] = cleanAdText(ad.headline15 || '').substring(0, 30);
             }
             
             // Handle descriptions - support both array format and individual fields
             if (ad.descriptions && Array.isArray(ad.descriptions)) {
               ad.descriptions.forEach((description: string, idx: number) => {
                 if (idx < 4 && description && description.trim()) {
-                  adRow[`Description ${idx + 1}`] = description.trim().substring(0, 90);
+                  adRow[`Description ${idx + 1}`] = cleanAdText(description).substring(0, 90);
                 }
               });
             } else {
               // Use individual description fields
               adRow['Description 1'] = desc1;
               adRow['Description 2'] = desc2;
-              if (ad.description3) adRow['Description 3'] = (ad.description3 || '').trim().substring(0, 90);
-              if (ad.description4) adRow['Description 4'] = (ad.description4 || '').trim().substring(0, 90);
+              if (ad.description3) adRow['Description 3'] = cleanAdText(ad.description3 || '').substring(0, 90);
+              if (ad.description4) adRow['Description 4'] = cleanAdText(ad.description4 || '').substring(0, 90);
             }
             adRow['Business name'] = (ad as any).businessName || '';
             adRow['Path 1'] = (ad.path1 || '').trim().substring(0, 15);
