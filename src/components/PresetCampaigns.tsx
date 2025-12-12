@@ -168,205 +168,6 @@ export const PresetCampaigns: React.FC<PresetCampaignsProps> = ({ onLoadPreset }
     }
   };
 
-  return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shrink-0">
-            <Package className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              Home Service Campaign Presets
-            </h1>
-            <p className="text-sm text-slate-600 mt-1">
-              Ready-to-use Google Ads campaigns for 20 home service verticals
-            </p>
-          </div>
-        </div>
-
-        {/* Search and Filters */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none z-10" />
-            <input
-              type="text"
-              placeholder="Search by vertical name..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-10 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                aria-label="Clear search"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            )}
-          </div>
-
-          {/* Structure Filter Buttons */}
-          <div className="flex items-center gap-2 bg-slate-100 rounded-xl p-1">
-            <button
-              onClick={() => setStructureFilter('all')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                structureFilter === 'all'
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              All ({presetCampaigns.length})
-            </button>
-            <button
-              onClick={() => setStructureFilter('skag')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                structureFilter === 'skag'
-                  ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              SKAG ({presetCampaigns.filter(p => p.structure === 'skag').length})
-            </button>
-            <button
-              onClick={() => setStructureFilter('stag')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                structureFilter === 'stag'
-                  ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              STAG ({presetCampaigns.filter(p => p.structure === 'stag').length})
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Results Count */}
-      {searchQuery && (
-        <p className="text-sm text-slate-500 mb-4">
-          Found {filteredPresets.length} preset{filteredPresets.length !== 1 ? 's' : ''} matching "{searchQuery}"
-        </p>
-      )}
-
-      {/* Presets Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {filteredPresets.map((preset) => (
-          <Card
-            key={preset.id}
-            className={`group relative overflow-hidden transition-all hover:shadow-lg cursor-pointer border-2 ${
-              preset.structure === 'skag'
-                ? 'hover:border-purple-300'
-                : 'hover:border-blue-300'
-            }`}
-            onClick={() => handlePreview(preset)}
-          >
-            {/* Gradient accent bar */}
-            <div
-              className={`absolute top-0 left-0 right-0 h-1 ${
-                preset.structure === 'skag'
-                  ? 'bg-gradient-to-r from-purple-500 to-indigo-500'
-                  : 'bg-gradient-to-r from-blue-500 to-cyan-500'
-              }`}
-            />
-
-            <CardHeader className="pb-2 pt-4">
-              {/* Badges Row */}
-              <div className="flex items-center gap-2 mb-2 flex-wrap">
-                <Badge
-                  className={`text-xs font-semibold ${
-                    preset.structure === 'skag'
-                      ? 'bg-purple-100 text-purple-700 border-purple-200'
-                      : 'bg-blue-100 text-blue-700 border-blue-200'
-                  }`}
-                  variant="outline"
-                >
-                  {preset.structureLabel}
-                </Badge>
-                <Badge
-                  className={`text-xs ${getIntentColor(preset.targetIntent)}`}
-                  variant="outline"
-                >
-                  <span className="flex items-center gap-1">
-                    {getIntentIcon(preset.targetIntent)}
-                    {preset.targetIntent}
-                  </span>
-                </Badge>
-              </div>
-
-              <CardTitle className="text-lg font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">
-                {preset.name}
-              </CardTitle>
-              <CardDescription className="text-sm text-slate-500 line-clamp-2 mt-1">
-                {preset.description}
-              </CardDescription>
-            </CardHeader>
-
-            <CardContent className="pt-0 pb-4">
-              {/* Stats */}
-              <div className="flex items-center gap-3 text-sm text-slate-600 mb-4">
-                <span className="flex items-center gap-1">
-                  <TrendingUp className="w-4 h-4 text-slate-400" />
-                  {preset.keywords.length} keywords
-                </span>
-                <span className="text-slate-300">|</span>
-                <span className="font-medium text-green-600">
-                  {preset.estimatedCPC} CPC
-                </span>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  onClick={(e) => handlePreview(preset, e)}
-                >
-                  <Eye className="w-4 h-4 mr-1" />
-                  Preview
-                </Button>
-                <Button
-                  size="sm"
-                  className={`flex-1 ${
-                    preset.structure === 'skag'
-                      ? 'bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600'
-                      : 'bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600'
-                  } text-white`}
-                  onClick={(e) => handleExportCSV(preset, e)}
-                  disabled={isExporting === preset.id}
-                >
-                  {isExporting === preset.id ? (
-                    <span className="flex items-center gap-1">
-                      <span className="animate-spin">...</span>
-                    </span>
-                  ) : (
-                    <>
-                      <Download className="w-4 h-4 mr-1" />
-                      CSV
-                    </>
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Empty State */}
-      {filteredPresets.length === 0 && (
-        <div className="text-center py-12">
-          <Package className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-slate-600 mb-2">No presets found</h3>
-          <p className="text-slate-500">Try adjusting your search or filter criteria</p>
-        </div>
-      )}
-
-    </div>
-  );
-
   if (showDetailView && selectedPreset) {
     return (
       <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
@@ -537,7 +338,204 @@ export const PresetCampaigns: React.FC<PresetCampaignsProps> = ({ onLoadPreset }
     );
   }
 
-  return listView;
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shrink-0">
+            <Package className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              Home Service Campaign Presets
+            </h1>
+            <p className="text-sm text-slate-600 mt-1">
+              Ready-to-use Google Ads campaigns for 20 home service verticals
+            </p>
+          </div>
+        </div>
+
+        {/* Search and Filters */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none z-10" />
+            <input
+              type="text"
+              placeholder="Search by vertical name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-11 pr-10 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                aria-label="Clear search"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+
+          {/* Structure Filter Buttons */}
+          <div className="flex items-center gap-2 bg-slate-100 rounded-xl p-1">
+            <button
+              onClick={() => setStructureFilter('all')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                structureFilter === 'all'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              All ({presetCampaigns.length})
+            </button>
+            <button
+              onClick={() => setStructureFilter('skag')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                structureFilter === 'skag'
+                  ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              SKAG ({presetCampaigns.filter(p => p.structure === 'skag').length})
+            </button>
+            <button
+              onClick={() => setStructureFilter('stag')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                structureFilter === 'stag'
+                  ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              STAG ({presetCampaigns.filter(p => p.structure === 'stag').length})
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Results Count */}
+      {searchQuery && (
+        <p className="text-sm text-slate-500 mb-4">
+          Found {filteredPresets.length} preset{filteredPresets.length !== 1 ? 's' : ''} matching "{searchQuery}"
+        </p>
+      )}
+
+      {/* Presets Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {filteredPresets.map((preset) => (
+          <Card
+            key={preset.id}
+            className={`group relative overflow-hidden transition-all hover:shadow-lg cursor-pointer border-2 ${
+              preset.structure === 'skag'
+                ? 'hover:border-purple-300'
+                : 'hover:border-blue-300'
+            }`}
+            onClick={() => handlePreview(preset)}
+          >
+            {/* Gradient accent bar */}
+            <div
+              className={`absolute top-0 left-0 right-0 h-1 ${
+                preset.structure === 'skag'
+                  ? 'bg-gradient-to-r from-purple-500 to-indigo-500'
+                  : 'bg-gradient-to-r from-blue-500 to-cyan-500'
+              }`}
+            />
+
+            <CardHeader className="pb-2 pt-4">
+              {/* Badges Row */}
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                <Badge
+                  className={`text-xs font-semibold ${
+                    preset.structure === 'skag'
+                      ? 'bg-purple-100 text-purple-700 border-purple-200'
+                      : 'bg-blue-100 text-blue-700 border-blue-200'
+                  }`}
+                  variant="outline"
+                >
+                  {preset.structureLabel}
+                </Badge>
+                <Badge
+                  className={`text-xs ${getIntentColor(preset.targetIntent)}`}
+                  variant="outline"
+                >
+                  <span className="flex items-center gap-1">
+                    {getIntentIcon(preset.targetIntent)}
+                    {preset.targetIntent}
+                  </span>
+                </Badge>
+              </div>
+
+              <CardTitle className="text-lg font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">
+                {preset.name}
+              </CardTitle>
+              <CardDescription className="text-sm text-slate-500 line-clamp-2 mt-1">
+                {preset.description}
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="pt-0 pb-4">
+              {/* Stats */}
+              <div className="flex items-center gap-3 text-sm text-slate-600 mb-4">
+                <span className="flex items-center gap-1">
+                  <TrendingUp className="w-4 h-4 text-slate-400" />
+                  {preset.keywords.length} keywords
+                </span>
+                <span className="text-slate-300">|</span>
+                <span className="font-medium text-green-600">
+                  {preset.estimatedCPC} CPC
+                </span>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={(e: React.MouseEvent) => handlePreview(preset, e)}
+                >
+                  <Eye className="w-4 h-4 mr-1" />
+                  Preview
+                </Button>
+                <Button
+                  size="sm"
+                  className={`flex-1 ${
+                    preset.structure === 'skag'
+                      ? 'bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600'
+                      : 'bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600'
+                  } text-white`}
+                  onClick={(e: React.MouseEvent) => handleExportCSV(preset, e)}
+                  disabled={isExporting === preset.id}
+                >
+                  {isExporting === preset.id ? (
+                    <span className="flex items-center gap-1">
+                      <span className="animate-spin">...</span>
+                    </span>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4 mr-1" />
+                      CSV
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Empty State */}
+      {filteredPresets.length === 0 && (
+        <div className="text-center py-12">
+          <Package className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-slate-600 mb-2">No presets found</h3>
+          <p className="text-slate-500">Try adjusting your search or filter criteria</p>
+        </div>
+      )}
+
+    </div>
+  );
 };
 
 export default PresetCampaigns;
