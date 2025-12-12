@@ -60,7 +60,7 @@ localPort = 5001
 externalPort = 3003
 
 [deployment]
-deploymentTarget = "vm"
+deploymentTarget = "autoscale"
 run = ["bash", "-c", "npx tsx server/index.ts & vite preview --host 0.0.0.0 --port 5000"]
 build = ["bash", "-c", "npm install && npm run build"]
 
