@@ -60,9 +60,9 @@ localPort = 5001
 externalPort = 3003
 
 [deployment]
-deploymentTarget = "autoscale"
+deploymentTarget = "vm"
 run = ["bash", "-c", "npx tsx server/index.ts & npm run preview"]
-build = ["npm", "run", "build"]
+build = ["bash", "-c", "npm install && npx playwright install chromium && npm run build"]
 
 [userenv]
 

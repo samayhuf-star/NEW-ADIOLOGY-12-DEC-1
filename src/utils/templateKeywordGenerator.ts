@@ -174,6 +174,84 @@ const serviceTermsByIndustry: Record<string, { primary: string[]; specific: stri
       "security lock installation"
     ]
   },
+  marketing: {
+    primary: ["marketing", "advertising", "ads", "campaign"],
+    specific: [
+      "google ads management",
+      "ppc management",
+      "ad campaign builder",
+      "keyword research tool",
+      "campaign automation",
+      "digital marketing platform",
+      "ad optimization",
+      "marketing automation"
+    ]
+  },
+  software: {
+    primary: ["software", "platform", "tool", "app", "saas"],
+    specific: [
+      "campaign management software",
+      "marketing software",
+      "ads automation platform",
+      "ppc software",
+      "advertising platform",
+      "campaign builder tool",
+      "keyword planner software",
+      "ad management solution"
+    ]
+  },
+  legal: {
+    primary: ["lawyer", "attorney", "law firm", "legal"],
+    specific: [
+      "personal injury lawyer",
+      "divorce attorney",
+      "criminal defense lawyer",
+      "estate planning attorney",
+      "business lawyer",
+      "immigration attorney",
+      "family law attorney",
+      "bankruptcy lawyer"
+    ]
+  },
+  medical: {
+    primary: ["doctor", "physician", "clinic", "medical", "healthcare"],
+    specific: [
+      "family doctor",
+      "urgent care",
+      "primary care physician",
+      "medical clinic",
+      "health screening",
+      "wellness checkup",
+      "telehealth services",
+      "preventive care"
+    ]
+  },
+  dental: {
+    primary: ["dentist", "dental", "orthodontist"],
+    specific: [
+      "teeth cleaning",
+      "dental implants",
+      "teeth whitening",
+      "root canal treatment",
+      "dental crowns",
+      "invisalign",
+      "emergency dental care",
+      "cosmetic dentistry"
+    ]
+  },
+  realestate: {
+    primary: ["real estate", "realtor", "property", "homes"],
+    specific: [
+      "homes for sale",
+      "real estate agent",
+      "property listings",
+      "buy a house",
+      "sell my home",
+      "real estate investment",
+      "property management",
+      "mortgage services"
+    ]
+  },
   default: {
     primary: ["service", "services"],
     specific: []
@@ -247,32 +325,66 @@ function isValidKeyword(keyword: string, serviceTerms: string[]): boolean {
   return true;
 }
 
+const EMERGENCY_INDUSTRIES = new Set([
+  'plumbing', 'hvac', 'electrical', 'roofing', 'locksmith', 'pest', 'dental'
+]);
+
 function detectIndustry(input: string): string {
   const lower = input.toLowerCase();
   
+  // Check service industries FIRST with broad patterns
   if (lower.includes('plumb') || lower.includes('drain') || lower.includes('pipe')) {
     return 'plumbing';
   }
-  if (lower.includes('hvac') || lower.includes('heat') || lower.includes('cool') || lower.includes('air condition')) {
+  if (lower.includes('hvac') || lower.includes('heating') || lower.includes('cooling') || 
+      lower.includes('air condition') || lower.includes('furnace')) {
     return 'hvac';
   }
-  if (lower.includes('electric') || lower.includes('wir')) {
+  if (lower.includes('electrician') || lower.includes('electrical') || lower.includes('wiring')) {
     return 'electrical';
   }
   if (lower.includes('roof') || lower.includes('gutter') || lower.includes('shingle')) {
     return 'roofing';
   }
+  if (lower.includes('lawyer') || lower.includes('attorney') || lower.includes('law firm') || 
+      lower.includes('legal')) {
+    return 'legal';
+  }
+  if (lower.includes('doctor') || lower.includes('physician') || lower.includes('clinic') || 
+      lower.includes('hospital') || lower.includes('medical') || lower.includes('healthcare')) {
+    return 'medical';
+  }
+  if (lower.includes('dentist') || lower.includes('dental') || lower.includes('orthodont')) {
+    return 'dental';
+  }
+  if (lower.includes('real estate') || lower.includes('realtor') || lower.includes('homes for sale')) {
+    return 'realestate';
+  }
   if (lower.includes('landscap') || lower.includes('lawn') || lower.includes('garden') || lower.includes('tree')) {
     return 'landscaping';
   }
-  if (lower.includes('clean') || lower.includes('maid') || lower.includes('janitorial')) {
+  if (lower.includes('cleaning') || lower.includes('maid') || lower.includes('janitorial')) {
     return 'cleaning';
   }
-  if (lower.includes('pest') || lower.includes('extermin') || lower.includes('termite') || lower.includes('bug')) {
+  if (lower.includes('pest') || lower.includes('exterminator') || lower.includes('termite')) {
     return 'pest';
   }
-  if (lower.includes('lock') || lower.includes('key') || lower.includes('safe')) {
+  if (lower.includes('locksmith') || lower.includes('lock') || lower.includes('key')) {
     return 'locksmith';
+  }
+  
+  // Marketing/Advertising - checked AFTER service industries
+  if (lower.includes('google ads') || lower.includes('campaign builder') || lower.includes('ppc') || 
+      lower.includes('adwords') || lower.includes('ad campaign') || lower.includes('keyword planner') ||
+      lower.includes('advertising platform') || lower.includes('ads automation')) {
+    return 'marketing';
+  }
+  
+  // Software/SaaS - checked AFTER service industries
+  if (lower.includes('saas') || lower.includes('software as a service') || 
+      lower.includes('enterprise software') || lower.includes('automation software') ||
+      lower.includes('crm software') || lower.includes('workflow automation')) {
+    return 'software';
   }
   
   return 'default';
@@ -310,6 +422,10 @@ export function generateTemplateKeywords(options: TemplateGeneratorOptions): Key
 
   for (const category in keywordTemplates) {
     if (category === 'specificService') continue;
+    
+    if (category === 'emergency' && !EMERGENCY_INDUSTRIES.has(industry)) {
+      continue;
+    }
     
     keywordTemplates[category].forEach(template => {
       const keyword = template
@@ -358,7 +474,11 @@ export function generateTemplateKeywords(options: TemplateGeneratorOptions): Key
   industryTerms.primary.forEach(serviceTerm => {
     if (serviceTerm.toLowerCase() === primaryService.toLowerCase()) return;
     
-    ['serviceLocation', 'emergency', 'costResearch'].forEach(category => {
+    const categoriesToUse = EMERGENCY_INDUSTRIES.has(industry)
+      ? ['serviceLocation', 'emergency', 'costResearch']
+      : ['serviceLocation', 'costResearch', 'research'];
+    
+    categoriesToUse.forEach(category => {
       keywordTemplates[category].slice(0, 3).forEach(template => {
         const keyword = template
           .replace('{service}', serviceTerm.toLowerCase())

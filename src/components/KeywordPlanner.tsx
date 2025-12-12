@@ -23,34 +23,55 @@ import { mapGoalToIntent } from '../utils/campaignIntelligence/intentClassifier'
 // Inline vertical detection (same logic as Campaign Builder)
 function detectVertical(url: string, pageText: string): string {
     const combined = (url + ' ' + pageText).toLowerCase();
-    const verticalPatterns: Record<string, string[]> = {
-        plumbing: ['plumber', 'plumbing', 'drain', 'pipe', 'water heater', 'leak', 'sewer'],
-        hvac: ['hvac', 'heating', 'cooling', 'air conditioning', 'furnace', 'ac repair'],
-        electrical: ['electrician', 'electrical', 'wiring', 'circuit', 'outlet'],
-        roofing: ['roofing', 'roof repair', 'shingle', 'gutter'],
-        legal: ['attorney', 'lawyer', 'law firm', 'legal'],
-        medical: ['doctor', 'medical', 'healthcare', 'clinic', 'hospital'],
-        dental: ['dentist', 'dental', 'orthodont'],
-        automotive: ['auto repair', 'mechanic', 'car repair', 'tire'],
-        restaurant: ['restaurant', 'food', 'dining', 'catering', 'menu'],
-        real_estate: ['real estate', 'realtor', 'property', 'homes for sale'],
-        fitness: ['gym', 'fitness', 'personal trainer', 'workout'],
-        beauty: ['salon', 'spa', 'beauty', 'hair', 'nail'],
-        cleaning: ['cleaning', 'maid', 'janitorial', 'housekeeping'],
-        landscaping: ['landscaping', 'lawn care', 'garden', 'tree service'],
-        pest_control: ['pest control', 'exterminator', 'termite', 'rodent'],
-        moving: ['moving', 'movers', 'relocation', 'packing'],
-        photography: ['photographer', 'photography', 'photo studio'],
-        marketing: ['marketing', 'seo', 'advertising', 'digital marketing'],
-        software: ['software', 'saas', 'app', 'technology', 'developer'],
-        ecommerce: ['shop', 'store', 'buy', 'product', 'ecommerce']
-    };
     
-    for (const [vertical, patterns] of Object.entries(verticalPatterns)) {
+    // Check service industries FIRST with broad patterns
+    const serviceIndustries: [string, string[]][] = [
+        ['plumbing', ['plumber', 'plumbing', 'drain', 'pipe', 'water heater', 'leak', 'sewer']],
+        ['hvac', ['hvac', 'heating', 'cooling', 'air conditioning', 'furnace', 'ac repair']],
+        ['electrical', ['electrician', 'electrical', 'wiring', 'circuit', 'outlet']],
+        ['roofing', ['roofing', 'roof repair', 'shingle', 'gutter']],
+        ['legal', ['attorney', 'lawyer', 'law firm', 'legal']],
+        ['medical', ['doctor', 'physician', 'healthcare', 'clinic', 'hospital', 'medical']],
+        ['dental', ['dentist', 'dental', 'orthodont']],
+        ['automotive', ['auto repair', 'mechanic', 'car repair', 'tire']],
+        ['restaurant', ['restaurant', 'dining', 'catering', 'menu']],
+        ['real_estate', ['real estate', 'realtor', 'property', 'homes for sale']],
+        ['fitness', ['gym', 'fitness', 'personal trainer', 'workout']],
+        ['beauty', ['salon', 'spa', 'beauty', 'hair', 'nail']],
+        ['cleaning', ['cleaning', 'maid', 'janitorial', 'housekeeping']],
+        ['landscaping', ['landscaping', 'lawn care', 'garden', 'tree service']],
+        ['pest_control', ['pest control', 'exterminator', 'termite', 'rodent']],
+        ['moving', ['moving', 'movers', 'relocation', 'packing']],
+        ['photography', ['photographer', 'photography', 'photo studio']],
+        ['ecommerce', ['shop', 'store', 'ecommerce', 'buy online']]
+    ];
+    
+    for (const [vertical, patterns] of serviceIndustries) {
         if (patterns.some(p => combined.includes(p))) {
             return vertical;
         }
     }
+    
+    // Marketing/Advertising - require SPECIFIC multi-word patterns (checked AFTER service industries)
+    const marketingPatterns = [
+        'google ads', 'adwords', 'ppc', 'campaign builder', 'ad campaign',
+        'keyword planner', 'ads automation', 'advertising platform', 'ad management',
+        'seo agency', 'digital marketing agency', 'media buying', 'campaign management'
+    ];
+    if (marketingPatterns.some(p => combined.includes(p))) {
+        return 'marketing';
+    }
+    
+    // Software/SaaS - require SPECIFIC tech terms (checked AFTER service industries)
+    const softwarePatterns = [
+        'saas', 'software as a service', 'cloud software', 'b2b software',
+        'api integration', 'enterprise software', 'automation software',
+        'workflow automation', 'crm software', 'erp system'
+    ];
+    if (softwarePatterns.some(p => combined.includes(p))) {
+        return 'software';
+    }
+    
     return 'general';
 }
 
@@ -406,16 +427,60 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
             
             // Step 5: Generate keywords
             addLog('🔑 Generating seed keywords...');
-            const primaryService = pageData.services?.[0] || vertical || pageData.domain?.split('.')[0] || 'service';
+            
+            // Use vertical-specific primary service for better keyword generation
+            let primaryService = pageData.services?.[0] || vertical || pageData.domain?.split('.')[0] || 'service';
+            let specificServices = pageData.services?.slice(0, 5) || [];
+            
+            // For marketing/software verticals, use more relevant terms
+            if (vertical === 'marketing') {
+                primaryService = 'google ads';
+                specificServices = [
+                    'google ads management',
+                    'ppc campaign',
+                    'ad campaign builder',
+                    'keyword planner',
+                    'campaign automation',
+                    ...(pageData.services || []).slice(0, 3)
+                ];
+            } else if (vertical === 'software') {
+                primaryService = pageData.title?.toLowerCase().includes('campaign') ? 'campaign software' : 'software platform';
+                specificServices = [
+                    'marketing software',
+                    'automation platform',
+                    'campaign management tool',
+                    'business software',
+                    ...(pageData.services || []).slice(0, 3)
+                ];
+            }
+            
             const generatedKws = generateTemplateKeywords({
                 businessUrl: url,
                 primaryService,
-                specificServices: pageData.services?.slice(0, 5) || [],
+                specificServices,
                 location: 'near me'
             });
             
-            // Collect keywords
+            // Collect keywords - add vertical-specific keywords for marketing/software
+            const verticalKeywords: string[] = [];
+            if (vertical === 'marketing') {
+                verticalKeywords.push(
+                    'google ads campaign builder',
+                    'ppc management tool',
+                    'ad campaign software',
+                    'keyword research tool',
+                    'google ads automation'
+                );
+            } else if (vertical === 'software') {
+                verticalKeywords.push(
+                    'campaign management software',
+                    'marketing automation platform',
+                    'ad optimization tool'
+                );
+            }
+            
             const suggestedKws = [
+                ...verticalKeywords,
                 ...generatedKws.map(k => k.keyword),
                 ...(pageData.services || []).slice(0, 10),
                 primaryService,
