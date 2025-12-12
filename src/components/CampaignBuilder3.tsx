@@ -3416,6 +3416,27 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                       </Button>
                     </div>
                   </div>
+                  <div className="space-y-3 pt-4 border-t">
+                    <Label className="text-sm font-medium text-slate-700">Manual Entry</Label>
+                    <p className="text-xs text-slate-500">Enter city names separated by commas or new lines</p>
+                    <textarea
+                      className="w-full h-24 p-3 text-sm border rounded-lg resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      placeholder="e.g., New York, Los Angeles, Chicago&#10;or one city per line"
+                      onChange={(e) => {
+                        const input = e.target.value;
+                        if (input.trim()) {
+                          const cities = input
+                            .split(/[,\n]/)
+                            .map(c => c.trim())
+                            .filter(c => c.length > 0);
+                          setCampaignData(prev => ({
+                            ...prev,
+                            locations: { ...prev.locations, cities, states: [], zipCodes: [] }
+                          }));
+                        }
+                      }}
+                    />
+                  </div>
                   {campaignData.locations.cities.length > 0 && (
                     <div className="mt-4 p-3 bg-slate-50 rounded-lg">
                       <p className="text-sm text-slate-600 mb-2">
@@ -3467,6 +3488,27 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                         All 50 States
                       </Button>
                     </div>
+                  </div>
+                  <div className="space-y-3 pt-4 border-t">
+                    <Label className="text-sm font-medium text-slate-700">Manual Entry</Label>
+                    <p className="text-xs text-slate-500">Enter state names or abbreviations separated by commas or new lines</p>
+                    <textarea
+                      className="w-full h-24 p-3 text-sm border rounded-lg resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      placeholder="e.g., California, Texas, Florida&#10;or CA, TX, FL"
+                      onChange={(e) => {
+                        const input = e.target.value;
+                        if (input.trim()) {
+                          const states = input
+                            .split(/[,\n]/)
+                            .map(s => s.trim())
+                            .filter(s => s.length > 0);
+                          setCampaignData(prev => ({
+                            ...prev,
+                            locations: { ...prev.locations, states, cities: [], zipCodes: [] }
+                          }));
+                        }
+                      }}
+                    />
                   </div>
                   {campaignData.locations.states.length > 0 && (
                     <div className="mt-4 p-3 bg-slate-50 rounded-lg">
@@ -3522,6 +3564,27 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                         Top 25,000 ZIPs
                       </Button>
                     </div>
+                  </div>
+                  <div className="space-y-3 pt-4 border-t">
+                    <Label className="text-sm font-medium text-slate-700">Manual Entry</Label>
+                    <p className="text-xs text-slate-500">Enter ZIP codes separated by commas, spaces, or new lines</p>
+                    <textarea
+                      className="w-full h-24 p-3 text-sm border rounded-lg resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      placeholder="e.g., 10001, 90210, 60601&#10;or one ZIP per line"
+                      onChange={(e) => {
+                        const input = e.target.value;
+                        if (input.trim()) {
+                          const zipCodes = input
+                            .split(/[,\s\n]+/)
+                            .map(z => z.trim())
+                            .filter(z => /^\d{5}(-\d{4})?$/.test(z));
+                          setCampaignData(prev => ({
+                            ...prev,
+                            locations: { ...prev.locations, zipCodes, cities: [], states: [] }
+                          }));
+                        }
+                      }}
+                    />
                   </div>
                   {campaignData.locations.zipCodes.length > 0 && (
                     <div className="mt-4 p-3 bg-slate-50 rounded-lg">
