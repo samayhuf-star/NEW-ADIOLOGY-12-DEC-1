@@ -320,12 +320,52 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
         };
 
         try {
-            const url = urlInput.trim();
+            let url = urlInput.trim();
+            // Add https:// if missing
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                url = 'https://' + url;
+            }
             addLog(`🔍 Starting analysis of: ${url}`);
             
-            // Step 1: Extract landing page content
-            addLog('📄 Fetching landing page content...');
-            const pageData = await extractLandingPageContent(url, { timeout: 15000 });
+            // Step 1: Extract landing page content using server-side API (comprehensive extraction)
+            addLog('📄 Fetching landing page content via server...');
+            let pageData: any = null;
+            
+            try {
+                // Use the server-side comprehensive page analyzer
+                const apiResponse = await fetch('/api/analyze-page', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url, extractionDepth: 'comprehensive' })
+                });
+                
+                if (apiResponse.ok) {
+                    const apiData = await apiResponse.json();
+                    pageData = {
+                        domain: new URL(url).hostname.replace('www.', ''),
+                        title: apiData.seoSignals?.title || null,
+                        h1: apiData.headings?.find((h: any) => h.level === 'h1')?.text || null,
+                        metaDescription: apiData.seoSignals?.metaDescription || null,
+                        services: apiData.services || [],
+                        phones: apiData.contactInfo?.phones || [],
+                        emails: apiData.contactInfo?.emails || [],
+                        addresses: apiData.contactInfo?.addresses || [],
+                        page_text_tokens: apiData.mainContent?.split(' ').slice(0, 100) || [],
+                        ctaElements: apiData.ctaElements || [],
+                        navigation: apiData.navigation || [],
+                        aiInsights: apiData.aiInsights || null
+                    };
+                    addLog(`✅ Server extraction successful`);
+                }
+            } catch (serverErr) {
+                addLog(`⚠️ Server extraction failed, trying client-side...`);
+            }
+            
+            // Fallback to client-side extraction if server fails
+            if (!pageData || !pageData.title) {
+                pageData = await extractLandingPageContent(url, { timeout: 15000 });
+            }
+            
             addLog(`✅ Page extracted: ${pageData.title || pageData.domain}`);
             
             // Step 2: Detect vertical/industry
