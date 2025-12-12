@@ -36,6 +36,7 @@ export interface AdGroupRow {
   campaignName: string;
   adGroupName: string;
   maxCpc?: string;
+  startDate?: string;
 }
 
 export interface KeywordRow {
@@ -43,6 +44,8 @@ export interface KeywordRow {
   adGroupName: string;
   keyword: string;
   criterionType: 'Broad' | 'Phrase' | 'Exact';
+  maxCpc?: string;
+  finalUrl?: string;
 }
 
 export interface NegativeKeywordRow {
@@ -50,6 +53,8 @@ export interface NegativeKeywordRow {
   adGroupName?: string;
   keyword: string;
   matchType?: 'broad' | 'phrase' | 'exact';
+  maxCpc?: string;
+  finalUrl?: string;
 }
 
 export interface RSAAdRow {
@@ -73,6 +78,7 @@ export interface CallOnlyAdRow {
 
 export interface SitelinkRow {
   campaignName: string;
+  adGroupName?: string;
   text: string;
   description1?: string;
   description2?: string;
@@ -81,26 +87,33 @@ export interface SitelinkRow {
 
 export interface CalloutRow {
   campaignName: string;
+  adGroupName?: string;
   text: string;
 }
 
 export interface SnippetRow {
   campaignName: string;
+  adGroupName?: string;
   header: string;
   values: string;
 }
 
 export interface PromotionRow {
   campaignName: string;
+  adGroupName?: string;
   target: string;
   discountModifier?: string;
   percentOff?: string;
+  startDate?: string;
+  endDate?: string;
+  finalUrl?: string;
 }
 
 export interface ImageAssetRow {
   campaignName: string;
+  adGroupName?: string;
   name: string;
-  url: string;
+  url?: string;
 }
 
 export interface PriceExtensionRow {
@@ -152,17 +165,17 @@ function buildCampaignRow(data: CampaignRow): Record<string, string> {
   row['Desktop Bid adj.'] = '-100%';
   row['Mobile Bid adj.'] = '0%';
   row['Tablet Bid adj.'] = '-100%';
-  // Format dates as MM/DD/YYYY for Google Ads Editor
-  row['Start Date'] = formatDateForGoogleAds(data.startDate || '');
-  row['End Date'] = formatDateForGoogleAds(data.endDate || '');
   return row;
 }
 
 function buildAdGroupRow(data: AdGroupRow): Record<string, string> {
   const row = createEmptyRow();
   row['Campaign'] = data.campaignName;
+  if (data.startDate) {
+    row['Start Date'] = formatDateForGoogleAds(data.startDate);
+  }
   row['Ad Group'] = data.adGroupName;
-  row['Max CPC'] = data.maxCpc || '1.00';
+  row['Max CPC'] = data.maxCpc || '2.00';
   return row;
 }
 
@@ -170,8 +183,12 @@ function buildKeywordRow(data: KeywordRow): Record<string, string> {
   const row = createEmptyRow();
   row['Campaign'] = data.campaignName;
   row['Ad Group'] = data.adGroupName;
+  row['Max CPC'] = data.maxCpc || '2.00';
   row['Keyword'] = data.keyword;
   row['Criterion Type'] = data.criterionType;
+  if (data.finalUrl) {
+    row['Final URL'] = ensureHttpsProtocol(data.finalUrl);
+  }
   return row;
 }
 
@@ -181,10 +198,14 @@ function buildNegativeKeywordRow(data: NegativeKeywordRow): Record<string, strin
   if (data.adGroupName) {
     row['Ad Group'] = data.adGroupName;
   }
+  row['Max CPC'] = data.maxCpc || '2.00';
   row['Keyword'] = data.keyword;
   const matchType = data.matchType || 'broad';
   row['Criterion Type'] = matchType === 'exact' ? 'Negative exact' : 
                           matchType === 'phrase' ? 'Negative phrase' : 'Negative broad';
+  if (data.finalUrl) {
+    row['Final URL'] = ensureHttpsProtocol(data.finalUrl);
+  }
   return row;
 }
 
@@ -259,12 +280,12 @@ function buildCallOnlyAdRow(data: CallOnlyAdRow): Record<string, string> {
 function buildSitelinkRow(data: SitelinkRow): Record<string, string> {
   const row = createEmptyRow();
   row['Campaign'] = data.campaignName;
-  // Sitelink text max 25 chars
+  if (data.adGroupName) {
+    row['Ad Group'] = data.adGroupName;
+  }
   row['Sitelink Text'] = (data.text || 'Learn More').substring(0, 25);
-  // Descriptions max 35 chars each
   row['Sitelink Description 1'] = (data.description1 || '').substring(0, 35);
   row['Sitelink Description 2'] = (data.description2 || '').substring(0, 35);
-  // Ensure Final URL has proper protocol
   row['Sitelink Final URL'] = ensureHttpsProtocol(data.finalUrl || '');
   return row;
 }
@@ -272,7 +293,9 @@ function buildSitelinkRow(data: SitelinkRow): Record<string, string> {
 function buildCalloutRow(data: CalloutRow): Record<string, string> {
   const row = createEmptyRow();
   row['Campaign'] = data.campaignName;
-  // Callout text max 25 chars
+  if (data.adGroupName) {
+    row['Ad Group'] = data.adGroupName;
+  }
   row['Callout Text'] = (data.text || '').substring(0, 25);
   return row;
 }
@@ -280,6 +303,9 @@ function buildCalloutRow(data: CalloutRow): Record<string, string> {
 function buildSnippetRow(data: SnippetRow): Record<string, string> {
   const row = createEmptyRow();
   row['Campaign'] = data.campaignName;
+  if (data.adGroupName) {
+    row['Ad Group'] = data.adGroupName;
+  }
   row['Structured Snippet Header'] = data.header;
   row['Structured Snippet Values'] = data.values;
   return row;
@@ -288,6 +314,18 @@ function buildSnippetRow(data: SnippetRow): Record<string, string> {
 function buildPromotionRow(data: PromotionRow): Record<string, string> {
   const row = createEmptyRow();
   row['Campaign'] = data.campaignName;
+  if (data.startDate) {
+    row['Start Date'] = formatDateForGoogleAds(data.startDate);
+  }
+  if (data.endDate) {
+    row['End Date'] = formatDateForGoogleAds(data.endDate);
+  }
+  if (data.adGroupName) {
+    row['Ad Group'] = data.adGroupName;
+  }
+  if (data.finalUrl) {
+    row['Final URL'] = ensureHttpsProtocol(data.finalUrl);
+  }
   row['Promotion Target'] = data.target;
   row['Promotion Discount Modifier'] = data.discountModifier || '';
   row['Promotion Percent Off'] = data.percentOff || '';
@@ -297,8 +335,13 @@ function buildPromotionRow(data: PromotionRow): Record<string, string> {
 function buildImageAssetRow(data: ImageAssetRow): Record<string, string> {
   const row = createEmptyRow();
   row['Campaign'] = data.campaignName;
+  if (data.adGroupName) {
+    row['Ad Group'] = data.adGroupName;
+  }
   row['Image Asset Name'] = data.name;
-  row['Image Asset URL'] = data.url;
+  if (data.url) {
+    row['Image Asset URL'] = data.url;
+  }
   return row;
 }
 
@@ -357,7 +400,9 @@ export function generateGoogleAdsEditorCSV(data: GoogleAdsEditorData): string {
 
 export function downloadGoogleAdsEditorCSV(data: GoogleAdsEditorData, filename: string): void {
   const csvContent = generateGoogleAdsEditorCSV(data);
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const BOM = '\uFEFF';
+  const csvWithBOM = BOM + csvContent.replace(/\n/g, '\r\n');
+  const blob = new Blob([csvWithBOM], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   const url = URL.createObjectURL(blob);
   link.setAttribute('href', url);
@@ -387,11 +432,13 @@ export function convertBuilderDataToEditorFormat(
 ): GoogleAdsEditorData {
   const campaignNameClean = campaignName || 'Campaign 1';
   const baseUrl = options?.baseUrl || 'https://www.example.com';
+  const maxCpc = options?.maxCpc || '2.00';
   
-  const adGroupRows: AdGroupRow[] = adGroups.map(ag => ({
+  const adGroupRows: AdGroupRow[] = adGroups.map((ag, index) => ({
     campaignName: campaignNameClean,
     adGroupName: ag.name,
-    maxCpc: options?.maxCpc || '2.00'
+    maxCpc: maxCpc,
+    startDate: index === 0 ? options?.startDate : undefined
   }));
   
   const keywordRows: KeywordRow[] = [];
@@ -418,7 +465,9 @@ export function convertBuilderDataToEditorFormat(
           campaignName: campaignNameClean,
           adGroupName: ag.name,
           keyword,
-          criterionType
+          criterionType,
+          maxCpc: maxCpc,
+          finalUrl: baseUrl
         });
       }
     });
@@ -451,7 +500,9 @@ export function convertBuilderDataToEditorFormat(
       negativeKeywordRows.push({
         campaignName: campaignNameClean,
         keyword,
-        matchType
+        matchType,
+        maxCpc: maxCpc,
+        finalUrl: baseUrl
       });
     }
   });
@@ -483,7 +534,9 @@ export function convertBuilderDataToEditorFormat(
           campaignName: campaignNameClean,
           adGroupName: ag.name,
           keyword,
-          matchType
+          matchType,
+          maxCpc: maxCpc,
+          finalUrl: baseUrl
         });
       }
     });
