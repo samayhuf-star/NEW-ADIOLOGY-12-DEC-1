@@ -7,7 +7,7 @@ import { runMigrations } from 'stripe-replit-sync';
 import { getStripeSync, getStripePublishableKey, getUncachableStripeClient } from './stripeClient';
 import { WebhookHandlers } from './webhookHandlers';
 import { stripeService } from './stripeService';
-import { startCronScheduler, triggerManualRun } from './cronScheduler';
+// import { startCronScheduler, triggerManualRun } from './cronScheduler';
 
 const { Pool } = pg;
 
