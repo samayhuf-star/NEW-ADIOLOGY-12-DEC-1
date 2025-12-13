@@ -18,7 +18,7 @@ export interface CampaignDatabaseItem {
 
 /**
  * Save campaign directly to Supabase database
- * Creates a 'campaign_history' table if it doesn't exist
+ * Uses 'adiology_campaigns' table
  */
 export const campaignDatabaseService = {
   /**
@@ -40,9 +40,9 @@ export const campaignDatabaseService = {
         updated_at: new Date().toISOString(),
       };
 
-      // Try to insert into campaign_history table
+      // Try to insert into adiology_campaigns table
       const { data: insertedData, error } = await supabase
-        .from('campaign_history')
+        .from('adiology_campaigns')
         .insert(campaignData)
         .select('id')
         .single();
@@ -50,12 +50,12 @@ export const campaignDatabaseService = {
       if (error) {
         // If table doesn't exist, create it and retry
         if (error.code === '42P01' || error.message?.includes('does not exist')) {
-          console.log('campaign_history table does not exist, creating it...');
+          console.log('adiology_campaigns table does not exist, creating it...');
           await this.createTableIfNeeded();
           
           // Retry insert
           const { data: retryData, error: retryError } = await supabase
-            .from('campaign_history')
+            .from('adiology_campaigns')
             .insert(campaignData)
             .select('id')
             .single();
@@ -86,7 +86,7 @@ export const campaignDatabaseService = {
       const userId = user?.id;
 
       let query = supabase
-        .from('campaign_history')
+        .from('adiology_campaigns')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -120,7 +120,7 @@ export const campaignDatabaseService = {
       const userId = user?.id;
 
       let query = supabase
-        .from('campaign_history')
+        .from('adiology_campaigns')
         .select('*')
         .eq('type', type)
         .order('created_at', { ascending: false });
@@ -160,7 +160,7 @@ export const campaignDatabaseService = {
       }
 
       const { error } = await supabase
-        .from('campaign_history')
+        .from('adiology_campaigns')
         .update(updateData)
         .eq('id', id);
 
@@ -179,7 +179,7 @@ export const campaignDatabaseService = {
   async delete(id: string): Promise<void> {
     try {
       const { error } = await supabase
-        .from('campaign_history')
+        .from('adiology_campaigns')
         .delete()
         .eq('id', id);
 
@@ -193,7 +193,7 @@ export const campaignDatabaseService = {
   },
 
   /**
-   * Create the campaign_history table if it doesn't exist
+   * Create the adiology_campaigns table if it doesn't exist
    * This is a client-side helper - actual table creation should be done via migrations
    */
   async createTableIfNeeded(): Promise<void> {
