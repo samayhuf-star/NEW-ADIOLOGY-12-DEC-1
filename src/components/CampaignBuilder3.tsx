@@ -53,6 +53,7 @@ import {
 import { getKeywordMetrics, type KeywordMetrics } from '../utils/keywordPlannerApi';
 import { GEO_PRESETS, US_STATES_ALL, US_CITIES_TOP_500, US_ZIP_CODES_EXTENDED } from '../data/locationPresets';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
+import { generateDKIAdWithAI } from '../utils/dkiAdGeneratorAI';
 
 // Campaign Structure Types (14 structures)
 const CAMPAIGN_STRUCTURES = [
@@ -306,6 +307,9 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
   const [analysisLogs, setAnalysisLogs] = useState<{ timestamp: string; message: string; type: 'info' | 'success' | 'step' | 'data' | 'ai' }[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const analysisLogsRef = React.useRef<HTMLDivElement>(null);
+  const [showCallAdDialog, setShowCallAdDialog] = useState(false);
+  const [callAdPhone, setCallAdPhone] = useState('');
+  const [callAdBusinessName, setCallAdBusinessName] = useState('');
   const [campaignData, setCampaignData] = useState<CampaignData>({
     url: '',
     campaignName: generateDefaultCampaignName(),
@@ -1550,6 +1554,25 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
     }
   };
 
+  // Helper function to extract business name from URL
+  const extractBusinessNameFromURL = () => {
+    let businessName = campaignData.campaignName || 'Your Business';
+    if (businessName.length > 25) {
+      businessName = businessName.split(' ')[0] || businessName.substring(0, 25);
+    }
+    if (campaignData.url) {
+      try {
+        const urlObj = new URL(campaignData.url.startsWith('http') ? campaignData.url : `https://${campaignData.url}`);
+        const hostname = urlObj.hostname.replace('www.', '');
+        const domainName = hostname.split('.')[0];
+        if (domainName && domainName.length > 2 && domainName.length <= 25) {
+          businessName = domainName.charAt(0).toUpperCase() + domainName.slice(1);
+        }
+      } catch (e) {}
+    }
+    return businessName;
+  };
+
   // Add a single ad of specified type (only if under 3 ads total)
   const handleAddNewAd = async (adType: 'rsa' | 'dki' | 'call') => {
     // Check if we already have 3 ads
@@ -1581,36 +1604,23 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
       return;
     }
 
+    // For Call Only ads, show dialog to prompt for phone and business name
+    if (adType === 'call') {
+      const defaultBusinessName = extractBusinessNameFromURL();
+      setCallAdBusinessName(defaultBusinessName);
+      setCallAdPhone('');
+      setShowCallAdDialog(true);
+      return;
+    }
+
     setLoading(true);
     try {
       const keywordTexts = campaignData.selectedKeywords.map(k => k.text || k.keyword || k).slice(0, 10);
-      
-      // Extract business name from campaign name or URL
-      let businessName = campaignData.campaignName || 'Your Business';
-      // If campaign name is too long, extract first meaningful part
-      if (businessName.length > 25) {
-        businessName = businessName.split(' ')[0] || businessName.substring(0, 25);
-      }
-      
-      // Extract domain name from URL for better business name
-      if (campaignData.url) {
-        try {
-          const urlObj = new URL(campaignData.url.startsWith('http') ? campaignData.url : `https://${campaignData.url}`);
-          const hostname = urlObj.hostname.replace('www.', '');
-          const domainName = hostname.split('.')[0];
-          if (domainName && domainName.length > 2 && domainName.length <= 25) {
-            // Capitalize first letter
-            businessName = domainName.charAt(0).toUpperCase() + domainName.slice(1);
-          }
-        } catch (e) {
-          // If URL parsing fails, use campaign name
-        }
-      }
+      const businessName = extractBusinessNameFromURL();
       
       // Determine industry from keywords if vertical is not set
       let industry = campaignData.vertical || 'general';
       if (industry === 'general' && keywordTexts.length > 0) {
-        // Try to extract industry from keywords
         const firstKeyword = keywordTexts[0].toLowerCase();
         if (firstKeyword.includes('plumb') || firstKeyword.includes('plumber')) industry = 'plumbing';
         else if (firstKeyword.includes('electric') || firstKeyword.includes('electrician')) industry = 'electrical';
@@ -1623,32 +1633,28 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
         else if (firstKeyword.includes('restaurant') || firstKeyword.includes('food')) industry = 'food';
         else if (firstKeyword.includes('hotel') || firstKeyword.includes('travel')) industry = 'travel';
         else {
-          // Use first keyword as industry hint
           industry = firstKeyword.split(' ')[0] || 'general';
         }
       }
       
-      const adInput: AdGenerationInput = {
-        keywords: keywordTexts,
-        baseUrl: campaignData.url || undefined, // Always use campaign URL
-        adType: adType === 'rsa' ? 'RSA' : adType === 'dki' ? 'ETA' : 'CALL_ONLY',
-        industry: industry,
-        businessName: businessName,
-        location: campaignData.locations?.cities?.[0] || campaignData.locations?.states?.[0] || undefined,
-        filters: {
-          matchType: campaignData.keywordTypes.phrase ? 'phrase' : campaignData.keywordTypes.exact ? 'exact' : 'broad',
-          campaignStructure: (campaignData.selectedStructure?.toUpperCase() || 'STAG') as 'SKAG' | 'STAG' | 'IBAG' | 'Alpha-Beta',
-          uniqueSellingPoints: [],
-          callToAction: campaignData.cta || undefined,
-        },
-      };
-
-      const ad = generateAdsUtility(adInput);
-      
-      // Convert to our ad format
       let newAd: any = null;
       
-      if (adType === 'rsa' && 'headlines' in ad) {
+      if (adType === 'rsa') {
+        const adInput: AdGenerationInput = {
+          keywords: keywordTexts,
+          baseUrl: campaignData.url || undefined,
+          adType: 'RSA',
+          industry: industry,
+          businessName: businessName,
+          location: campaignData.locations?.cities?.[0] || campaignData.locations?.states?.[0] || undefined,
+          filters: {
+            matchType: campaignData.keywordTypes.phrase ? 'phrase' : campaignData.keywordTypes.exact ? 'exact' : 'broad',
+            campaignStructure: (campaignData.selectedStructure?.toUpperCase() || 'STAG') as 'SKAG' | 'STAG' | 'IBAG' | 'Alpha-Beta',
+            uniqueSellingPoints: [],
+            callToAction: campaignData.cta || undefined,
+          },
+        };
+        const ad = generateAdsUtility(adInput);
         const rsa = ad as ResponsiveSearchAd;
         newAd = {
           id: `ad-${Date.now()}-${Math.random()}`,
@@ -1661,35 +1667,29 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
           selected: false,
           extensions: [],
         };
-      } else if (adType === 'dki' && 'headline1' in ad) {
-        const dki = ad as ExpandedTextAd;
+      } else if (adType === 'dki') {
+        // Use AI-powered DKI generation
+        notifications.info('Generating AI-powered DKI ad...', { title: 'AI Generation' });
+        const dkiResult = await generateDKIAdWithAI({
+          keywords: keywordTexts,
+          industry: industry,
+          businessName: businessName,
+          url: campaignData.url || undefined,
+          location: campaignData.locations?.cities?.[0] || campaignData.locations?.states?.[0] || undefined,
+        });
+        
+        const industryPath = industry.toLowerCase().slice(0, 15);
         newAd = {
           id: `ad-${Date.now()}-${Math.random()}`,
           type: 'dki',
           adType: 'DKI',
-          headline1: dki.headline1 || '',
-          headline2: dki.headline2 || '',
-          headline3: dki.headline3 || '',
-          description1: dki.description1 || '',
-          description2: dki.description2 || '',
-          displayPath: dki.displayPath || [],
-          finalUrl: dki.finalUrl || campaignData.url,
-          selected: false,
-          extensions: [],
-        };
-      } else if (adType === 'call' && 'phoneNumber' in ad) {
-        const call = ad as CallOnlyAd;
-        newAd = {
-          id: `ad-${Date.now()}-${Math.random()}`,
-          type: 'call',
-          adType: 'CallOnly',
-          headline1: call.headline1 || '',
-          headline2: call.headline2 || '',
-          description1: call.description1 || '',
-          description2: call.description2 || '',
-          phoneNumber: call.phoneNumber || '',
-          businessName: call.businessName || businessName,
-          finalUrl: call.verificationUrl || campaignData.url || '',
+          headline1: dkiResult.headline1 || '',
+          headline2: dkiResult.headline2 || '',
+          headline3: dkiResult.headline3 || '',
+          description1: dkiResult.description1 || '',
+          description2: dkiResult.description2 || '',
+          displayPath: [industryPath, 'services'].slice(0, 2),
+          finalUrl: campaignData.url || '',
           selected: false,
           extensions: [],
         };
@@ -1697,7 +1697,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
 
       if (newAd) {
         setCampaignData(prev => ({
-            ...prev,
+          ...prev,
           ads: [...prev.ads, newAd],
         }));
 
@@ -1706,7 +1706,6 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
           description: `${campaignData.ads.length + 1} / 3 ads created`
         });
         
-        // Auto-save draft
         await autoSaveDraft();
       } else {
         throw new Error(`Failed to generate ${adType} ad`);
@@ -1719,6 +1718,84 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Handle Call Only ad creation after dialog submission
+  const handleCreateCallAd = async () => {
+    setShowCallAdDialog(false);
+    setLoading(true);
+    
+    try {
+      const keywordTexts = campaignData.selectedKeywords.map(k => k.text || k.keyword || k).slice(0, 10);
+      const businessName = callAdBusinessName || extractBusinessNameFromURL();
+      const phoneNumber = callAdPhone || '(555) 123-4567';
+      
+      let industry = campaignData.vertical || 'general';
+      if (industry === 'general' && keywordTexts.length > 0) {
+        const firstKeyword = keywordTexts[0].toLowerCase();
+        if (firstKeyword.includes('plumb') || firstKeyword.includes('plumber')) industry = 'plumbing';
+        else if (firstKeyword.includes('electric') || firstKeyword.includes('electrician')) industry = 'electrical';
+        else if (firstKeyword.includes('hvac') || firstKeyword.includes('heating') || firstKeyword.includes('cooling')) industry = 'hvac';
+        else {
+          industry = firstKeyword.split(' ')[0] || 'general';
+        }
+      }
+      
+      const adInput: AdGenerationInput = {
+        keywords: keywordTexts,
+        baseUrl: campaignData.url || undefined,
+        adType: 'CALL_ONLY',
+        industry: industry,
+        businessName: businessName,
+        location: campaignData.locations?.cities?.[0] || campaignData.locations?.states?.[0] || undefined,
+        filters: {
+          matchType: campaignData.keywordTypes.phrase ? 'phrase' : campaignData.keywordTypes.exact ? 'exact' : 'broad',
+          campaignStructure: (campaignData.selectedStructure?.toUpperCase() || 'STAG') as 'SKAG' | 'STAG' | 'IBAG' | 'Alpha-Beta',
+          uniqueSellingPoints: [],
+          callToAction: campaignData.cta || undefined,
+        },
+      };
+
+      const ad = generateAdsUtility(adInput);
+      const call = ad as CallOnlyAd;
+      
+      const newAd = {
+        id: `ad-${Date.now()}-${Math.random()}`,
+        type: 'call',
+        adType: 'CallOnly',
+        headline1: call.headline1 || '',
+        headline2: call.headline2 || '',
+        description1: call.description1 || '',
+        description2: call.description2 || '',
+        phoneNumber: phoneNumber,
+        businessName: businessName.substring(0, 25),
+        finalUrl: call.verificationUrl || campaignData.url || '',
+        selected: false,
+        extensions: [],
+      };
+
+      setCampaignData(prev => ({
+        ...prev,
+        ads: [...prev.ads, newAd],
+      }));
+
+      notifications.success('Call Only ad added successfully', {
+        title: 'Ad Added',
+        description: `Phone: ${phoneNumber} | Business: ${businessName}`
+      });
+      
+      await autoSaveDraft();
+    } catch (error) {
+      console.error('Error generating Call Only ad:', error);
+      notifications.error('Failed to generate Call Only ad', {
+        title: 'Generation Error',
+        description: error instanceof Error ? error.message : 'Unknown error occurred'
+      });
+    } finally {
+      setLoading(false);
+      setCallAdPhone('');
+      setCallAdBusinessName('');
     }
   };
 
@@ -4524,6 +4601,79 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
       </div>
 
         
+        {/* Call Only Ad Dialog */}
+        <Dialog open={showCallAdDialog} onOpenChange={setShowCallAdDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Phone className="w-5 h-5 text-green-600" />
+                Call Only Ad Details
+              </DialogTitle>
+              <DialogDescription>
+                Enter the business phone number and name for your call-only ad.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="call-phone">Phone Number *</Label>
+                <Input
+                  id="call-phone"
+                  type="tel"
+                  placeholder="(555) 123-4567"
+                  value={callAdPhone}
+                  onChange={(e) => setCallAdPhone(e.target.value)}
+                />
+                <p className="text-xs text-slate-500">
+                  Enter the phone number customers will call. Premium rate numbers are not allowed.
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="call-business">Business Name (max 25 chars)</Label>
+                <Input
+                  id="call-business"
+                  type="text"
+                  placeholder="Your Business Name"
+                  maxLength={25}
+                  value={callAdBusinessName}
+                  onChange={(e) => setCallAdBusinessName(e.target.value)}
+                />
+                <p className="text-xs text-slate-500">
+                  {callAdBusinessName.length}/25 characters
+                </p>
+              </div>
+            </div>
+            
+            <DialogFooter className="flex gap-2">
+              <Button variant="outline" onClick={() => {
+                setShowCallAdDialog(false);
+                setCallAdPhone('');
+                setCallAdBusinessName('');
+              }}>
+                Cancel
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  setCallAdPhone('(555) 123-4567');
+                  handleCreateCallAd();
+                }}
+              >
+                Skip (Use Defaults)
+              </Button>
+              <Button 
+                onClick={handleCreateCallAd}
+                disabled={!callAdPhone.trim()}
+                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+              >
+                <Phone className="w-4 h-4 mr-2" />
+                Create Ad
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {/* Export Dialog */}
         <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
           <DialogContent className="max-w-2xl">

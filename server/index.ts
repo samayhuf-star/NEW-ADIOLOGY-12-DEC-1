@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
 import { cors } from 'hono/cors';
 import pg from 'pg';
+import OpenAI from 'openai';
 import { runMigrations } from 'stripe-replit-sync';
 import { getStripeSync, getStripePublishableKey, getUncachableStripeClient } from './stripeClient';
 import { WebhookHandlers } from './webhookHandlers';
@@ -2685,6 +2686,111 @@ app.get('/api/dashboard/:userId', async (c) => {
   } catch (error: any) {
     console.error('Error fetching dashboard data:', error);
     return c.json({ error: error.message }, 500);
+  }
+});
+
+// ============================================
+// DKI Ad Generation API (AI-powered)
+// ============================================
+
+const openaiClient = new OpenAI({
+  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
+  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || undefined,
+});
+
+function buildDKIDefault(keyword: string, maxLength: number = 20): string {
+  const words = keyword.split(' ');
+  let result = words[0];
+  for (let i = 1; i < words.length && result.length + words[i].length + 1 <= maxLength; i++) {
+    result += ' ' + words[i];
+  }
+  return result.charAt(0).toUpperCase() + result.slice(1);
+}
+
+function getDefaultDKIAd(context: { keywords: string[]; industry: string; businessName: string }) {
+  const mainKeyword = context.keywords[0] || context.industry || 'Service';
+  const dkiDefault = buildDKIDefault(mainKeyword, 12);
+  const shortDefault = buildDKIDefault(mainKeyword, 8);
+  
+  return {
+    headline1: `{KeyWord:${dkiDefault}} Experts`,
+    headline2: `Best {KeyWord:${shortDefault}} Near You`,
+    headline3: `Call ${context.businessName.substring(0, 20)} Today`,
+    description1: `Professional ${mainKeyword} services you can trust. ${context.businessName} delivers expert solutions. Contact us today.`,
+    description2: `Looking for quality ${mainKeyword}? We offer fast, reliable service with satisfaction guaranteed. Get your free quote now.`,
+  };
+}
+
+app.post('/api/generate-dki-ad', async (c) => {
+  try {
+    const { keywords, industry, businessName, url, location } = await c.req.json();
+    
+    if (!keywords || !Array.isArray(keywords) || keywords.length === 0) {
+      return c.json({ error: 'Keywords array is required' }, 400);
+    }
+    
+    const mainKeyword = keywords[0] || industry;
+    const dkiDefault = buildDKIDefault(mainKeyword, 15);
+    
+    const prompt = `You are a Google Ads expert specializing in Dynamic Keyword Insertion (DKI) ads.
+
+Generate DKI ad copy for:
+- Keywords: ${keywords.slice(0, 5).join(', ')}
+- Industry: ${industry}
+- Business: ${businessName}
+- Location: ${location || 'Not specified'}
+
+Requirements:
+1. Generate 3 headlines (MAX 30 characters each) using {KeyWord:${dkiDefault}} DKI syntax
+2. Generate 2 descriptions (MAX 90 characters each)
+3. At least 2 headlines MUST include {KeyWord:${dkiDefault}} for dynamic insertion
+4. Headlines should be compelling and action-oriented
+5. Descriptions should highlight benefits and include a call-to-action
+6. Count characters carefully - DKI syntax {KeyWord:text} counts fully toward the limit
+
+Examples of valid DKI headlines (under 30 chars):
+- "{KeyWord:Plumber} Near You" (19 chars)
+- "Expert {KeyWord:HVAC}" (18 chars)
+- "Call {KeyWord:Service} Today" (24 chars)
+
+Return ONLY a JSON object (no markdown, no backticks) with this exact structure:
+{
+  "headline1": "string with {KeyWord:${dkiDefault}} (max 30 chars)",
+  "headline2": "string with {KeyWord:${dkiDefault}} (max 30 chars)",
+  "headline3": "string (max 30 chars)",
+  "description1": "string (max 90 chars)",
+  "description2": "string (max 90 chars)"
+}`;
+
+    const response = await openaiClient.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 400,
+      temperature: 0.7,
+    });
+
+    const content = response.choices[0]?.message?.content || '';
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    
+    if (jsonMatch) {
+      const result = JSON.parse(jsonMatch[0]);
+      const truncateHeadline = (h: string) => h && h.length > 30 ? h.substring(0, 27) + '...' : h || '';
+      const truncateDescription = (d: string) => d && d.length > 90 ? d.substring(0, 87) + '...' : d || '';
+      
+      return c.json({
+        headline1: truncateHeadline(result.headline1),
+        headline2: truncateHeadline(result.headline2),
+        headline3: truncateHeadline(result.headline3),
+        description1: truncateDescription(result.description1),
+        description2: truncateDescription(result.description2),
+      });
+    }
+    
+    return c.json(getDefaultDKIAd({ keywords, industry, businessName }));
+  } catch (error: any) {
+    console.error('Error generating DKI ad:', error);
+    const { keywords, industry, businessName } = await c.req.json().catch(() => ({ keywords: [], industry: '', businessName: '' }));
+    return c.json(getDefaultDKIAd({ keywords: keywords || [], industry: industry || '', businessName: businessName || '' }));
   }
 });
 
