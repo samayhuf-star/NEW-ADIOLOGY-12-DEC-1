@@ -2540,6 +2540,165 @@ Example output format: ["keyword 1", "keyword 2", "keyword 3", "keyword 4", "key
 });
 
 // ============================================
+// AI Negative Keywords API
+// ============================================
+
+app.post('/api/ai/generate-negative-keywords', async (c) => {
+  try {
+    const body = await c.req.json();
+    const { url, coreKeywords, userGoal, count = 200, excludeCompetitors, competitorBrands, targetLocation } = body;
+
+    if (!url || !coreKeywords || !userGoal) {
+      return c.json({ error: 'URL, coreKeywords, and userGoal are required' }, 400);
+    }
+
+    const openaiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+    if (!openaiKey) {
+      console.log('OpenAI key not configured, returning contextual static fallback');
+      return c.json({ 
+        error: 'AI service not configured',
+        keywords: generateStaticNegativeKeywords(coreKeywords, userGoal, count)
+      }, 200);
+    }
+
+    const domainMatch = url.match(/https?:\/\/(?:www\.)?([^\/]+)/);
+    const domain = domainMatch ? domainMatch[1] : url;
+    const keywordList = coreKeywords.split(',').map((k: string) => k.trim()).filter(Boolean);
+    const mainKeyword = keywordList[0] || 'service';
+
+    const prompt = `You are a Google Ads negative keyword expert. Analyze this business and generate contextual negative keywords.
+
+BUSINESS CONTEXT:
+- Website: ${url}
+- Domain: ${domain}
+- Core Keywords: ${coreKeywords}
+- Campaign Goal: ${userGoal}
+${targetLocation ? `- Target Location: ${targetLocation}` : ''}
+${excludeCompetitors && competitorBrands?.length ? `- Competitor Brands to Block: ${competitorBrands.join(', ')}` : ''}
+
+Generate ${Math.min(count, 150)} highly relevant negative keywords that would waste ad spend for THIS SPECIFIC business type.
+
+IMPORTANT RULES:
+1. Keywords must be CONTEXTUAL to the business type and industry
+2. Analyze the domain and keywords to understand the industry/vertical
+3. Include industry-specific irrelevant terms (not just generic "free" or "jobs")
+4. Include job/career terms specific to THIS industry
+5. Include low-intent modifiers relevant to this service/product
+6. Include informational queries that won't convert for a ${userGoal} campaign
+7. DO NOT include the business's own service keywords as negatives
+
+CATEGORIES:
+- Job/DIY: Job seekers, DIY learners specific to ${mainKeyword} industry
+- Low-Value: Free-seekers, extreme bargain hunters for ${mainKeyword}
+- Irrelevant: Unrelated services that share similar keywords
+- Informational: Research queries, definitions, how-to for ${mainKeyword}
+- Competitor: Competitor research terms (reviews, alternatives, vs)
+- Other: Geographic exclusions, scam/complaint searches
+
+Return ONLY a valid JSON array (no markdown, no explanations):
+[{"keyword": "keyword here", "reason": "why this wastes spend", "category": "Job/DIY|Low-Value|Irrelevant|Informational|Competitor|Other"}]`;
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7,
+        max_tokens: 4000
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('OpenAI API error:', errorText);
+      return c.json({
+        error: 'AI generation failed',
+        keywords: generateStaticNegativeKeywords(coreKeywords, userGoal, count)
+      }, 200);
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || '';
+    
+    let keywords: any[] = [];
+    try {
+      const jsonMatch = content.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        keywords = JSON.parse(jsonMatch[0]);
+      }
+    } catch (parseError) {
+      console.error('Failed to parse OpenAI response:', parseError);
+      keywords = generateStaticNegativeKeywords(coreKeywords, userGoal, count);
+    }
+
+    if (keywords.length === 0) {
+      keywords = generateStaticNegativeKeywords(coreKeywords, userGoal, count);
+    }
+
+    return c.json({
+      success: true,
+      keywords: keywords.slice(0, count),
+      model: 'gpt-4o-mini',
+      tokensUsed: data.usage?.total_tokens || 0
+    });
+
+  } catch (error: any) {
+    console.error('AI negative keywords error:', error);
+    return c.json({
+      error: error.message || 'AI generation failed',
+      keywords: generateStaticNegativeKeywords('service', 'leads', 100)
+    }, 200);
+  }
+});
+
+function generateStaticNegativeKeywords(coreKeywords: string, userGoal: string, count: number): any[] {
+  const keywords: any[] = [];
+  const keywordSet = new Set<string>();
+  
+  const addKeyword = (kw: string, reason: string, category: string) => {
+    const clean = kw.toLowerCase().trim();
+    if (!keywordSet.has(clean) && clean.length > 0) {
+      keywordSet.add(clean);
+      keywords.push({ keyword: kw, reason, category });
+    }
+  };
+
+  const mainTerm = coreKeywords.split(',')[0]?.trim() || 'service';
+  
+  const jobTerms = ['jobs', 'career', 'hiring', 'salary', 'resume', 'employment', 'internship', 'job openings'];
+  jobTerms.forEach(term => {
+    addKeyword(`${mainTerm} ${term}`, `Filters job seekers for ${mainTerm}`, 'Job/DIY');
+    addKeyword(term, 'Filters general job seekers', 'Job/DIY');
+  });
+  
+  const diyTerms = ['how to', 'diy', 'tutorial', 'guide', 'course', 'training', 'certification', 'learn'];
+  diyTerms.forEach(term => {
+    addKeyword(`${mainTerm} ${term}`, `Filters DIY learners for ${mainTerm}`, 'Job/DIY');
+  });
+  
+  const freeTerms = ['free', 'cheap', 'discount', 'coupon', 'deal', 'bargain', 'budget', 'low cost'];
+  freeTerms.forEach(term => {
+    addKeyword(`${term} ${mainTerm}`, `Filters price-focused searches`, 'Low-Value');
+  });
+  
+  const infoTerms = ['what is', 'definition', 'meaning', 'wikipedia', 'facts about', 'history of'];
+  infoTerms.forEach(term => {
+    addKeyword(`${term} ${mainTerm}`, `Filters informational searches`, 'Informational');
+  });
+  
+  const reviewTerms = ['review', 'reviews', 'vs', 'alternative', 'alternatives', 'comparison', 'compare'];
+  reviewTerms.forEach(term => {
+    addKeyword(`${mainTerm} ${term}`, `Filters comparison searches`, 'Irrelevant');
+  });
+
+  return keywords.slice(0, count);
+}
+
+// ============================================
 // User Notifications API
 // ============================================
 
