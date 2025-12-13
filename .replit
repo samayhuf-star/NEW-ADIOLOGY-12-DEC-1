@@ -1,44 +1,80 @@
-modules = ["nodejs-20"]
+modules = ["nodejs-20", "web", "python-3.12", "postgresql-16"]
+[agent]
+expertMode = true
+integrations = ["javascript_openai_ai_integrations:1.0.0", "stripe:2.0.0"]
 
 [nix]
-channel = "stable-24_05"
+channel = "stable-25_05"
+packages = ["imagemagick_light", "mailutils", "psmisc"]
 
-[unitTest]
-language = "nodejs"
+[workflows]
+runButton = "Project"
 
-[languages.javascript]
-pattern = "**/{*.js,*.jsx,*.ts,*.tsx}"
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
 
-[languages.javascript.languageServer]
-start = "typescript-language-server --stdio"
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Frontend Dev Server"
 
-[env]
-PORT = "3001"
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Admin API Server"
 
-[debugger]
-support = true
+[[workflows.workflow]]
+name = "Frontend Dev Server"
+author = "agent"
 
-[debugger.interactive]
-transport = "localhost:0"
-startCommand = ["dap-node"]
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+waitForPort = 5000
 
-[debugger.interactive.initializeMessage]
-command = "initialize"
-type = "request"
+[workflows.workflow.metadata]
+outputType = "webview"
 
-[debugger.interactive.launchMessage]
-command = "launch"
-type = "request"
-[debugger.interactive.launchMessage.arguments]
-cwd = "${workspaceFolder}"
-args = []
-console = "externalTerminal"
-pauseOnThrow = false
+[[workflows.workflow]]
+name = "Admin API Server"
+author = "agent"
 
-[ports]
-3001 = {
-  name = "Adiology API"
-  description = "Express server"
-  localResolver = "127.0.0.1:3001"
-  externalResolver = "adiology-${REPL_SLUG}.replit.dev:443"
-}
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx tsx server/index.ts"
+waitForPort = 3001
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[ports]]
+localPort = 3001
+externalPort = 3001
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[[ports]]
+localPort = 5001
+externalPort = 3003
+
+[deployment]
+deploymentTarget = "autoscale"
+run = ["npm", "run", "preview"]
+build = ["npm", "run", "build"]
+
+[userenv]
+
+[userenv.shared]
+SUPABASE_URL = "https://kkdnnrwhzofttzajnwlj.supabase.co"
+SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrZG5ucndoem9mdHR6YWpud2xqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0Njk2ODAsImV4cCI6MjA3OTA0NTY4MH0.IVIEaP0Stc0AieekxDFMG_q76vu6KRRMsI_yIjOfmZM"
+VITE_SUPABASE_URL = "https://kkdnnrwhzofttzajnwlj.supabase.co"
+VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrZG5ucndoem9mdHR6YWpud2xqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0Njk2ODAsImV4cCI6MjA3OTA0NTY4MH0.IVIEaP0Stc0AieekxDFMG_q76vu6KRRMsI_yIjOfmZM"
+VITE_RESELLERCLUB_CLIENT_ID = "1301617"
+VITE_RESELLERCLUB_API_URL = "https://httpapi.com/api"
+VITE_RESELLERCLUB_API_KEY = "3K0BpCJoVQvX2uCvbSeHS357hNdRsyZ4"
+VITE_NAMECOM_API_URL = "https://api.name.com"
+GOOGLE_ADS_CLIENT_ID = "301579464387-v6ls7i4r8b193s45de0vt5vc389o5b7i.apps.googleusercontent.com"
+GOOGLE_ADS_CLIENT_SECRET = "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"
+GOOGLE_ADS_DEVELOPER_TOKEN = "UzifgEs9SwOBo5bP_vmi2A"
