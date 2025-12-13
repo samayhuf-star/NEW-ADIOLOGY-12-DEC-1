@@ -85,8 +85,8 @@ function isValidKeyword(keyword: string, serviceTerms: string[]): boolean {
   const lower = keyword.toLowerCase().trim();
   const words = lower.split(/\s+/).filter(w => w.length > 0);
   
-  // Rule 1: Must be 2-6 words (not too short, not too long)
-  if (words.length < 2 || words.length > 6) return false;
+  // Rule 1: Must be 1-6 words (allow 1-word keywords too)
+  if (words.length < 1 || words.length > 6) return false;
   
   // Rule 2: No duplicate consecutive words (e.g., "24/7 24/7 plumber")
   for (let i = 0; i < words.length - 1; i++) {
@@ -97,11 +97,14 @@ function isValidKeyword(keyword: string, serviceTerms: string[]): boolean {
   const uniqueWords = new Set(words);
   if (words.length !== uniqueWords.size) return false;
   
-  // Rule 4: Must contain at least one core service term
+  // Rule 4: RELAXED - Contains at least one core service term OR is a valid modifier phrase
   const hasServiceTerm = serviceTerms.some(term => 
     lower.includes(term.toLowerCase())
   );
-  if (!hasServiceTerm) return false;
+  // Allow modifiers like "near me", "24/7", "free", "cheap", etc. even without service term
+  const validModifiers = ['near me', '24/7', 'same day', 'open now', 'available', 'emergency', 'cost', 'price', 'cheap', 'affordable', 'free', 'best', 'top', 'local', 'online'];
+  const hasValidModifier = validModifiers.some(mod => lower.includes(mod));
+  if (!hasServiceTerm && !hasValidModifier) return false;
   
   // Rule 5: No nonsense question patterns
   const invalidPatterns = [
@@ -267,8 +270,8 @@ export function generateKeywords(options: KeywordGenerationOptions): GeneratedKe
     vertical = 'default',
     intentResult,
     landingPageData,
-    maxKeywords = 630,
-    minKeywords = 410
+    maxKeywords = 800,
+    minKeywords = 150
   } = options;
 
   // Parse negative keywords (comma or newline separated)
@@ -389,31 +392,59 @@ export function generateKeywords(options: KeywordGenerationOptions): GeneratedKe
 
     // Get additional vertical-specific patterns (using imported normalizeVertical)
     const verticalExtras: Record<string, string[]> = {
-      'Travel': ['[seed] booking', '[seed] reservation', '[seed] tickets', '[seed] comparison', 'compare [seed]', '[seed] deals online', 'best [seed] offers'],
-      'E-commerce': ['[seed] online', '[seed] delivery', '[seed] fast shipping', '[seed] in stock', '[seed] buy now', '[seed] purchase', '[seed] checkout'],
-      'Healthcare': ['[seed] clinic', '[seed] doctor', '[seed] appointment', '[seed] near me', '[seed] consultation', '[seed] specialist'],
-      'Legal': ['[seed] lawyer', '[seed] attorney', '[seed] legal help', '[seed] advice', '[seed] consultation'],
-      'Real Estate': ['[seed] listings', '[seed] homes', '[seed] properties', '[seed] for sale', '[seed] for rent', '[seed] agents'],
-      'Finance': ['[seed] account', '[seed] application', '[seed] online', '[seed] approval', '[seed] calculator'],
-      'Education': ['[seed] course', '[seed] classes', '[seed] training', '[seed] certification', '[seed] online'],
-      'Services': ['[seed] service', '[seed] company', '[seed] local', '[seed] near me', '[seed] quote', '[seed] estimate'],
-      'default': ['[seed] service', '[seed] help', '[seed] support', '[seed] online', 'find [seed]', 'get [seed]']
+      'Travel': ['[seed] booking', '[seed] reservation', '[seed] tickets', '[seed] comparison', 'compare [seed]', '[seed] deals online', 'best [seed] offers', '[seed] packages', '[seed] flights', '[seed] hotels', '[seed] resorts', '[seed] tours', '[seed] vacation', 'book [seed] now', 'find [seed] deals', '[seed] last minute deals', '[seed] all inclusive', '[seed] adventure'],
+      'E-commerce': ['[seed] online', '[seed] delivery', '[seed] fast shipping', '[seed] in stock', '[seed] buy now', '[seed] purchase', '[seed] checkout', '[seed] sale', '[seed] deal', '[seed] offer', '[seed] discount', '[seed] promo', 'shop [seed]', 'order [seed]', '[seed] amazon', '[seed] ebay', '[seed] walmart'],
+      'Healthcare': ['[seed] clinic', '[seed] doctor', '[seed] appointment', '[seed] near me', '[seed] consultation', '[seed] specialist', '[seed] treatment', '[seed] care', '[seed] hospital', '[seed] urgent care', '[seed] pharmacy', '[seed] telemedicine', 'find [seed]', '[seed] booking', '[seed] reviews'],
+      'Legal': ['[seed] lawyer', '[seed] attorney', '[seed] legal help', '[seed] advice', '[seed] consultation', '[seed] services', '[seed] firm', '[seed] office', '[seed] near me', '[seed] experienced', '[seed] expert', 'hire [seed]', 'contact [seed]'],
+      'Real Estate': ['[seed] listings', '[seed] homes', '[seed] properties', '[seed] for sale', '[seed] for rent', '[seed] agents', '[seed] houses', '[seed] apartments', '[seed] condos', '[seed] land', '[seed] commercial', 'buy [seed]', 'rent [seed]', '[seed] prices'],
+      'Finance': ['[seed] account', '[seed] application', '[seed] online', '[seed] approval', '[seed] calculator', '[seed] rates', '[seed] interest', '[seed] loan', '[seed] credit', '[seed] investment', '[seed] savings', 'apply for [seed]', 'open [seed]'],
+      'Education': ['[seed] course', '[seed] classes', '[seed] training', '[seed] certification', '[seed] online', '[seed] degree', '[seed] program', '[seed] school', '[seed] university', '[seed] college', '[seed] instructor', '[seed] tuition', 'enroll [seed]', 'register [seed]'],
+      'Services': ['[seed] service', '[seed] company', '[seed] local', '[seed] near me', '[seed] quote', '[seed] estimate', '[seed] contractor', '[seed] professional', '[seed] licensed', '[seed] experienced', '[seed] rates', '[seed] prices', 'hire [seed]', 'book [seed]', '[seed] available', '[seed] same day'],
+      'default': ['[seed] service', '[seed] help', '[seed] support', '[seed] online', 'find [seed]', 'get [seed]', '[seed] near me', '[seed] local', '[seed] cost', '[seed] price', 'best [seed]', 'top [seed]', '[seed] reviews', '[seed] rates']
     };
 
     const normalizedVertical = normalizeVertical(vertical);
     const extraPatterns = verticalExtras[normalizedVertical] || verticalExtras['default'];
 
-    for (const seed of seedList) {
-      if (generated >= needed) break;
-      
-      for (const pattern of extraPatterns) {
+    // Generate more keywords by cycling through seeds multiple times with different patterns
+    for (let cycle = 0; cycle < 3 && generated < needed; cycle++) {
+      for (const seed of seedList) {
         if (generated >= needed) break;
-        const kw = pattern.replace('[seed]', seed);
-        if (!kw.includes('[')) {
-          const prevLen = generatedKeywords.length;
-          addValidKeyword(kw, 'Medium', '$2.00', classifyIntent(kw), 'BROAD');
-          if (generatedKeywords.length > prevLen) generated++;
+        
+        const patternsToTry = extraPatterns.slice(cycle * Math.ceil(extraPatterns.length / 3), (cycle + 1) * Math.ceil(extraPatterns.length / 3));
+        for (const pattern of patternsToTry) {
+          if (generated >= needed) break;
+          const kw = pattern.replace('[seed]', seed);
+          if (!kw.includes('[')) {
+            const prevLen = generatedKeywords.length;
+            addValidKeyword(kw, 'Medium', '$2.00', classifyIntent(kw), 'BROAD');
+            if (generatedKeywords.length > prevLen) generated++;
+          }
         }
+      }
+    }
+  }
+
+  // Additional fallback: If still below min, generate simple variations
+  if (generatedKeywords.length < minKeywords && seedList.length > 0) {
+    const needed = minKeywords - generatedKeywords.length;
+    const simpleModifiers = [
+      'near me', 'nearby', 'local', 'in my area',
+      'best', 'top', 'quality', 'professional',
+      'cheap', 'affordable', 'cost', 'price',
+      '24/7', 'same day', 'emergency', 'urgent',
+      'online', 'digital', 'virtual', 'remote',
+      'free', 'free estimate', 'free quote', 'free consultation'
+    ];
+    
+    let added = 0;
+    for (const seed of seedList) {
+      for (const mod of simpleModifiers) {
+        if (added >= needed) break;
+        const kw = `${mod} ${seed}`;
+        const prevLen = generatedKeywords.length;
+        addValidKeyword(kw, 'Low', '$1.50', classifyIntent(kw), 'BROAD');
+        if (generatedKeywords.length > prevLen) added++;
       }
     }
   }

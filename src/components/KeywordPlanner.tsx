@@ -968,15 +968,6 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                 Set up your keyword generation parameters
                                             </p>
                                         </div>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={handleFillInfo}
-                                            className="bg-white border-gray-300 text-gray-700 hover:bg-violet-50 hover:text-violet-700 hover:border-violet-400 transition-all duration-300"
-                                        >
-                                            <Sparkles className="w-4 h-4 mr-2 text-violet-500" />
-                                            Auto Fill
-                                        </Button>
                                     </div>
 
                                     <div className="space-y-5">

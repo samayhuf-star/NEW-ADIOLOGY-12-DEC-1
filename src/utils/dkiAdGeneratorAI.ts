@@ -14,26 +14,32 @@ export interface DKIAdResult {
   description2: string;
 }
 
-function buildDKIDefault(keyword: string, maxLength: number = 20): string {
-  const words = keyword.split(' ');
-  let result = words[0];
-  for (let i = 1; i < words.length && result.length + words[i].length + 1 <= maxLength; i++) {
-    result += ' ' + words[i];
+function buildDKIDefault(keyword: string, maxLength: number = 30): string {
+  // Ensure we have a meaningful default text (not truncated)
+  let result = keyword.trim();
+  
+  // If keyword is too long for DKI placeholder, use first 25 chars of keyword as default
+  if (result.length > maxLength) {
+    result = result.substring(0, maxLength - 1).trim();
   }
+  
+  // Capitalize first letter
   return result.charAt(0).toUpperCase() + result.slice(1);
 }
 
 function getDefaultDKIAd(context: DKIAdContext): DKIAdResult {
   const mainKeyword = context.keywords[0] || context.industry || 'Service';
-  const dkiDefault = buildDKIDefault(mainKeyword, 12);
-  const shortDefault = buildDKIDefault(mainKeyword, 8);
+  // For headlines: max 30 chars (Google Ads limit)
+  // For descriptions: max 90 chars (Google Ads limit)
+  const headlineDefault = buildDKIDefault(mainKeyword, 28); // 28 chars + {KeyWord:} = ~39 chars total
+  const descriptionDefault = buildDKIDefault(mainKeyword, 85); // 85 chars + {KeyWord:} = ~94 chars total
   
   return {
-    headline1: `{KeyWord:${dkiDefault}} Experts`,
-    headline2: `Best {KeyWord:${shortDefault}} Near You`,
-    headline3: `Call ${context.businessName.substring(0, 20)} Today`,
-    description1: `Professional ${mainKeyword} services you can trust. ${context.businessName} delivers expert solutions. Contact us today.`,
-    description2: `Looking for quality ${mainKeyword}? We offer fast, reliable service with satisfaction guaranteed. Get your free quote now.`,
+    headline1: `{KeyWord:${headlineDefault}} Experts`,
+    headline2: `Best {KeyWord:${headlineDefault}} Today`,
+    headline3: `Professional ${context.businessName.substring(0, 15)} Service`,
+    description1: `Need {KeyWord:${descriptionDefault}}? We deliver expert, fast service. ${context.businessName} offers solutions you can trust. Contact us today.`,
+    description2: `Looking for {KeyWord:${descriptionDefault}}? We provide quality service with guaranteed satisfaction. Get your free estimate now.`,
   };
 }
 

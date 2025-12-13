@@ -7,7 +7,6 @@
             "@grapesjs/react": "^2.0.0",
             "@hono/node-server": "^1.19.7",
             "@jsr/supabase__supabase-js": "^2.49.8",
-            "@prisma/client": "^7.1.0",
             "@radix-ui/react-accordion": "^1.2.3",
             "@radix-ui/react-alert-dialog": "^1.1.6",
             "@radix-ui/react-aspect-ratio": "^1.1.2",
@@ -50,7 +49,7 @@
             "grapesjs": "^0.22.14",
             "grapesjs-blocks-basic": "^1.0.2",
             "grapesjs-preset-webpage": "^1.0.3",
-            "hono": "^4.11.0",
+            "hono": "*",
             "html2canvas": "^1.4.1",
             "input-otp": "^1.4.2",
             "jszip": "^3.10.1",
@@ -71,6 +70,7 @@
             "tailwind-merge": "*",
             "tsx": "^4.21.0",
             "vaul": "^1.1.2",
+            "xlsx": "^0.18.5",
             "xlsx-js-style": "^1.2.0",
             "zod": "^4.1.13"
       },
@@ -85,10 +85,8 @@
             "fs-extra": "^11.2.0",
             "handlebars": "^4.7.8",
             "postcss": "^8.5.6",
-            "prisma": "^7.1.0",
-            "rollup": "^4.53.3",
             "tailwindcss": "^4.1.17",
-            "vite": "^6.4.1"
+            "vite": "6.3.5"
       },
       "scripts": {
             "dev": "vite",

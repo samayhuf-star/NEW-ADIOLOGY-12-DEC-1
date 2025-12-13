@@ -51,9 +51,10 @@ import {
   generateLocationInput 
 } from '../utils/autoFill';
 import { getKeywordMetrics, type KeywordMetrics } from '../utils/keywordPlannerApi';
-import { GEO_PRESETS, US_STATES_ALL, US_CITIES_TOP_500, US_ZIP_CODES_EXTENDED } from '../data/locationPresets';
+import { GEO_PRESETS, US_STATES_ALL, US_CITIES_TOP_500, US_ZIP_CODES_EXTENDED, getGeoPresetsForCountry } from '../data/locationPresets';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 import { generateDKIAdWithAI } from '../utils/dkiAdGeneratorAI';
+import { CampaignFlowDiagram } from './CampaignFlowDiagram';
 
 // Campaign Structure Types (14 structures)
 const CAMPAIGN_STRUCTURES = [
@@ -310,6 +311,8 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
   const [showCallAdDialog, setShowCallAdDialog] = useState(false);
   const [callAdPhone, setCallAdPhone] = useState('');
   const [callAdBusinessName, setCallAdBusinessName] = useState('');
+  const [showFlowDiagram, setShowFlowDiagram] = useState(false);
+  const [selectedStructureForDiagram, setSelectedStructureForDiagram] = useState<{ id: string; name: string } | null>(null);
   const [campaignData, setCampaignData] = useState<CampaignData>({
     url: '',
     campaignName: generateDefaultCampaignName(),
@@ -2675,34 +2678,47 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
           const Icon = structure.icon;
 
           return (
-            <Card
-              key={structure.id}
-              className={`cursor-pointer transition-all p-2 ${
-                isSelected
-                  ? 'ring-2 ring-indigo-500 bg-indigo-50'
-                  : 'hover:shadow-md hover:border-indigo-200'
-              }`}
-              onClick={() => handleStructureSelect(structure.id)}
-            >
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-1.5">
-                  <Icon className="w-4 h-4 text-indigo-600 shrink-0" />
-                  <span className="text-sm font-semibold text-slate-800 truncate">{structure.name}</span>
+            <div key={structure.id} className="relative group">
+              <Card
+                className={`cursor-pointer transition-all p-2 ${
+                  isSelected
+                    ? 'ring-2 ring-indigo-500 bg-indigo-50'
+                    : 'hover:shadow-md hover:border-indigo-200'
+                }`}
+                onClick={() => handleStructureSelect(structure.id)}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-1.5">
+                    <Icon className="w-4 h-4 text-indigo-600 shrink-0" />
+                    <span className="text-sm font-semibold text-slate-800 truncate">{structure.name}</span>
+                  </div>
+                  {isRecommended && rankLabel && (
+                    <Badge variant={ranking === 0 ? 'default' : 'secondary'} className="text-[10px] px-1.5 py-0 h-4">
+                      {rankLabel}
+                    </Badge>
+                  )}
                 </div>
-                {isRecommended && rankLabel && (
-                  <Badge variant={ranking === 0 ? 'default' : 'secondary'} className="text-[10px] px-1.5 py-0 h-4">
-                    {rankLabel}
-                  </Badge>
+                <p className="text-xs text-slate-500 line-clamp-1">{structure.description}</p>
+                {isSelected && (
+                  <div className="flex items-center gap-1 text-indigo-600 mt-1">
+                    <CheckCircle2 className="w-3 h-3" />
+                    <span className="text-xs font-medium">Selected</span>
+                  </div>
                 )}
-              </div>
-              <p className="text-xs text-slate-500 line-clamp-1">{structure.description}</p>
-              {isSelected && (
-                <div className="flex items-center gap-1 text-indigo-600 mt-1">
-                  <CheckCircle2 className="w-3 h-3" />
-                  <span className="text-xs font-medium">Selected</span>
-                </div>
-              )}
-            </Card>
+              </Card>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute -top-8 left-0 opacity-0 group-hover:opacity-100 transition-opacity text-xs h-6"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedStructureForDiagram({ id: structure.id, name: structure.name });
+                  setShowFlowDiagram(true);
+                }}
+              >
+                View Structure
+              </Button>
+            </div>
           );
         })}
       </div>
@@ -3140,20 +3156,6 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                       </Button>
                     );
                   })}
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      // Add all extensions at once
-                      extensionTypes.forEach(ext => {
-                        handleAddExtensionToAllAds(ext.id);
-                      });
-                    }}
-                    disabled={loading}
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed text-xs px-2 py-0.5 h-6"
-                  >
-                    <Plus className="w-3 h-3 mr-1" />
-                    ADD ALL
-                  </Button>
                 </div>
               </div>
             </div>
@@ -3641,28 +3643,29 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
   const renderStep5 = () => {
     const handlePresetSelect = (type: 'cities' | 'states' | 'zips', preset: string) => {
       let items: string[] = [];
+      const countryPresets = getGeoPresetsForCountry(campaignData.targetCountry);
       
       if (type === 'cities') {
-        if (preset === 'top50') items = GEO_PRESETS.cities.top50;
-        else if (preset === 'top250') items = GEO_PRESETS.cities.top250;
-        else if (preset === 'top500') items = GEO_PRESETS.cities.top500;
+        if (preset === 'top50') items = countryPresets.cities.top50;
+        else if (preset === 'top250') items = countryPresets.cities.top250;
+        else if (preset === 'top500') items = countryPresets.cities.top500;
         setCampaignData(prev => ({ 
           ...prev, 
           locations: { ...prev.locations, cities: items, states: [], zipCodes: [] }
         }));
       } else if (type === 'states') {
-        if (preset === 'top10') items = GEO_PRESETS.states.top10;
-        else if (preset === 'top25') items = GEO_PRESETS.states.top25;
-        else if (preset === 'top50') items = GEO_PRESETS.states.top50;
+        if (preset === 'top10') items = countryPresets.states.top10;
+        else if (preset === 'top25') items = countryPresets.states.top25;
+        else if (preset === 'top50') items = countryPresets.states.top50;
         setCampaignData(prev => ({ 
           ...prev, 
           locations: { ...prev.locations, states: items, cities: [], zipCodes: [] }
         }));
       } else if (type === 'zips') {
-        if (preset === 'top1000') items = GEO_PRESETS.zips.top1000;
-        else if (preset === 'top5000') items = GEO_PRESETS.zips.top5000;
-        else if (preset === 'top15000') items = GEO_PRESETS.zips.top15000;
-        else if (preset === 'top25000') items = GEO_PRESETS.zips.top25000;
+        if (preset === 'top1000') items = countryPresets.zips.top1000;
+        else if (preset === 'top5000') items = countryPresets.zips.top5000;
+        else if (preset === 'top15000') items = countryPresets.zips.top15000;
+        else if (preset === 'top25000') items = countryPresets.zips.top25000;
         setCampaignData(prev => ({ 
           ...prev, 
           locations: { ...prev.locations, zipCodes: items, cities: [], states: [] }
@@ -4224,6 +4227,94 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
 
           </CardContent>
         </Card>
+
+          {/* Generation Logic Details */}
+          <Card className="mb-6 border-2 border-slate-200/60 bg-white/80 backdrop-blur-xl shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50 border-b border-slate-200 py-3 px-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shadow-md">
+                  <FileText className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg text-slate-900">Generation Logic Details</CardTitle>
+                  <CardDescription className="text-xs text-slate-600 mt-0.5">Backend calculations and structure breakdown</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              {/* Structure Logic */}
+              <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
+                <h4 className="font-semibold text-indigo-800 mb-2 flex items-center gap-2">
+                  <Layers className="w-4 h-4" />
+                  Campaign Structure: {structureName}
+                </h4>
+                <p className="text-sm text-indigo-700">
+                  {campaignData.selectedStructure === 'skag' && 'SKAG (Single Keyword Ad Groups): Each keyword gets its own ad group for maximum relevance and Quality Score. This creates 1 ad group per unique keyword.'}
+                  {campaignData.selectedStructure === 'stag' && 'STAG (Single Theme Ad Groups): Keywords are grouped by theme/intent. Related keywords share an ad group for efficient management.'}
+                  {campaignData.selectedStructure === 'intent' && 'Intent-Based: Keywords organized by user intent (informational, navigational, transactional). Ads tailored to each intent type.'}
+                  {campaignData.selectedStructure === 'alpha_beta' && 'Alpha-Beta: Alpha campaign for exact match winners, Beta for broad match discovery. Optimizes budget allocation.'}
+                  {campaignData.selectedStructure === 'funnel' && 'Funnel-Based: Top/Middle/Bottom funnel structure. Targets users at different stages of the buying journey.'}
+                  {campaignData.selectedStructure === 'geo' && 'Geo-Based: Location-focused ad groups. Each geographic area gets targeted messaging.'}
+                  {campaignData.selectedStructure === 'brand_split' && 'Brand Split: Separates brand vs. non-brand keywords for different bidding strategies.'}
+                  {!['skag', 'stag', 'intent', 'alpha_beta', 'funnel', 'geo', 'brand_split'].includes(campaignData.selectedStructure || '') && 'Standard campaign structure with optimized keyword grouping.'}
+                </p>
+              </div>
+
+              {/* Metrics Breakdown */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Ad Groups Logic */}
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <h4 className="font-semibold text-blue-800 mb-2">{campaignData.adGroups.length} Ad Groups</h4>
+                  <p className="text-sm text-blue-700">
+                    {campaignData.selectedStructure === 'skag' 
+                      ? `Created 1 ad group per keyword. With ${campaignData.selectedKeywords.length} selected keywords, SKAG structure groups them into ${campaignData.adGroups.length} focused ad groups.`
+                      : `Keywords grouped by theme/pattern into ${campaignData.adGroups.length} ad groups for optimal organization.`
+                    }
+                  </p>
+                </div>
+
+                {/* Ads Logic */}
+                <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                  <h4 className="font-semibold text-orange-800 mb-2">{campaignData.ads.length * Math.max(1, campaignData.adGroups.length)} Ads</h4>
+                  <p className="text-sm text-orange-700">
+                    {campaignData.ads.length} ad template(s) × {campaignData.adGroups.length} ad groups = {campaignData.ads.length * campaignData.adGroups.length} total ads. 
+                    Types: {campaignData.ads.map(a => a.type?.toUpperCase()).filter((v, i, arr) => arr.indexOf(v) === i).join(', ') || 'RSA, DKI'}.
+                  </p>
+                </div>
+
+                {/* Keywords Logic */}
+                <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                  <h4 className="font-semibold text-purple-800 mb-2">{campaignData.selectedKeywords.length} Keywords</h4>
+                  <p className="text-sm text-purple-700">
+                    Generated from {campaignData.seedKeywords.length} seed keywords using pattern expansion (modifiers, locations, intents). 
+                    Match types: Broad, Phrase, Exact. Excludes {campaignData.negativeKeywords.length} negative keywords.
+                  </p>
+                </div>
+
+                {/* Assets Logic */}
+                <div className="bg-teal-50 rounded-lg p-4 border border-teal-200">
+                  <h4 className="font-semibold text-teal-800 mb-2">{campaignData.ads.reduce((total, ad) => total + (ad.extensions?.length || 0), 0)} Assets</h4>
+                  <p className="text-sm text-teal-700">
+                    Ad extensions including sitelinks, callouts, structured snippets, and call extensions. 
+                    These enhance ad visibility and click-through rates.
+                  </p>
+                </div>
+              </div>
+
+              {/* CSV Export Info */}
+              <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                <h4 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
+                  <Download className="w-4 h-4" />
+                  CSV Export Format
+                </h4>
+                <p className="text-sm text-green-700">
+                  Master 183-column Google Ads Editor format. Includes campaign settings, ad groups, keywords, RSA ads, 
+                  location targeting ({locationInfo.count} {locationInfo.type.toLowerCase()}), and all extensions. 
+                  Ready for direct import into Google Ads Editor.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Primary Action Section */}
           <div className="mb-6">

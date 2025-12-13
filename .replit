@@ -5,7 +5,7 @@ integrations = ["javascript_openai_ai_integrations:1.0.0", "stripe:2.0.0"]
 
 [nix]
 channel = "stable-25_05"
-packages = ["imagemagick_light", "mailutils", "psmisc"]
+packages = ["imagemagick_light", "mailutils", "psmisc", "speech-tools", "nano"]
 
 [workflows]
 runButton = "Project"
@@ -27,13 +27,13 @@ args = "Admin API Server"
 name = "Frontend Dev Server"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev"
-waitForPort = 5000
-
 [workflows.workflow.metadata]
 outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx vite --host 0.0.0.0 --port 5000"
+waitForPort = 5000
 
 [[workflows.workflow]]
 name = "Admin API Server"
@@ -49,15 +49,11 @@ outputType = "console"
 
 [[ports]]
 localPort = 3001
-externalPort = 3001
+externalPort = 3003
 
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 5001
-externalPort = 3003
 
 [deployment]
 deploymentTarget = "autoscale"
