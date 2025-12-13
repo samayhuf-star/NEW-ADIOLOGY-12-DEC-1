@@ -1390,7 +1390,7 @@ app.get('/api/google-ads/callback', async (c) => {
     // Store refresh token in database for persistence
     try {
       await pool.query(
-        `INSERT INTO google_ads_tokens (id, refresh_token, created_at) 
+        `INSERT INTO adiology_google_ads_accounts (id, refresh_token, created_at) 
          VALUES ('default', $1, NOW()) 
          ON CONFLICT (id) DO UPDATE SET refresh_token = $1, updated_at = NOW()`,
         [tokens.refresh_token]
@@ -1413,7 +1413,7 @@ app.get('/api/google-ads/status', async (c) => {
   // Try to load from database if no tokens in memory
   if (!hasTokens) {
     try {
-      const result = await pool.query('SELECT refresh_token FROM google_ads_tokens WHERE id = $1', ['default']);
+      const result = await pool.query('SELECT refresh_token FROM adiology_google_ads_accounts WHERE id = $1', ['default']);
       if (result.rows.length > 0) {
         googleAdsTokens.refresh_token = result.rows[0].refresh_token;
       }
@@ -1433,7 +1433,7 @@ async function refreshAccessToken(): Promise<string | null> {
   if (!googleAdsTokens.refresh_token) {
     // Try to load from database
     try {
-      const result = await pool.query('SELECT refresh_token FROM google_ads_tokens WHERE id = $1', ['default']);
+      const result = await pool.query('SELECT refresh_token FROM adiology_google_ads_accounts WHERE id = $1', ['default']);
       if (result.rows.length > 0) {
         googleAdsTokens.refresh_token = result.rows[0].refresh_token;
       }
@@ -1529,7 +1529,7 @@ app.post('/api/google-ads/keyword-research', async (c) => {
         metrics.ctr,
         metrics.average_cpc,
         metrics.cost_micros
-      FROM keyword_view
+      FROM adiology_keywords
       WHERE segments.date BETWEEN '${startDateStr}' AND '${endDateStr}'
         AND (${keywordConditions})
       ORDER BY metrics.impressions DESC
@@ -2649,7 +2649,7 @@ app.get('/api/dashboard/:userId', async (c) => {
     
     // Get campaign history count
     const campaignsResult = await pool.query(
-      `SELECT COUNT(*) as count FROM campaign_history WHERE user_id = $1`,
+      `SELECT COUNT(*) as count FROM adiology_campaigns WHERE user_id = $1`,
       [userId]
     );
     
@@ -2662,7 +2662,7 @@ app.get('/api/dashboard/:userId', async (c) => {
     // Get recent campaigns (last 10)
     const recentCampaignsResult = await pool.query(
       `SELECT id, campaign_name, structure_type, step, created_at, updated_at
-       FROM campaign_history 
+       FROM adiology_campaigns 
        WHERE user_id = $1 
        ORDER BY updated_at DESC 
        LIMIT 10`,
