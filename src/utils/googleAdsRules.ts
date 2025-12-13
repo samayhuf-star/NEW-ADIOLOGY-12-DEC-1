@@ -85,9 +85,17 @@ export function buildDKIDefault(
     }
   }
 
-  // Strategy 2: If first word is still too long, hard truncate it
+  // Strategy 2: If first word is still too long, use a short generic fallback
+  // Never truncate a word in the middle as it looks unprofessional
   if (!truncated && words[0]) {
-    truncated = words[0].substring(0, maxLength);
+    // If first word fits, use it; otherwise use a short generic term
+    if (words[0].length <= maxLength) {
+      truncated = words[0];
+    } else {
+      // Use progressively shorter fallbacks that always fit
+      const fallbacks = ['Services', 'Service', 'Help', 'Pro'];
+      truncated = fallbacks.find(f => f.length <= maxLength) || 'Pro';
+    }
   }
 
   // Strategy 3: If still empty, use a safe default
