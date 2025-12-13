@@ -638,7 +638,7 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
             console.log('[Keyword Planner] API unavailable - using local fallback');
             setDataSource('local');
             
-            // FALLBACK: Generate quality keywords locally
+            // FALLBACK: Generate 150-200 quality keywords locally
             const seeds = seedKeywords.split(',').map(s => s.trim()).filter(Boolean);
             const negatives = normalizedNegativeKeywords.map(n => n.toLowerCase());
             
@@ -646,12 +646,29 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
             
             const preModifiers = [
                 'best', 'top', 'professional', 'reliable', 'trusted', 'local',
-                'affordable', 'certified', 'licensed', '24/7', 'emergency', 'same day'
+                'affordable', 'certified', 'licensed', '24/7', 'emergency', 'same day',
+                'quality', 'experienced', 'expert', 'rated', 'recommended', 'nearby',
+                'fast', 'quick', 'urgent', 'premier', 'leading', 'premium'
             ];
             
             const postModifiers = [
                 'near me', 'services', 'company', 'companies', 'contractor',
-                'specialist', 'expert', 'repair', 'cost', 'prices', 'quote'
+                'specialist', 'expert', 'repair', 'cost', 'prices', 'quote',
+                'in my area', 'nearby', 'local', 'professionals', 'providers',
+                'solutions', 'options', 'assistance', 'help', 'support', 'consultation'
+            ];
+            
+            const combinedModifiers = [
+                'best {seed} near me',
+                'top rated {seed} services',
+                'professional {seed} company',
+                'affordable {seed} near me',
+                'local {seed} services',
+                '24/7 {seed} services',
+                'emergency {seed} near me',
+                'trusted {seed} company',
+                'certified {seed} professionals',
+                'licensed {seed} contractor'
             ];
             
             const questionTemplates = [
@@ -659,7 +676,12 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                 '{seed} pricing guide',
                 'where to get {seed}',
                 '{seed} options near me',
-                'compare {seed} prices'
+                'compare {seed} prices',
+                'find {seed} near me',
+                'get {seed} quote',
+                '{seed} estimates',
+                'hire {seed} professional',
+                'book {seed} service'
             ];
             
             seeds.forEach(seed => {
@@ -681,6 +703,13 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                     }
                 });
                 
+                combinedModifiers.forEach(template => {
+                    const combined = template.replace('{seed}', seed);
+                    if (!negatives.some(neg => combined.toLowerCase().includes(neg))) {
+                        mockKeywords.push(combined);
+                    }
+                });
+                
                 questionTemplates.forEach(template => {
                     const combined = template.replace('{seed}', seed);
                     if (!negatives.some(neg => combined.toLowerCase().includes(neg))) {
@@ -689,10 +718,13 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                 });
             });
             
+            // Deduplicate keywords and cap at 150-200 base keywords
+            const uniqueKeywords = [...new Set(mockKeywords)].slice(0, 200);
+            
             const formattedKeywords: string[] = [];
             const enriched: EnrichedKeyword[] = [];
             
-            mockKeywords.forEach((keyword: string) => {
+            uniqueKeywords.forEach((keyword: string) => {
                 if (matchTypes.broad) {
                     formattedKeywords.push(keyword);
                     enriched.push({ text: keyword, matchType: 'broad' });
@@ -964,30 +996,6 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                             <p className="text-xs text-gray-500">
                                                 Enter 3-5 core keywords, comma-separated
                                             </p>
-                                            
-                                            {/* AI Suggestions */}
-                                            {suggestedKeywords.length > 0 && (
-                                                <div className="mt-4 p-4 rounded-xl bg-purple-50 border border-purple-200">
-                                                    <div className="flex items-center gap-2 mb-3">
-                                                        <Lightbulb className="w-4 h-4 text-purple-600" />
-                                                        <span className="text-sm font-medium text-purple-700">AI Suggestions</span>
-                                                    </div>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {suggestedKeywords.map((keyword, idx) => (
-                                                            <Button
-                                                                key={idx}
-                                                                variant="outline"
-                                                                size="sm"
-                                                                onClick={() => applySuggestedKeyword(keyword)}
-                                                                className="h-8 text-xs bg-white border-purple-300 text-purple-700 hover:bg-purple-100 hover:border-purple-400 hover:text-purple-800 transition-all duration-200"
-                                                            >
-                                                                <Plus className="w-3 h-3 mr-1.5" />
-                                                                {keyword}
-                                                            </Button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
                                         </div>
 
                                         {/* Match Types */}
