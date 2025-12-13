@@ -29,3 +29,5 @@ Thumbs.db
 
 # Generated templates (optional - uncomment if you don't want to track generated files)
 # dist/
+
+/generated/prisma
