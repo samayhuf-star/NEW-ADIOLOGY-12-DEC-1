@@ -537,19 +537,56 @@ export const CampaignPresets: React.FC<CampaignPresetsProps> = ({ onLoadPreset }
                         variant="outline"
                         size="sm"
                         className="border-slate-300 hover:bg-slate-50 whitespace-nowrap"
-                        onClick={(e) => {
+                        onClick={(e: React.MouseEvent) => {
                           e.stopPropagation();
                           handleSelectPreset(preset);
                         }}
                         title="View campaign details"
                       >
                         <Eye className="w-4 h-4 mr-1.5" />
-                        View
+                        VIEW
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-indigo-300 text-indigo-600 hover:bg-indigo-50 whitespace-nowrap"
+                        onClick={async (e: React.MouseEvent) => {
+                          e.stopPropagation();
+                          await historyService.save(
+                            'campaign',
+                            preset.title,
+                            {
+                              presetId: preset.slug,
+                              presetData: preset,
+                              campaignName: preset.campaign_name,
+                              structure: preset.structure,
+                              keywords: preset.keywords,
+                              adGroups: preset.ad_groups,
+                              ads: preset.ads,
+                              negativeKeywords: preset.negative_keywords,
+                              finalUrl: preset.final_url,
+                              maxCpc: preset.max_cpc,
+                              dailyBudget: preset.daily_budget,
+                              fromPreset: true,
+                              editable: true
+                            },
+                            'draft'
+                          );
+                          notifications.success(`"${preset.title}" saved to your campaigns for editing`, {
+                            title: 'Saved to Campaigns'
+                          });
+                          setSelectedPreset(preset);
+                          setShowReview(true);
+                        }}
+                        title="Edit and save to your campaigns"
+                      >
+                        <Edit className="w-4 h-4 mr-1.5" />
+                        Edit
                       </Button>
                       <Button
                         size="sm"
                         className="theme-button-primary whitespace-nowrap"
-                        onClick={(e) => {
+                        onClick={(e: React.MouseEvent) => {
                           e.stopPropagation();
                           handleExportCSV(preset);
                         }}
@@ -617,24 +654,63 @@ export const CampaignPresets: React.FC<CampaignPresetsProps> = ({ onLoadPreset }
                 )}
               </div>
 
-              <div className="flex gap-1.5 mt-auto">
-              <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 border-slate-300 hover:bg-slate-50 text-[10px] h-7 px-1.5"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleSelectPreset(preset);
-                }}
-                  title="View campaign details"
-                >
-                  <Eye className="w-3 h-3 mr-0.5" />
-                  View
-                </Button>
+              <div className="flex flex-col gap-1 mt-auto">
+                <div className="flex gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 border-slate-300 hover:bg-slate-50 text-[10px] h-7 px-1.5"
+                    onClick={(e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      handleSelectPreset(preset);
+                    }}
+                    title="View campaign details"
+                  >
+                    <Eye className="w-3 h-3 mr-0.5" />
+                    VIEW
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 border-indigo-300 text-indigo-600 hover:bg-indigo-50 text-[10px] h-7 px-1.5"
+                    onClick={async (e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      await historyService.save(
+                        'campaign',
+                        preset.title,
+                        {
+                          presetId: preset.slug,
+                          presetData: preset,
+                          campaignName: preset.campaign_name,
+                          structure: preset.structure,
+                          keywords: preset.keywords,
+                          adGroups: preset.ad_groups,
+                          ads: preset.ads,
+                          negativeKeywords: preset.negative_keywords,
+                          finalUrl: preset.final_url,
+                          maxCpc: preset.max_cpc,
+                          dailyBudget: preset.daily_budget,
+                          fromPreset: true,
+                          editable: true
+                        },
+                        'draft'
+                      );
+                      notifications.success(`Saved to campaigns`, {
+                        title: 'Ready to Edit'
+                      });
+                      setSelectedPreset(preset);
+                      setShowReview(true);
+                    }}
+                    title="Edit and save to campaigns"
+                  >
+                    <Edit className="w-3 h-3 mr-0.5" />
+                    Edit
+                  </Button>
+                </div>
                 <Button
                   size="sm"
-                  className="flex-1 theme-button-primary text-[10px] h-7 px-1.5"
-                  onClick={(e) => {
+                  className="w-full theme-button-primary text-[10px] h-7 px-1.5"
+                  onClick={(e: React.MouseEvent) => {
                     e.stopPropagation();
                     handleExportCSV(preset);
                   }}
@@ -642,7 +718,7 @@ export const CampaignPresets: React.FC<CampaignPresetsProps> = ({ onLoadPreset }
                 >
                   <Download className="w-3 h-3 mr-0.5" />
                   Export
-              </Button>
+                </Button>
               </div>
             </div>
           </div>
