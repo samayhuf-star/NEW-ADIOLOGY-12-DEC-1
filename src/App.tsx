@@ -549,17 +549,33 @@ const App = () => {
           }, 0);
         }
 
-        // Handle email verification
+        // Handle email verification - detect auth callback tokens in URL
         if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at && isMounted) {
-          // User just verified email, redirect to auth
-          if (window.location.pathname.includes('/verify-email')) {
+          // Check if this was an email verification callback (tokens in URL hash or query)
+          const hashParams = new URLSearchParams(window.location.hash.substring(1));
+          const urlParams = new URLSearchParams(window.location.search);
+          const authType = hashParams.get('type') || urlParams.get('type');
+          
+          // Only handle email verification callbacks (type=signup or type=email)
+          // Do NOT match other auth types like 'recovery' to avoid breaking password reset flow
+          const isEmailVerification = authType === 'signup' || authType === 'email' || 
+                                       window.location.pathname.includes('/verify-email');
+          
+          if (isEmailVerification) {
+            // Show success notification
+            notificationService.success('Email verified successfully!', {
+              title: 'Verification Complete',
+              description: 'Your email has been verified. Please log in to continue.',
+            });
+            
             setTimeout(() => {
               if (isMounted) {
-                window.history.pushState({}, '', '/');
+                // Clean up URL and redirect to auth/login
+                window.history.replaceState({}, '', '/');
                 setAppView('auth');
                 setAuthMode('login');
               }
-            }, 0);
+            }, 500);
           }
         }
       }, 100); // Debounce by 100ms to prevent rapid-fire updates
@@ -591,6 +607,38 @@ const App = () => {
     const path = window.location.pathname;
     const urlParams = new URLSearchParams(window.location.search);
     const bypassKey = urlParams.get('bypass');
+    
+    // Check for Supabase auth callback tokens in URL hash or query params
+    // Supabase sends verification links with tokens like: #access_token=xxx&type=signup
+    // or with PKCE flow: ?code=xxx&type=signup
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const hasAuthTokenInHash = hashParams.get('access_token') || hashParams.get('type');
+    const hasAuthCodeInQuery = urlParams.get('code') && urlParams.get('type');
+    const authType = hashParams.get('type') || urlParams.get('type');
+    
+    // If we have auth tokens in URL, let Supabase client handle them
+    // The detectSessionInUrl: true will process these automatically
+    // We just need to show a loading state and clean up the URL after
+    if (hasAuthTokenInHash || hasAuthCodeInQuery) {
+      // For email verification (type=signup), show the verify-email page briefly
+      // The auth state change listener will redirect after verification completes
+      if (authType === 'signup' || authType === 'email') {
+        // Clean up URL hash/params after a short delay to let Supabase process
+        setTimeout(() => {
+          if (isActive) {
+            window.history.replaceState({}, '', '/');
+          }
+        }, 1000);
+        // Don't set to verify-email view - let the auth state change handle it
+        // The user will see a brief loading state then be redirected
+        return;
+      }
+      
+      // For password recovery, the auth state change listener handles it
+      if (authType === 'recovery') {
+        return;
+      }
+    }
 
     const setView = (next: AppView) => {
       setAppView(prev => (prev === next ? prev : next));
