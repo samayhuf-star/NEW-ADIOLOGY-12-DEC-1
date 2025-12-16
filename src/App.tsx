@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { 
-  LayoutDashboard, TrendingUp, Settings, Bell, Search, Menu, X, FileCheck, Lightbulb, Shuffle, MinusCircle, Shield, HelpCircle, Megaphone, User, LogOut, Sparkles, Zap, Package, Clock, ChevronDown, ChevronRight, FolderOpen, TestTube, Code, Download, GitCompare, Globe, CreditCard, ArrowRight
+  LayoutDashboard, TrendingUp, Settings, Bell, Search, Menu, X, FileCheck, Lightbulb, Shuffle, MinusCircle, Shield, HelpCircle, Megaphone, User, LogOut, Sparkles, Zap, Package, Clock, ChevronDown, ChevronRight, FolderOpen, TestTube, Code, Download, GitCompare, Globe, CreditCard, ArrowRight, Users
 } from 'lucide-react';
 import { useTheme } from './contexts/ThemeContext';
 import { COLOR_CLASSES } from './utils/colorScheme';
@@ -54,6 +54,7 @@ import CreativeMinimalistHomepage from './components/CreativeMinimalistHomepage'
 import { notifications as notificationService } from './utils/notifications';
 import { WebTemplates } from './components/WebTemplates';
 import { PlanSelection } from './components/PlanSelection';
+import { Teams } from './components/Teams';
 
 type AppView = 'homepage' | 'auth' | 'user' | 'verify-email' | 'reset-password' | 'payment' | 'payment-success' | 'plan-selection' | 'privacy-policy' | 'terms-of-service' | 'cookie-policy' | 'gdpr-compliance' | 'refund-policy';
 
@@ -135,6 +136,7 @@ const App = () => {
     'web-templates',
     'saved-websites',
     'connected-websites',
+    'teams',
   ]);
 
   // Safe setActiveTab wrapper that validates and redirects to dashboard if invalid
@@ -844,6 +846,7 @@ const App = () => {
         { id: 'connected-websites', label: 'Connected Websites', icon: Globe },
       ]
     },
+    { id: 'teams', label: 'Teams', icon: Users },
     { id: 'settings', label: 'Settings', icon: Settings },
     { id: 'support-help', label: 'Support & Help', icon: HelpCircle },
   ];
@@ -1291,6 +1294,8 @@ const App = () => {
         return <SupportHelpCombined />;
       case 'support':
         return <SupportPanel />;
+      case 'teams':
+        return <Teams />;
       case 'settings':
         return <SettingsPanel />;
       case 'billing':
