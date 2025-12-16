@@ -214,6 +214,78 @@ app.get('/api/stripe/products', async (c) => {
   }
 });
 
+// Create payment intent for direct card payments
+app.post('/api/stripe/create-payment-intent', async (c) => {
+  try {
+    const body = await c.req.json();
+    const { priceId, planName, amount, isSubscription, userId } = body;
+
+    if (!priceId || !amount) {
+      return c.json({ error: 'Missing required fields' }, 400);
+    }
+
+    const stripe = await getUncachableStripeClient();
+
+    // For subscriptions, we should use Stripe Checkout instead
+    if (isSubscription) {
+      return c.json({ error: 'Use checkout for subscriptions' }, 400);
+    }
+
+    // For one-time payments, create a payment intent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount,
+      currency: 'usd',
+      metadata: {
+        planName,
+        userId: userId || 'anonymous',
+      },
+    });
+
+    return c.json({ clientSecret: paymentIntent.client_secret });
+  } catch (error: any) {
+    console.error('Payment Intent error:', error);
+    return c.json({ error: error.message || 'Failed to create payment intent' }, 500);
+  }
+});
+
+// Create checkout session for subscriptions
+app.post('/api/stripe/create-checkout-session', async (c) => {
+  try {
+    const body = await c.req.json();
+    const { priceId, planName, userId } = body;
+
+    if (!priceId) {
+      return c.json({ error: 'Missing priceId' }, 400);
+    }
+
+    const stripe = await getUncachableStripeClient();
+    const domain = process.env.REPLIT_DOMAINS?.split(',')[0] || process.env.REPLIT_DEV_DOMAIN || 'localhost:5000';
+    const protocol = domain.includes('localhost') ? 'http' : 'https';
+    const baseUrl = `${protocol}://${domain}`;
+
+    // Check if price is recurring or one-time
+    const price = await stripe.prices.retrieve(priceId);
+    const mode = price.recurring ? 'subscription' : 'payment';
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [{ price: priceId, quantity: 1 }],
+      mode,
+      success_url: `${baseUrl}/?payment=success&plan=${planName}`,
+      cancel_url: `${baseUrl}/?payment=canceled`,
+      metadata: {
+        planName,
+        userId: userId || 'anonymous',
+      },
+    });
+
+    return c.json({ sessionId: session.id, url: session.url });
+  } catch (error: any) {
+    console.error('Checkout Session error:', error);
+    return c.json({ error: error.message || 'Failed to create checkout session' }, 500);
+  }
+});
+
 app.post('/api/stripe/checkout', async (c) => {
   try {
     const body = await c.req.json();
