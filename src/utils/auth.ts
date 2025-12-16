@@ -244,17 +244,43 @@ export async function createUserProfile(userId: string, email: string, fullName:
         }
       }
       
-      // If it's a duplicate key error, try to fetch the existing profile
+      // If it's a duplicate key error (email already exists), try to fetch and update the existing profile
       if (error.code === '23505' || error.message?.includes('duplicate')) {
-        console.log('Profile already exists (duplicate key), fetching it...');
+        console.log('Profile already exists (duplicate key), fetching by email...');
+        
+        // Fetch by email instead of user ID - the profile might have been created with a different user ID
         const { data: existingData, error: fetchError } = await supabase
           .from('users')
           .select('*')
-          .eq('id', userId)
-          .single();
+          .eq('email', email)
+          .maybeSingle();
         
         if (!fetchError && existingData) {
-          console.log('✅ Fetched existing user profile');
+          console.log('✅ Found existing user profile by email');
+          
+          // If the user ID doesn't match, update the profile to use the new user ID
+          if (existingData.id !== userId) {
+            console.log('Updating profile user ID from', existingData.id, 'to', userId);
+            const { data: updatedData, error: updateError } = await supabase
+              .from('users')
+              .update({ 
+                id: userId,
+                full_name: fullName || existingData.full_name,
+                updated_at: new Date().toISOString()
+              })
+              .eq('email', email)
+              .select()
+              .maybeSingle();
+            
+            if (!updateError && updatedData) {
+              console.log('✅ Updated user profile with new user ID');
+              return updatedData;
+            }
+            
+            // If update failed, still return the existing data - user can continue
+            console.warn('⚠️ Could not update user ID, but returning existing profile');
+          }
+          
           return existingData;
         }
         
@@ -265,7 +291,9 @@ export async function createUserProfile(userId: string, email: string, fullName:
             console.warn('⚠️ Table "users" not found when fetching existing profile.');
             return null;
           }
-          throw fetchError;
+          // Don't throw - return null and let the caller handle it gracefully
+          console.warn('⚠️ Could not fetch existing profile, continuing without it');
+          return null;
         }
       }
       
