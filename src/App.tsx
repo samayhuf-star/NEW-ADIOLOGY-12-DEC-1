@@ -1121,7 +1121,7 @@ const App = () => {
     return (
       <CreativeMinimalistHomepage
         onGetStarted={() => {
-          setAuthMode('login');
+          setAuthMode('signup');
           setAppView('auth');
         }}
         onLogin={() => {
