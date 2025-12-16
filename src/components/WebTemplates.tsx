@@ -1192,7 +1192,7 @@ const windowsTemplate: TemplateData = {
     heading: "Our Services",
     subheading: "Complete window and door solutions",
     items: [
-      { image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop", title: "Window Replacement", desc: "Double-hung, casement, sliding, and specialty windows", price: "From $399/window" },
+      { image: "https://images.unsplash.com/photo-1604147706283-d7119b5b822c?w=400&h=300&fit=crop", title: "Window Replacement", desc: "Double-hung, casement, sliding, and specialty windows", price: "From $399/window" },
       { image: "https://images.unsplash.com/photo-1555636222-cae831e670b3?w=400&h=300&fit=crop", title: "Entry Doors", desc: "Beautiful, secure front doors and patio doors", price: "From $899" },
       { image: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=300&fit=crop", title: "Window Repair", desc: "Glass replacement, seal repair, and hardware fixes", price: "From $149" }
     ]
@@ -1282,7 +1282,7 @@ const moversTemplate: TemplateData = {
     subheading: "Complete relocation solutions",
     items: [
       { image: "https://images.unsplash.com/photo-1600518464441-9154a4dea21b?w=400&h=300&fit=crop", title: "Local Moving", desc: "Same-day local moves with careful handling", price: "From $299" },
-      { image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop", title: "Long Distance", desc: "Interstate and cross-country relocations", price: "From $1,499" },
+      { image: "https://images.unsplash.com/photo-1600518464441-9306c5188764?w=400&h=300&fit=crop", title: "Long Distance", desc: "Interstate and cross-country relocations", price: "From $1,499" },
       { image: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400&h=300&fit=crop", title: "Packing Services", desc: "Professional packing and crating services", price: "From $199" }
     ]
   },
@@ -1815,9 +1815,9 @@ const locksmithTemplate: TemplateData = {
     heading: "Our Services",
     subheading: "Complete locksmith solutions",
     items: [
-      { image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop", title: "Emergency Lockout", desc: "Locked out? We'll get you back in quickly", price: "From $49" },
-      { image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop", title: "Lock Replacement", desc: "New locks installed for enhanced security", price: "From $89" },
-      { image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop", title: "Key Duplication", desc: "Fast key copying for all lock types", price: "From $15" }
+      { image: "https://images.unsplash.com/photo-1582139329536-e7284fece509?w=400&h=300&fit=crop", title: "Emergency Lockout", desc: "Locked out? We'll get you back in quickly", price: "From $49" },
+      { image: "https://images.unsplash.com/photo-1558002038-1055907df827?w=400&h=300&fit=crop", title: "Lock Replacement", desc: "New locks installed for enhanced security", price: "From $89" },
+      { image: "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=400&h=300&fit=crop", title: "Key Duplication", desc: "Fast key copying for all lock types", price: "From $15" }
     ]
   },
   testimonials: {
@@ -2211,9 +2211,9 @@ const homeSecurityTemplate: TemplateData = {
     heading: "Security Solutions",
     subheading: "Complete home protection",
     items: [
-      { image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop", title: "Security Systems", desc: "Professional alarm installation", price: "From $299" },
-      { image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop", title: "Video Surveillance", desc: "HD camera systems", price: "From $499" },
-      { image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop", title: "24/7 Monitoring", desc: "Professional monitoring service", price: "$29/month" }
+      { image: "https://images.unsplash.com/photo-1558002038-1055907df827?w=400&h=300&fit=crop", title: "Security Systems", desc: "Professional alarm installation", price: "From $299" },
+      { image: "https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=400&h=300&fit=crop", title: "Video Surveillance", desc: "HD camera systems", price: "From $499" },
+      { image: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=400&h=300&fit=crop", title: "24/7 Monitoring", desc: "Professional monitoring service", price: "$29/month" }
     ]
   },
   testimonials: {
@@ -2255,9 +2255,9 @@ const insulationTemplate: TemplateData = {
     heading: "Insulation Services",
     subheading: "Complete insulation solutions",
     items: [
-      { image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop", title: "Attic Insulation", desc: "Blown-in and batt insulation", price: "From $1/sq ft" },
-      { image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop", title: "Wall Insulation", desc: "Injection foam insulation", price: "From $2/sq ft" },
-      { image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop", title: "Spray Foam", desc: "Premium spray foam", price: "From $3/sq ft" }
+      { image: "https://images.unsplash.com/photo-1607400201889-565b1ee75f8e?w=400&h=300&fit=crop", title: "Attic Insulation", desc: "Blown-in and batt insulation", price: "From $1/sq ft" },
+      { image: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&h=300&fit=crop", title: "Wall Insulation", desc: "Injection foam insulation", price: "From $2/sq ft" },
+      { image: "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400&h=300&fit=crop", title: "Spray Foam", desc: "Premium spray foam", price: "From $3/sq ft" }
     ]
   },
   testimonials: {
@@ -2299,9 +2299,9 @@ const chimneyTemplate: TemplateData = {
     heading: "Our Services",
     subheading: "Complete chimney care",
     items: [
-      { image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop", title: "Chimney Cleaning", desc: "Remove soot and creosote buildup", price: "From $149" },
-      { image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop", title: "Chimney Repair", desc: "Fix cracks, caps, and liners", price: "From $199" },
-      { image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop", title: "Inspection", desc: "Full chimney safety inspection", price: "From $99" }
+      { image: "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=400&h=300&fit=crop", title: "Chimney Cleaning", desc: "Remove soot and creosote buildup", price: "From $149" },
+      { image: "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=400&h=300&fit=crop", title: "Chimney Repair", desc: "Fix cracks, caps, and liners", price: "From $199" },
+      { image: "https://images.unsplash.com/photo-1544984243-ec57ea16fe25?w=400&h=300&fit=crop", title: "Inspection", desc: "Full chimney safety inspection", price: "From $99" }
     ]
   },
   testimonials: {
@@ -2433,7 +2433,7 @@ const wifiPrinterSupportTemplate: TemplateData = {
     subheading: "Complete printer and WiFi support solutions",
     items: [
       { image: "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&h=300&fit=crop", title: "Printer Setup", desc: "New printer installation and configuration", price: "From $49" },
-      { image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop", title: "WiFi Connection", desc: "Connect printer to wireless network", price: "From $39" },
+      { image: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400&h=300&fit=crop", title: "WiFi Connection", desc: "Connect printer to wireless network", price: "From $39" },
       { image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=300&fit=crop", title: "Troubleshooting", desc: "Fix paper jams, errors, and connectivity issues", price: "From $29" }
     ]
   },
@@ -2477,7 +2477,7 @@ const routerSupportTemplate: TemplateData = {
     subheading: "Complete networking solutions",
     items: [
       { image: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400&h=300&fit=crop", title: "Router Setup", desc: "New router installation and configuration", price: "From $59" },
-      { image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop", title: "WiFi Optimization", desc: "Improve coverage and speed", price: "From $49" },
+      { image: "https://images.unsplash.com/photo-1516044734145-07ca8eef8731?w=400&h=300&fit=crop", title: "WiFi Optimization", desc: "Improve coverage and speed", price: "From $49" },
       { image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=300&fit=crop", title: "Network Security", desc: "Secure your WiFi network", price: "From $39" }
     ]
   },
@@ -2521,7 +2521,7 @@ const smartTvSupportTemplate: TemplateData = {
     subheading: "Complete Smart TV solutions",
     items: [
       { image: "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=400&h=300&fit=crop", title: "TV Setup", desc: "Complete Smart TV installation", price: "From $79" },
-      { image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop", title: "Streaming Setup", desc: "Configure all streaming apps", price: "From $49" },
+      { image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400&h=300&fit=crop", title: "Streaming Setup", desc: "Configure all streaming apps", price: "From $49" },
       { image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=300&fit=crop", title: "Troubleshooting", desc: "Fix connectivity and app issues", price: "From $39" }
     ]
   },
@@ -2565,7 +2565,7 @@ const itServicesTemplate: TemplateData = {
     subheading: "Comprehensive technology solutions",
     items: [
       { image: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=400&h=300&fit=crop", title: "Managed IT", desc: "Complete IT management and support", price: "From $299/mo" },
-      { image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop", title: "Network Setup", desc: "Business network design and implementation", price: "Custom Quote" },
+      { image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&h=300&fit=crop", title: "Network Setup", desc: "Business network design and implementation", price: "Custom Quote" },
       { image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=300&fit=crop", title: "Help Desk", desc: "On-demand technical support", price: "From $99/hr" }
     ]
   },
@@ -2609,7 +2609,7 @@ const smartHomeSupportTemplate: TemplateData = {
     subheading: "Complete home automation support",
     items: [
       { image: "https://images.unsplash.com/photo-1558002038-1055907df827?w=400&h=300&fit=crop", title: "Device Setup", desc: "Install and configure smart devices", price: "From $49" },
-      { image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop", title: "Home Integration", desc: "Connect all devices together", price: "From $99" },
+      { image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=400&h=300&fit=crop", title: "Home Integration", desc: "Connect all devices together", price: "From $99" },
       { image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=300&fit=crop", title: "Troubleshooting", desc: "Fix connectivity issues", price: "From $39" }
     ]
   },
@@ -2653,7 +2653,7 @@ const cctvDvrTemplate: TemplateData = {
     subheading: "Complete video surveillance solutions",
     items: [
       { image: "https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=400&h=300&fit=crop", title: "Camera Install", desc: "Professional CCTV installation", price: "From $199" },
-      { image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop", title: "DVR Setup", desc: "Configure recording and storage", price: "From $99" },
+      { image: "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=400&h=300&fit=crop", title: "DVR Setup", desc: "Configure recording and storage", price: "From $99" },
       { image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=300&fit=crop", title: "Remote Access", desc: "View cameras from your phone", price: "From $49" }
     ]
   },
@@ -3219,7 +3219,7 @@ export const WebTemplates = ({ initialTab = 'templates' }: WebTemplatesProps) =>
       name: 'ClearView Windows & Doors',
       category: 'Home Services',
       description: 'Window replacement and repair services with energy-efficient solutions.',
-      thumbnail: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop',
+      thumbnail: 'https://images.unsplash.com/photo-1604147706283-d7119b5b822c?w=400&h=300&fit=crop',
       color: 'blue',
       data: windowsTemplate
     },
@@ -3282,7 +3282,7 @@ export const WebTemplates = ({ initialTab = 'templates' }: WebTemplatesProps) =>
       name: 'SecureLock Locksmith',
       category: 'Home Services',
       description: '24/7 emergency locksmith services for homes, businesses, and vehicles.',
-      thumbnail: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop',
+      thumbnail: 'https://images.unsplash.com/photo-1582139329536-e7284fece509?w=400&h=300&fit=crop',
       color: 'blue',
       data: locksmithTemplate
     },
@@ -3291,7 +3291,7 @@ export const WebTemplates = ({ initialTab = 'templates' }: WebTemplatesProps) =>
       name: 'DoorPro Garage Services',
       category: 'Home Services',
       description: 'Professional garage door repair, installation, and opener services.',
-      thumbnail: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop',
+      thumbnail: 'https://images.unsplash.com/photo-1558767132-cb76ffe7ad00?w=400&h=300&fit=crop',
       color: 'orange',
       data: garageDoorTemplate
     },
@@ -3309,7 +3309,7 @@ export const WebTemplates = ({ initialTab = 'templates' }: WebTemplatesProps) =>
       name: 'PowerWash Pro',
       category: 'Home Services',
       description: 'Professional pressure washing for driveways, homes, and decks.',
-      thumbnail: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop',
+      thumbnail: 'https://images.unsplash.com/photo-1628177142898-93e36e4e3a50?w=400&h=300&fit=crop',
       color: 'blue',
       data: pressureWashingTemplate
     },
@@ -3327,7 +3327,7 @@ export const WebTemplates = ({ initialTab = 'templates' }: WebTemplatesProps) =>
       name: 'FenceBuilders Pro',
       category: 'Home Services',
       description: 'Quality fence installation for wood, vinyl, and chain link fencing.',
-      thumbnail: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop',
+      thumbnail: 'https://images.unsplash.com/photo-1558618107-d49a9a2b2c53?w=400&h=300&fit=crop',
       color: 'brown',
       data: fenceInstallTemplate
     },
@@ -3336,7 +3336,7 @@ export const WebTemplates = ({ initialTab = 'templates' }: WebTemplatesProps) =>
       name: 'SolidGround Concrete',
       category: 'Home Services',
       description: 'Professional concrete work for driveways, patios, and sidewalks.',
-      thumbnail: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop',
+      thumbnail: 'https://images.unsplash.com/photo-1590579491624-f98f36d4c763?w=400&h=300&fit=crop',
       color: 'gray',
       data: concreteTemplate
     },
@@ -3363,7 +3363,7 @@ export const WebTemplates = ({ initialTab = 'templates' }: WebTemplatesProps) =>
       name: 'SafeHome Security',
       category: 'Home Services',
       description: 'Professional home security systems with 24/7 monitoring.',
-      thumbnail: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop',
+      thumbnail: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=400&h=300&fit=crop',
       color: 'indigo',
       data: homeSecurityTemplate
     },
@@ -3372,7 +3372,7 @@ export const WebTemplates = ({ initialTab = 'templates' }: WebTemplatesProps) =>
       name: 'InsulPro Insulation',
       category: 'Home Services',
       description: 'Professional insulation installation for attics, walls, and more.',
-      thumbnail: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop',
+      thumbnail: 'https://images.unsplash.com/photo-1607400201889-565b1ee75f8e?w=400&h=300&fit=crop',
       color: 'green',
       data: insulationTemplate
     },
@@ -3381,7 +3381,7 @@ export const WebTemplates = ({ initialTab = 'templates' }: WebTemplatesProps) =>
       name: 'ChimneyCare Services',
       category: 'Home Services',
       description: 'Professional chimney cleaning, repair, and inspection services.',
-      thumbnail: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop',
+      thumbnail: 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=400&h=300&fit=crop',
       color: 'brown',
       data: chimneyTemplate
     },
