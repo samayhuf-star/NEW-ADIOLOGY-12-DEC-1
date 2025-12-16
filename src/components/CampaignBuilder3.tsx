@@ -55,6 +55,7 @@ import { GEO_PRESETS, US_STATES_ALL, US_CITIES_TOP_500, US_ZIP_CODES_EXTENDED, g
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 import { generateDKIAdWithAI } from '../utils/dkiAdGeneratorAI';
 import { CampaignFlowDiagram } from './CampaignFlowDiagram';
+import { TerminalCard, TerminalLine } from './ui/terminal-card';
 
 // Campaign Structure Types (14 structures)
 const CAMPAIGN_STRUCTURES = [
