@@ -38,64 +38,84 @@ interface PlanDetails {
 }
 
 const PLAN_DETAILS: Record<string, PlanDetails> = {
-  'Lifetime Limited': {
-    name: 'Lifetime Limited',
+  'Basic': {
+    name: 'Basic',
+    price: '$69.99',
+    priceId: 'price_basic_monthly',
+    isSubscription: true,
+    amount: 6999,
+    features: [
+      '10 Active Campaigns',
+      '5 Draft Campaigns',
+      '50 Campaign Exports/Month',
+      '500 Keyword Credits/Month',
+      '10 Landing Page Templates',
+      '2 User Seats',
+      'Email Support'
+    ]
+  },
+  'Basic (Yearly)': {
+    name: 'Basic (Yearly)',
+    price: '$671.90',
+    priceId: 'price_basic_yearly',
+    isSubscription: true,
+    amount: 67190,
+    features: [
+      '10 Active Campaigns',
+      '5 Draft Campaigns',
+      '50 Campaign Exports/Month',
+      '500 Keyword Credits/Month',
+      '10 Landing Page Templates',
+      '2 User Seats',
+      'Email Support'
+    ]
+  },
+  'Pro': {
+    name: 'Pro',
+    price: '$129.99',
+    priceId: 'price_pro_monthly',
+    isSubscription: true,
+    amount: 12999,
+    features: [
+      '50 Active Campaigns',
+      'Unlimited Draft Campaigns',
+      'Unlimited Campaign Exports',
+      '2,500 Keyword Credits/Month',
+      '50+ Landing Page Templates',
+      '5 User Seats',
+      'Email Support'
+    ]
+  },
+  'Pro (Yearly)': {
+    name: 'Pro (Yearly)',
+    price: '$1,247.90',
+    priceId: 'price_pro_yearly',
+    isSubscription: true,
+    amount: 124790,
+    features: [
+      '50 Active Campaigns',
+      'Unlimited Draft Campaigns',
+      'Unlimited Campaign Exports',
+      '2,500 Keyword Credits/Month',
+      '50+ Landing Page Templates',
+      '5 User Seats',
+      'Email Support'
+    ]
+  },
+  'Lifetime': {
+    name: 'Lifetime',
     price: '$99.99',
-    priceId: 'price_1ScnHdRfXPeepCvaHuURidFs',
+    priceId: 'price_lifetime',
     isSubscription: false,
     amount: 9999,
     features: [
-      '15 campaigns/month',
-      'All features included',
-      'AI keyword generation',
-      'Campaign builder',
-      'CSV validation & export',
-      '24/7 support'
-    ]
-  },
-  'Lifetime Unlimited': {
-    name: 'Lifetime Unlimited',
-    price: '$199',
-    priceId: 'price_1ScnHdRfXPeepCva95wPdyod',
-    isSubscription: false,
-    amount: 19900,
-    features: [
-      'Unlimited campaigns',
-      'Unlimited access to all tools',
-      'AI keyword generation',
-      'Campaign builder',
-      'CSV validation & export',
-      'Priority support'
-    ]
-  },
-  'Monthly Limited': {
-    name: 'Monthly Limited',
-    price: '$49.99',
-    priceId: 'price_1ScnHeRfXPeepCvahKDgpIJs',
-    isSubscription: true,
-    amount: 4999,
-    features: [
-      '25 campaigns/month',
-      'Access to other tools',
-      'AI keyword generation',
-      'Campaign builder',
-      'CSV validation & export',
-      '24/7 support'
-    ]
-  },
-  'Monthly Unlimited': {
-    name: 'Monthly Unlimited',
-    price: '$99',
-    priceId: 'price_1ScnHfRfXPeepCvadz2Po5tX',
-    isSubscription: true,
-    amount: 9900,
-    features: [
-      'Unlimited campaigns',
-      'Full access to all tools',
-      'AI keyword generation',
-      'Campaign builder',
-      'CSV validation & export',
-      'Priority support'
+      '5 Active Campaigns',
+      '3 Draft Campaigns',
+      '25 Campaign Exports/Month',
+      '250 Keyword Credits/Month',
+      '5 Landing Page Templates',
+      '1 User Seat',
+      'Email Support'
     ]
   }
 };
@@ -103,7 +123,7 @@ const PLAN_DETAILS: Record<string, PlanDetails> = {
 // Payment Form Component
 const PaymentForm: React.FC<{
   plan: PlanDetails;
-  onSuccess: () => void;
+  onSuccess: (planName: string, amount: number, isSubscription: boolean) => void;
   onBack: () => void;
 }> = ({ plan, onSuccess, onBack }) => {
   const stripe = useStripe();
@@ -329,7 +349,7 @@ const PaymentForm: React.FC<{
           userId: userId,
         });
 
-        const { error: redirectError } = await stripe.redirectToCheckout({ sessionId });
+        const { error: redirectError } = await (stripe as any).redirectToCheckout({ sessionId });
 
         if (redirectError) {
           setError(redirectError.message || 'Failed to redirect to checkout');
@@ -551,7 +571,6 @@ export const PaymentPage: React.FC<PaymentPageProps> = ({
                   onBack();
                 }}
                 className="text-slate-700 hover:text-indigo-600 font-medium"
-                disabled={isProcessing}
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Pricing
