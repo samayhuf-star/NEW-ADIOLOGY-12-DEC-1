@@ -47,7 +47,7 @@ const PLAN_TEAM_LIMITS: PlanLimits = {
   'Basic (Yearly)': 2,
   'Pro': 5,
   'Pro (Yearly)': 5,
-  'Lifetime': 3,
+  'Lifetime': 1,
   'free': 1,
 };
 

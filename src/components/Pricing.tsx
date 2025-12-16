@@ -11,11 +11,17 @@ const pricingPlans = [
     bgColor: 'bg-blue-50',
     borderColor: 'border-blue-200',
     features: [
-      '25 campaigns per month',
-      'AI keyword generation',
-      'All campaign structures',
-      'CSV export',
-      'Email support'
+      '10 Active Campaigns',
+      '5 Draft Campaigns',
+      '50 Campaign Exports/Month',
+      '500 Keyword Credits/Month',
+      '10 Landing Page Templates',
+      '5 Active/Saved Landing Pages',
+      '3 Connected Domains',
+      '10 Campaign Presets',
+      '2 User Seats',
+      'Email Support',
+      'Raise Tickets'
     ],
     buttonStyle: 'bg-white text-gray-900 border-2 border-gray-200 hover:border-gray-300',
     popular: false
@@ -30,11 +36,17 @@ const pricingPlans = [
     bgColor: 'bg-blue-50',
     borderColor: 'border-blue-200',
     features: [
-      '25 campaigns per month',
-      'AI keyword generation',
-      'All campaign structures',
-      'CSV export',
-      'Email support'
+      '10 Active Campaigns',
+      '5 Draft Campaigns',
+      '50 Campaign Exports/Month',
+      '500 Keyword Credits/Month',
+      '10 Landing Page Templates',
+      '5 Active/Saved Landing Pages',
+      '3 Connected Domains',
+      '10 Campaign Presets',
+      '2 User Seats',
+      'Email Support',
+      'Raise Tickets'
     ],
     buttonStyle: 'bg-white text-gray-900 border-2 border-gray-200 hover:border-gray-300',
     popular: false
@@ -48,11 +60,17 @@ const pricingPlans = [
     bgColor: 'bg-purple-50',
     borderColor: 'border-purple-300',
     features: [
-      'Unlimited campaigns',
-      'AI keyword generation',
-      'All campaign structures',
-      'CSV export',
-      '24/7 priority support'
+      '50 Active Campaigns',
+      'Unlimited Draft Campaigns',
+      'Unlimited Campaign Exports',
+      '2,500 Keyword Credits/Month',
+      '50+ Landing Page Templates',
+      '50+ Active/Saved Landing Pages',
+      '15 Connected Domains',
+      '50+ Campaign Presets',
+      '5 User Seats',
+      'Email Support',
+      'Raise Tickets'
     ],
     buttonStyle: 'bg-gradient-to-r from-purple-500 to-purple-700 text-white hover:shadow-xl',
     popular: true
@@ -67,11 +85,17 @@ const pricingPlans = [
     bgColor: 'bg-purple-50',
     borderColor: 'border-purple-300',
     features: [
-      'Unlimited campaigns',
-      'AI keyword generation',
-      'All campaign structures',
-      'CSV export',
-      '24/7 priority support'
+      '50 Active Campaigns',
+      'Unlimited Draft Campaigns',
+      'Unlimited Campaign Exports',
+      '2,500 Keyword Credits/Month',
+      '50+ Landing Page Templates',
+      '50+ Active/Saved Landing Pages',
+      '15 Connected Domains',
+      '50+ Campaign Presets',
+      '5 User Seats',
+      'Email Support',
+      'Raise Tickets'
     ],
     buttonStyle: 'bg-white text-gray-900 border-2 border-gray-200 hover:border-gray-300',
     popular: false
@@ -85,11 +109,17 @@ const pricingPlans = [
     bgColor: 'bg-pink-50',
     borderColor: 'border-pink-200',
     features: [
-      'Unlimited campaigns forever',
-      'AI keyword generation',
-      'All campaign structures',
-      'CSV export',
-      '24/7 priority support'
+      '5 Active Campaigns',
+      '3 Draft Campaigns',
+      '25 Campaign Exports/Month',
+      '250 Keyword Credits/Month',
+      '5 Landing Page Templates',
+      '3 Active/Saved Landing Pages',
+      '2 Connected Domains',
+      '5 Campaign Presets',
+      '1 User Seat',
+      'Email Support',
+      'Raise Tickets'
     ],
     buttonStyle: 'bg-white text-gray-900 border-2 border-gray-200 hover:border-gray-300',
     popular: false
