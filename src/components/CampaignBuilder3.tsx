@@ -3516,8 +3516,10 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
           </TerminalCard>
         </div>
 
-              {/* Create Ads & Extensions - Compact Inline */}
-              <div className="pt-2 space-y-1">
+        {/* Create Ads & Extensions - Compact Inline */}
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <div className="pt-2 space-y-1">
                 <div className="flex items-center flex-wrap gap-1.5">
                   <span className="text-xs font-semibold text-blue-800 whitespace-nowrap">Create Ads (Max 3):</span>
                   <Button 
@@ -3566,10 +3568,9 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                     );
                   })}
                 </div>
-              </div>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Ad Group Selector and Ads Display */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
