@@ -92,6 +92,217 @@ export interface StructureSettings {
 }
 
 /**
+ * Auto-classify keywords by search intent
+ * Returns object with transactional, commercial, informational, navigational arrays
+ */
+function autoClassifyIntentGroups(keywords: string[]): { [key: string]: string[] } {
+  const transactionalSignals = ['buy', 'purchase', 'order', 'price', 'cost', 'cheap', 'deal', 'discount', 'hire', 'get', 'book', 'schedule', 'quote', 'pricing', 'rates', 'affordable', 'shop', 'sale'];
+  const commercialSignals = ['best', 'top', 'review', 'compare', 'vs', 'versus', 'alternative', 'comparison', 'rated', 'recommended', 'pros', 'cons', 'features'];
+  const informationalSignals = ['how', 'what', 'why', 'when', 'where', 'who', 'guide', 'tutorial', 'tips', 'learn', 'example', 'definition', 'meaning', 'explain', 'ideas', 'ways'];
+  const navigationalSignals = ['near me', 'in my area', 'local', 'nearby', 'closest', 'directions', 'location', 'address', 'hours', 'contact'];
+
+  const groups: { [key: string]: string[] } = {
+    transactional: [],
+    commercial: [],
+    informational: [],
+    navigational: []
+  };
+
+  keywords.forEach(kw => {
+    const kwLower = kw.toLowerCase();
+    
+    if (transactionalSignals.some(signal => kwLower.includes(signal))) {
+      groups.transactional.push(kw);
+    } else if (commercialSignals.some(signal => kwLower.includes(signal))) {
+      groups.commercial.push(kw);
+    } else if (informationalSignals.some(signal => kwLower.includes(signal))) {
+      groups.informational.push(kw);
+    } else if (navigationalSignals.some(signal => kwLower.includes(signal))) {
+      groups.navigational.push(kw);
+    } else {
+      groups.transactional.push(kw);
+    }
+  });
+
+  return groups;
+}
+
+/**
+ * Auto-split keywords into Alpha (high-intent exact) and Beta (broad discovery)
+ * Alpha: transactional/commercial keywords, Beta: informational/general keywords
+ */
+function autoSplitAlphaBeta(keywords: string[]): { alpha: string[]; beta: string[] } {
+  const highIntentSignals = ['buy', 'purchase', 'order', 'price', 'cost', 'hire', 'get', 'book', 'quote', 'service', 'company', 'near me', 'best', 'top', 'professional'];
+  
+  const alpha: string[] = [];
+  const beta: string[] = [];
+
+  keywords.forEach(kw => {
+    const kwLower = kw.toLowerCase();
+    if (highIntentSignals.some(signal => kwLower.includes(signal))) {
+      alpha.push(kw);
+    } else {
+      beta.push(kw);
+    }
+  });
+
+  if (alpha.length === 0 && beta.length > 0) {
+    const splitPoint = Math.ceil(beta.length * 0.3);
+    return { alpha: beta.slice(0, splitPoint), beta: beta.slice(splitPoint) };
+  }
+
+  return { alpha, beta };
+}
+
+/**
+ * Auto-classify keywords into marketing funnel stages
+ * TOF (Top of Funnel): Awareness
+ * MOF (Middle of Funnel): Consideration
+ * BOF (Bottom of Funnel): Conversion
+ */
+function autoClassifyFunnelGroups(keywords: string[]): { [key: string]: string[] } {
+  const tofSignals = ['what is', 'how to', 'tips', 'guide', 'learn', 'benefits', 'ideas', 'examples', 'ways to', 'introduction', 'basics', 'beginner'];
+  const mofSignals = ['best', 'compare', 'vs', 'review', 'features', 'pros', 'cons', 'alternative', 'top', 'rated', 'comparison', 'difference'];
+  const bofSignals = ['buy', 'order', 'price', 'quote', 'hire', 'get', 'near me', 'cost', 'book', 'schedule', 'service', 'company', 'professional', 'affordable', 'cheap'];
+
+  const groups: { [key: string]: string[] } = {
+    tof: [],
+    mof: [],
+    bof: []
+  };
+
+  keywords.forEach(kw => {
+    const kwLower = kw.toLowerCase();
+    
+    if (bofSignals.some(signal => kwLower.includes(signal))) {
+      groups.bof.push(kw);
+    } else if (mofSignals.some(signal => kwLower.includes(signal))) {
+      groups.mof.push(kw);
+    } else if (tofSignals.some(signal => kwLower.includes(signal))) {
+      groups.tof.push(kw);
+    } else {
+      groups.bof.push(kw);
+    }
+  });
+
+  return groups;
+}
+
+/**
+ * Auto-detect brand keywords from URL/campaign name
+ * Extracts brand name from domain and checks keywords for brand mentions
+ */
+function autoDetectBrandKeywords(keywords: string[], url: string, campaignName: string): { brand: string[]; nonBrand: string[] } {
+  const brandTerms: string[] = [];
+  
+  // Try to parse URL, adding https:// if protocol is missing
+  let urlToParse = url;
+  if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+    urlToParse = 'https://' + url;
+  }
+  
+  try {
+    const urlObj = new URL(urlToParse);
+    const domain = urlObj.hostname.replace('www.', '');
+    const domainParts = domain.split('.');
+    if (domainParts.length > 0 && domainParts[0].length > 2) {
+      brandTerms.push(domainParts[0].toLowerCase());
+    }
+  } catch (e) {
+    // URL parsing failed completely, skip URL-based brand detection
+  }
+  
+  // Only use campaign name for brand detection if we couldn't get it from URL
+  // and only use the FIRST significant word to avoid over-matching
+  if (brandTerms.length === 0 && campaignName) {
+    const campaignWords = campaignName.toLowerCase().split(/[\s\-_]+/);
+    const commonWords = ['campaign', 'ads', 'google', 'search', 'brand', 'keywords', 'ppc', 'sem', 'marketing', 'test', 'new', 'main', 'primary', 'default'];
+    const firstBrandWord = campaignWords.find(word => 
+      word.length > 3 && !commonWords.includes(word)
+    );
+    if (firstBrandWord) {
+      brandTerms.push(firstBrandWord);
+    }
+  }
+
+  const brand: string[] = [];
+  const nonBrand: string[] = [];
+
+  keywords.forEach(kw => {
+    const kwLower = kw.toLowerCase();
+    if (brandTerms.length > 0 && brandTerms.some(term => kwLower.includes(term))) {
+      brand.push(kw);
+    } else {
+      nonBrand.push(kw);
+    }
+  });
+
+  return { brand, nonBrand };
+}
+
+/**
+ * Generate competitor conquest keywords based on industry verticals
+ */
+function generateCompetitorKeywords(keywords: string[], url: string): string[] {
+  const competitorsByVertical: { [key: string]: string[] } = {
+    marketing: ['hubspot', 'salesforce', 'mailchimp', 'semrush', 'ahrefs', 'moz'],
+    legal: ['avvo', 'findlaw', 'justia', 'martindale', 'lawyers.com'],
+    healthcare: ['zocdoc', 'healthgrades', 'webmd', 'vitals'],
+    realestate: ['zillow', 'redfin', 'trulia', 'realtor.com', 'opendoor'],
+    ecommerce: ['amazon', 'ebay', 'shopify', 'etsy', 'walmart'],
+    software: ['salesforce', 'microsoft', 'oracle', 'sap', 'workday'],
+    telecom: ['nextiva', 'ringcentral', 'vonage', 'dialpad', 'zoom'],
+    insurance: ['geico', 'progressive', 'allstate', 'state farm', 'liberty mutual'],
+    finance: ['quickbooks', 'freshbooks', 'xero', 'wave', 'netsuite'],
+    crm: ['hubspot crm', 'salesforce crm', 'pipedrive', 'zoho crm', 'monday']
+  };
+
+  // Extract meaningful service terms from keywords
+  const serviceTerms = keywords.slice(0, 5)
+    .flatMap(kw => kw.split(' '))
+    .filter(w => w.length > 3)
+    .slice(0, 3);
+
+  // Detect vertical from URL and keywords
+  let vertical: string | null = null;
+  const urlLower = url.toLowerCase();
+  const keywordsLower = keywords.map(kw => kw.toLowerCase()).join(' ');
+  
+  Object.keys(competitorsByVertical).forEach(v => {
+    if (v !== 'default' && (urlLower.includes(v) || keywordsLower.includes(v))) {
+      vertical = v;
+    }
+  });
+
+  const conquestKeywords: string[] = [];
+
+  // If we found a vertical, generate conquest keywords with real competitor names
+  if (vertical) {
+    const competitors = competitorsByVertical[vertical];
+    competitors.slice(0, 3).forEach(comp => {
+      conquestKeywords.push(`${comp} alternative`);
+      conquestKeywords.push(`${comp} vs`);
+      if (serviceTerms.length > 0) {
+        conquestKeywords.push(`${comp} ${serviceTerms[0]}`);
+      }
+    });
+  } else {
+    // No vertical detected - generate generic conquest patterns using service terms
+    // These create useful competitor-style keywords without nonsense placeholder names
+    if (serviceTerms.length > 0) {
+      const primaryService = serviceTerms[0];
+      conquestKeywords.push(`best ${primaryService} alternative`);
+      conquestKeywords.push(`${primaryService} comparison`);
+      conquestKeywords.push(`top ${primaryService} companies`);
+      conquestKeywords.push(`${primaryService} vs competitors`);
+      conquestKeywords.push(`switch ${primaryService} provider`);
+    }
+  }
+
+  return conquestKeywords;
+}
+
+/**
  * Main function to generate campaign structure
  */
 export function generateCampaignStructure(
@@ -410,32 +621,43 @@ function generateSTAGPlus(keywords: string[], settings: StructureSettings): Camp
 }
 
 /**
- * Intent-Based: Group by intent (High Intent, Research, Brand, Competitor)
+ * Intent-Based: Group by intent (Transactional, Commercial, Informational, Navigational)
  */
 function generateIntentStructure(keywords: string[], settings: StructureSettings): CampaignStructure {
   const matchTypes = getMatchTypes(settings.matchTypes);
   let ads = settings.ads || getDefaultAds(settings);
-  // Ensure all ads have final_url
   ads = ads.map(ad => ({
     ...ad,
     final_url: ad.final_url || settings.url || 'https://www.example.com'
   }));
   const negativeKeywords = settings.negativeKeywords || [];
-  const intentGroups = settings.intentGroups || {};
-  const selectedIntents = settings.selectedIntents || ['high_intent', 'research', 'brand'];
+  
+  // Auto-classify keywords if intentGroups is empty or not provided
+  const hasProvidedIntentGroups = settings.intentGroups && 
+    Object.values(settings.intentGroups).some(arr => arr && arr.length > 0);
+  const intentGroups = hasProvidedIntentGroups 
+    ? settings.intentGroups! 
+    : autoClassifyIntentGroups(keywords);
+  
+  // Respect user's selected intents if provided, otherwise show all populated groups
+  const allIntentTypes = ['transactional', 'commercial', 'informational', 'navigational'];
+  const selectedIntents = settings.selectedIntents && settings.selectedIntents.length > 0
+    ? settings.selectedIntents
+    : allIntentTypes;
   
   const adgroups: AdGroup[] = [];
   
   selectedIntents.forEach((intent) => {
     const intentKeywords = intentGroups[intent] || [];
     if (intentKeywords.length > 0) {
+      const intentLabel = intent.charAt(0).toUpperCase() + intent.slice(1);
       adgroups.push({
-        adgroup_name: `Intent: ${intent.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}`,
+        adgroup_name: `Intent: ${intentLabel}`,
         keywords: intentKeywords.flatMap(kw => matchTypes.map(mt => formatKeyword(kw, mt))),
         match_types: matchTypes,
         ads: getIntentBasedAds(intent, settings),
         negative_keywords: negativeKeywords,
-    location_target: buildLocationTarget(settings)
+        location_target: buildLocationTarget(settings)
       });
     }
   });
@@ -445,7 +667,6 @@ function generateIntentStructure(keywords: string[], settings: StructureSettings
     adgroups
   };
   
-  // Add location data at campaign level if available
   if (settings.selectedZips && settings.selectedZips.length > 0) {
     campaign.zip_codes = settings.selectedZips;
   }
@@ -462,36 +683,49 @@ function generateIntentStructure(keywords: string[], settings: StructureSettings
 }
 
 /**
- * Alpha-Beta: Alpha winners and Beta discovery
+ * Alpha-Beta: Alpha (high-intent exact match) and Beta (broad match discovery)
  */
 function generateAlphaBeta(keywords: string[], settings: StructureSettings): CampaignStructure {
-  const matchTypes = getMatchTypes(settings.matchTypes);
   const negativeKeywords = settings.negativeKeywords || [];
-  const alphaKeywords = settings.alphaKeywords || [];
-  const betaKeywords = settings.betaKeywords || keywords;
+  
+  // Auto-split keywords if not provided
+  const hasProvidedSplit = (settings.alphaKeywords && settings.alphaKeywords.length > 0) ||
+    (settings.betaKeywords && settings.betaKeywords.length > 0);
+  
+  let alphaKeywords: string[];
+  let betaKeywords: string[];
+  
+  if (hasProvidedSplit) {
+    alphaKeywords = settings.alphaKeywords || [];
+    betaKeywords = settings.betaKeywords || keywords;
+  } else {
+    const split = autoSplitAlphaBeta(keywords);
+    alphaKeywords = split.alpha;
+    betaKeywords = split.beta;
+  }
   
   const adgroups: AdGroup[] = [];
   
-  // Beta Ad Group (discovery)
-  if (betaKeywords.length > 0) {
+  // Alpha Campaign: Exact match only for high-intent keywords
+  if (alphaKeywords.length > 0) {
     adgroups.push({
-      adgroup_name: 'Beta - Discovery',
-      keywords: betaKeywords.flatMap(kw => matchTypes.map(mt => formatKeyword(kw, mt))),
-      match_types: matchTypes,
-      ads: getBetaAds(settings),
+      adgroup_name: 'Alpha - High Intent (Exact)',
+      keywords: alphaKeywords.map(kw => formatKeyword(kw, 'exact')),
+      match_types: ['exact'],
+      ads: getAlphaAds(settings),
       negative_keywords: negativeKeywords,
       location_target: buildLocationTarget(settings)
     });
   }
   
-  // Alpha Ad Group (winners)
-  if (alphaKeywords.length > 0) {
+  // Beta Campaign: Broad match for discovery
+  if (betaKeywords.length > 0) {
     adgroups.push({
-      adgroup_name: 'Alpha - Winners',
-      keywords: alphaKeywords.flatMap(kw => matchTypes.map(mt => formatKeyword(kw, mt))),
-      match_types: matchTypes,
-      ads: getAlphaAds(settings),
-      negative_keywords: negativeKeywords,
+      adgroup_name: 'Beta - Discovery (Broad)',
+      keywords: betaKeywords.map(kw => formatKeyword(kw, 'broad')),
+      match_types: ['broad'],
+      ads: getBetaAds(settings),
+      negative_keywords: [...negativeKeywords, ...alphaKeywords.map(kw => `[${kw}]`)],
       location_target: buildLocationTarget(settings)
     });
   }
@@ -501,7 +735,6 @@ function generateAlphaBeta(keywords: string[], settings: StructureSettings): Cam
     adgroups
   };
   
-  // Add location data at campaign level if available
   if (settings.selectedZips && settings.selectedZips.length > 0) {
     campaign.zip_codes = settings.selectedZips;
   }
@@ -640,12 +873,18 @@ function generateGeoSegmented(keywords: string[], settings: StructureSettings): 
 }
 
 /**
- * Funnel-Based: TOF/MOF/BOF grouping
+ * Funnel-Based: TOF (Awareness) / MOF (Consideration) / BOF (Conversion) grouping
  */
 function generateFunnelStructure(keywords: string[], settings: StructureSettings): CampaignStructure {
   const matchTypes = getMatchTypes(settings.matchTypes);
   const negativeKeywords = settings.negativeKeywords || [];
-  const funnelGroups = settings.funnelGroups || {};
+  
+  // Auto-classify keywords if funnelGroups is empty or not provided
+  const hasProvidedFunnelGroups = settings.funnelGroups && 
+    Object.values(settings.funnelGroups).some(arr => arr && arr.length > 0);
+  const funnelGroups = hasProvidedFunnelGroups 
+    ? settings.funnelGroups! 
+    : autoClassifyFunnelGroups(keywords);
   
   const adgroups: AdGroup[] = [];
   
@@ -671,7 +910,6 @@ function generateFunnelStructure(keywords: string[], settings: StructureSettings
     adgroups
   };
   
-  // Add location data at campaign level if available
   if (settings.selectedZips && settings.selectedZips.length > 0) {
     campaign.zip_codes = settings.selectedZips;
   }
@@ -688,22 +926,36 @@ function generateFunnelStructure(keywords: string[], settings: StructureSettings
 }
 
 /**
- * Brand vs Non-Brand Split
+ * Brand vs Non-Brand Split - Auto-detects brand keywords from URL/campaign name
  */
 function generateBrandSplit(keywords: string[], settings: StructureSettings): CampaignStructure {
   const matchTypes = getMatchTypes(settings.matchTypes);
   let ads = settings.ads || getDefaultAds(settings);
-  // Ensure all ads have final_url
   ads = ads.map(ad => ({
     ...ad,
     final_url: ad.final_url || settings.url || 'https://www.example.com'
   }));
   const negativeKeywords = settings.negativeKeywords || [];
-  const brandKeywords = settings.brandKeywords || [];
-  const nonBrandKeywords = settings.nonBrandKeywords || keywords.filter(kw => !brandKeywords.includes(kw));
+  
+  // Auto-detect brand keywords if not provided
+  const hasProvidedBrandKeywords = (settings.brandKeywords && settings.brandKeywords.length > 0) ||
+    (settings.nonBrandKeywords && settings.nonBrandKeywords.length > 0);
+  
+  let brandKeywords: string[];
+  let nonBrandKeywords: string[];
+  
+  if (hasProvidedBrandKeywords) {
+    brandKeywords = settings.brandKeywords || [];
+    nonBrandKeywords = settings.nonBrandKeywords || keywords.filter(kw => !brandKeywords.includes(kw));
+  } else {
+    const detected = autoDetectBrandKeywords(keywords, settings.url, settings.campaignName);
+    brandKeywords = detected.brand;
+    nonBrandKeywords = detected.nonBrand;
+  }
   
   const adgroups: AdGroup[] = [];
   
+  // Brand campaign with non-brand negatives
   if (brandKeywords.length > 0) {
     const adGroup: AdGroup = {
       adgroup_name: 'Brand Keywords',
@@ -717,13 +969,14 @@ function generateBrandSplit(keywords: string[], settings: StructureSettings): Ca
     adgroups.push(adGroup);
   }
   
+  // Non-brand campaign with brand negatives
   if (nonBrandKeywords.length > 0) {
     const adGroup: AdGroup = {
       adgroup_name: 'Non-Brand Keywords',
       keywords: nonBrandKeywords.flatMap(kw => matchTypes.map(mt => formatKeyword(kw, mt))),
       match_types: matchTypes,
       ads: ads,
-      negative_keywords: negativeKeywords,
+      negative_keywords: [...negativeKeywords, ...brandKeywords],
       location_target: buildLocationTarget(settings)
     };
     addLocationDataToAdGroup(adGroup, settings);
@@ -735,7 +988,6 @@ function generateBrandSplit(keywords: string[], settings: StructureSettings): Ca
     adgroups
   };
   
-  // Add location data at campaign level if available
   if (settings.selectedZips && settings.selectedZips.length > 0) {
     campaign.zip_codes = settings.selectedZips;
   }
@@ -752,22 +1004,38 @@ function generateBrandSplit(keywords: string[], settings: StructureSettings): Ca
 }
 
 /**
- * Competitor Campaigns
+ * Competitor Campaigns - Generate conquest keywords based on industry
  */
 function generateCompetitor(keywords: string[], settings: StructureSettings): CampaignStructure {
   const matchTypes = getMatchTypes(settings.matchTypes);
   const negativeKeywords = settings.negativeKeywords || [];
-  const competitorKeywords = settings.competitorKeywords || keywords.filter(kw => 
-    ['nextiva', 'hubspot', 'clickcease', 'semrush', 'competitor'].some(c => 
-      kw.toLowerCase().includes(c)
-    )
-  );
+  
+  // Use provided competitor keywords or auto-generate them
+  let competitorKeywords: string[];
+  
+  if (settings.competitorKeywords && settings.competitorKeywords.length > 0) {
+    competitorKeywords = settings.competitorKeywords;
+  } else {
+    // First check if any existing keywords match common competitor patterns
+    const existingCompetitorKws = keywords.filter(kw => 
+      ['alternative', 'vs', 'versus', 'compare', 'competitor', 'switch from', 'better than'].some(c => 
+        kw.toLowerCase().includes(c)
+      )
+    );
+    
+    if (existingCompetitorKws.length > 0) {
+      competitorKeywords = existingCompetitorKws;
+    } else {
+      // Generate competitor conquest keywords
+      competitorKeywords = generateCompetitorKeywords(keywords, settings.url);
+    }
+  }
   
   const adgroups: AdGroup[] = [];
   
   if (competitorKeywords.length > 0) {
     adgroups.push({
-      adgroup_name: 'Competitor Keywords',
+      adgroup_name: 'Competitor Conquest',
       keywords: competitorKeywords.flatMap(kw => matchTypes.map(mt => formatKeyword(kw, mt))),
       match_types: matchTypes,
       ads: getCompetitorAds(settings),
@@ -781,7 +1049,6 @@ function generateCompetitor(keywords: string[], settings: StructureSettings): Ca
     adgroups
   };
   
-  // Add location data at campaign level if available
   if (settings.selectedZips && settings.selectedZips.length > 0) {
     campaign.zip_codes = settings.selectedZips;
   }
@@ -842,7 +1109,8 @@ function generateNgramClusters(keywords: string[], settings: StructureSettings):
 }
 
 /**
- * Long-Tail Master: Focus on 3+ word keywords for lower competition & higher conversion
+ * Long-Tail Master: Focus on 4+ word keywords for lower competition & higher conversion
+ * Only includes true long-tail keywords (4 or more words)
  */
 function generateLongTail(keywords: string[], settings: StructureSettings): CampaignStructure {
   const matchTypes = getMatchTypes(settings.matchTypes);
@@ -853,9 +1121,8 @@ function generateLongTail(keywords: string[], settings: StructureSettings): Camp
   }));
   const negativeKeywords = settings.negativeKeywords || [];
   
-  // Filter for long-tail keywords (3+ words)
-  const longTailKeywords = keywords.filter(kw => kw.trim().split(/\s+/).length >= 3);
-  const shortKeywords = keywords.filter(kw => kw.trim().split(/\s+/).length < 3);
+  // Filter for true long-tail keywords (4+ words only)
+  const longTailKeywords = keywords.filter(kw => kw.trim().split(/\s+/).length >= 4);
   
   const adgroups: AdGroup[] = [];
   
@@ -885,30 +1152,35 @@ function generateLongTail(keywords: string[], settings: StructureSettings): Camp
     });
   }
   
-  // Add short keywords to a separate "General" group if any exist
-  if (shortKeywords.length > 0) {
-    const adGroup: AdGroup = {
-      adgroup_name: 'General Keywords',
-      keywords: shortKeywords.flatMap(kw => matchTypes.map(mt => formatKeyword(kw, mt))),
-      match_types: matchTypes,
-      ads: ads,
-      negative_keywords: negativeKeywords,
-      location_target: buildLocationTarget(settings)
-    };
-    addLocationDataToAdGroup(adGroup, settings);
-    adgroups.push(adGroup);
-  }
-  
-  // If no keywords matched, use all keywords in a single group
+  // If no 4+ word keywords exist, show a message that no true long-tail keywords were found
+  // Create a single group with available keywords (but ideally user should generate more long-tail keywords)
   if (adgroups.length === 0) {
-    adgroups.push({
-      adgroup_name: 'All Keywords',
-      keywords: keywords.flatMap(kw => matchTypes.map(mt => formatKeyword(kw, mt))),
-      match_types: matchTypes,
-      ads: ads,
-      negative_keywords: negativeKeywords,
-      location_target: buildLocationTarget(settings)
-    });
+    // Try to find keywords with 3+ words as fallback
+    const fallbackKeywords = keywords.filter(kw => kw.trim().split(/\s+/).length >= 3);
+    if (fallbackKeywords.length > 0) {
+      adgroups.push({
+        adgroup_name: 'Long-Tail Keywords (3+ words)',
+        keywords: fallbackKeywords.flatMap(kw => matchTypes.map(mt => formatKeyword(kw, mt))),
+        match_types: matchTypes,
+        ads: ads,
+        negative_keywords: negativeKeywords,
+        location_target: buildLocationTarget(settings)
+      });
+    } else {
+      // Last resort: use longest keywords available
+      const sortedByLength = [...keywords].sort((a, b) => 
+        b.trim().split(/\s+/).length - a.trim().split(/\s+/).length
+      ).slice(0, 20);
+      
+      adgroups.push({
+        adgroup_name: 'Keywords (Consider adding longer keywords)',
+        keywords: sortedByLength.flatMap(kw => matchTypes.map(mt => formatKeyword(kw, mt))),
+        match_types: matchTypes,
+        ads: ads,
+        negative_keywords: negativeKeywords,
+        location_target: buildLocationTarget(settings)
+      });
+    }
   }
 
   const campaign: Campaign = {

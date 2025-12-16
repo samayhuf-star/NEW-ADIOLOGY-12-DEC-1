@@ -258,7 +258,7 @@ export const KeywordSavedLists = () => {
                               variant="outline"
                               size="sm"
                               onClick={() => handleExport(item)}
-                              className="text-green-600 hover:text-green-700"
+                              className="text-indigo-600 hover:text-indigo-700"
                             >
                               <Download className="w-4 h-4" />
                             </Button>
@@ -348,7 +348,7 @@ export const KeywordSavedLists = () => {
                               variant="outline"
                               size="sm"
                               onClick={() => handleExport(item)}
-                              className="text-green-600 hover:text-green-700"
+                              className="text-indigo-600 hover:text-indigo-700"
                             >
                               <Download className="w-4 h-4" />
                             </Button>
@@ -439,7 +439,7 @@ export const KeywordSavedLists = () => {
                               variant="outline"
                               size="sm"
                               onClick={() => handleExport(item)}
-                              className="text-green-600 hover:text-green-700"
+                              className="text-indigo-600 hover:text-indigo-700"
                             >
                               <Download className="w-4 h-4" />
                             </Button>

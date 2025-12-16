@@ -9,7 +9,7 @@ const alertVariants = cva(
     variants: {
       variant: {
         // Unified green/white style for default alerts (matching Sonner success style)
-        default: "bg-green-50 border-green-200 text-green-800",
+        default: "bg-indigo-50 border-indigo-200 text-green-800",
         destructive:
           "text-red-800 bg-red-50 border-red-200 [&>svg]:text-current *:data-[slot=alert-description]:text-red-700",
         // Additional variants to match Sonner notification types

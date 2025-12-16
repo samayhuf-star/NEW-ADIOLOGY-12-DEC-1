@@ -161,7 +161,7 @@ export function ZipTargetingFeature() {
                       <div className="text-xs text-gray-500">Cities</div>
                     </div>
                     <div className="p-3 bg-white rounded-lg">
-                      <div className="text-2xl text-green-600">30s</div>
+                      <div className="text-2xl text-indigo-600">30s</div>
                       <div className="text-xs text-gray-500">Deploy Time</div>
                     </div>
                   </div>

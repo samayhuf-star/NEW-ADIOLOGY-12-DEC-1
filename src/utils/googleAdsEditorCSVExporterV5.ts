@@ -435,6 +435,16 @@ export function generateMasterCSV(campaign: CampaignDataV5): string {
   // Ad rows (RSA, DKI, Call-Only)
   campaign.adGroups.forEach(adGroup => {
     adGroup.ads.forEach(ad => {
+      // Skip ads with no headlines or descriptions (invalid ads)
+      const validHeadlines = (ad.headlines || []).filter((h: string) => h && h.trim());
+      const validDescriptions = (ad.descriptions || []).filter((d: string) => d && d.trim());
+      
+      // RSA requires at least 3 headlines and 2 descriptions
+      if (validHeadlines.length < 1 || validDescriptions.length < 1) {
+        console.warn(`Skipping invalid ad in group "${adGroup.name}": insufficient headlines (${validHeadlines.length}) or descriptions (${validDescriptions.length})`);
+        return;
+      }
+      
       const adRow = createEmptyRow();
       adRow[COLUMN_INDEX['Campaign']] = campaign.campaignName;
       adRow[COLUMN_INDEX['Campaign Status']] = 'Enabled';
@@ -446,19 +456,19 @@ export function generateMasterCSV(campaign: CampaignDataV5): string {
       adRow[COLUMN_INDEX['Final URL']] = ad.finalUrl;
       adRow[COLUMN_INDEX['Mobile Final URL']] = ad.mobileUrl || '';
       
-      // Headlines (up to 15)
-      for (let i = 0; i < Math.min(15, ad.headlines.length); i++) {
+      // Headlines (up to 15) - use validated headlines
+      for (let i = 0; i < Math.min(15, validHeadlines.length); i++) {
         const headlineCol = `Headline ${i + 1}`;
         if (COLUMN_INDEX[headlineCol] !== undefined) {
-          adRow[COLUMN_INDEX[headlineCol]] = (ad.headlines[i] || '').substring(0, 30);
+          adRow[COLUMN_INDEX[headlineCol]] = validHeadlines[i].substring(0, 30);
         }
       }
       
-      // Descriptions (up to 4)
-      for (let i = 0; i < Math.min(4, ad.descriptions.length); i++) {
+      // Descriptions (up to 4) - use validated descriptions
+      for (let i = 0; i < Math.min(4, validDescriptions.length); i++) {
         const descCol = `Description ${i + 1}`;
         if (COLUMN_INDEX[descCol] !== undefined) {
-          adRow[COLUMN_INDEX[descCol]] = (ad.descriptions[i] || '').substring(0, 90);
+          adRow[COLUMN_INDEX[descCol]] = validDescriptions[i].substring(0, 90);
         }
       }
       
@@ -673,8 +683,16 @@ export function convertToV5Format(legacyData: any): CampaignDataV5 {
     });
   }
   
-  // Convert sitelinks from extensions
-  if (legacyData.extensions && Array.isArray(legacyData.extensions)) {
+  // Convert sitelinks - check both direct array and extensions format
+  if (legacyData.sitelinks && Array.isArray(legacyData.sitelinks)) {
+    campaign.sitelinks = legacyData.sitelinks.slice(0, 4).map((sl: any) => ({
+      text: sl.text || '',
+      description1: sl.description1 || '',
+      description2: sl.description2 || '',
+      finalUrl: sl.finalUrl || legacyData.url || legacyData.final_url || '',
+      status: 'Enabled'
+    }));
+  } else if (legacyData.extensions && Array.isArray(legacyData.extensions)) {
     const sitelinkExts = legacyData.extensions.filter((e: any) => e.type === 'sitelink');
     campaign.sitelinks = sitelinkExts.slice(0, 4).map((sl: any) => ({
       text: sl.text || sl.linkText || '',
@@ -683,13 +701,30 @@ export function convertToV5Format(legacyData: any): CampaignDataV5 {
       finalUrl: sl.finalUrl || sl.url || '',
       status: 'Enabled'
     }));
-    
+  }
+  
+  // Convert callouts - check both direct array and extensions format
+  if (legacyData.callouts && Array.isArray(legacyData.callouts)) {
+    campaign.callouts = legacyData.callouts.slice(0, 4).map((co: any) => ({
+      text: co.text || '',
+      status: 'Enabled'
+    }));
+  } else if (legacyData.extensions && Array.isArray(legacyData.extensions)) {
     const calloutExts = legacyData.extensions.filter((e: any) => e.type === 'callout');
     campaign.callouts = calloutExts.slice(0, 4).map((co: any) => ({
       text: co.text || '',
       status: 'Enabled'
     }));
-    
+  }
+  
+  // Convert structured snippets - check both direct array and extensions format
+  if (legacyData.structured_snippets && Array.isArray(legacyData.structured_snippets)) {
+    campaign.snippets = legacyData.structured_snippets.slice(0, 2).map((sn: any) => ({
+      header: sn.header || '',
+      values: Array.isArray(sn.values) ? sn.values.join('; ') : (sn.values || ''),
+      status: 'Enabled'
+    }));
+  } else if (legacyData.extensions && Array.isArray(legacyData.extensions)) {
     const snippetExts = legacyData.extensions.filter((e: any) => e.type === 'snippet');
     campaign.snippets = snippetExts.slice(0, 2).map((sn: any) => ({
       header: sn.header || '',

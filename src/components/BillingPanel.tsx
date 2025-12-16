@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
-    CreditCard, CheckCircle, Shield, Zap, Download, 
-    ArrowUpRight, Calendar, Clock, FileText, ArrowRight, CheckCircle2, AlertCircle
+    CreditCard, CheckCircle, Shield, Download, 
+    Calendar, FileText, CheckCircle2, AlertCircle
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from './ui/card';
@@ -24,7 +24,6 @@ export const BillingPanel = () => {
     const [error, setError] = useState<string | null>(null);
     const [isPaid, setIsPaid] = useState(false);
     const [showCancelDialog, setShowCancelDialog] = useState(false);
-    const [showPricingDialog, setShowPricingDialog] = useState(false);
     const [showPaymentDialog, setShowPaymentDialog] = useState(false);
     const [showAddCardDialog, setShowAddCardDialog] = useState(false);
     
@@ -258,9 +257,6 @@ export const BillingPanel = () => {
         }
     };
 
-    const handleViewPricing = () => {
-        setShowPricingDialog(true);
-    };
 
     // Card validation functions
     const validateCardNumber = (value: string) => {
@@ -669,23 +665,222 @@ Generated on ${new Date().toLocaleDateString()}`;
                         </CardContent>
                     </Card>
 
-                    {/* Only show "Go Pro" banner for free users */}
-                    {!isPaid && (
-                        <div className="p-5 sm:p-6 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl text-white shadow-lg">
-                            <Zap className="w-7 h-7 sm:w-8 sm:h-8 mb-3 sm:mb-4 text-yellow-300" />
-                            <h3 className="font-bold text-base sm:text-lg mb-2">Go Pro Today</h3>
-                            <p className="text-indigo-100 text-xs sm:text-sm mb-3 sm:mb-4">Get access to AI-powered keyword suggestions and advanced analytics.</p>
-                            <Button 
-                                variant="secondary" 
-                                className="w-full bg-white text-indigo-600 hover:bg-indigo-50 text-sm sm:text-base"
-                                onClick={handleViewPricing}
-                            >
-                                View Pricing
-                            </Button>
-                        </div>
-                    )}
                 </div>
             </div>
+
+            {/* Upgrade Plan Section - Inline Pricing */}
+            {!isPaid && (
+                <Card className="border-slate-200/60 bg-white/60 backdrop-blur-xl shadow-xl">
+                    <CardHeader>
+                        <CardTitle className="text-xl sm:text-2xl">Choose Your Plan</CardTitle>
+                        <CardDescription>
+                            Select the plan that best fits your needs. All plans include access to our powerful campaign building tools.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {/* Lifetime Limited Plan */}
+                            <Card className="border-2 border-slate-200 hover:border-indigo-300 transition-all hover:shadow-lg relative flex flex-col h-full">
+                                <CardHeader className="flex-shrink-0 pb-3">
+                                    <div className="text-center">
+                                        <Badge className="mb-2 bg-indigo-100 text-indigo-700 border-indigo-200 text-xs">Lifetime</Badge>
+                                        <CardTitle className="text-lg mb-2">Lifetime Limited</CardTitle>
+                                        <div className="text-2xl font-bold text-slate-800 mb-1">$99.99</div>
+                                        <div className="text-xs text-slate-600">One-time payment</div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="flex-1 pb-3">
+                                    <ul className="space-y-2">
+                                        <li className="flex items-start gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                            <span className="text-xs text-slate-700">15 campaigns/month</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                            <span className="text-xs text-slate-700">All features included</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                            <span className="text-xs text-slate-700">AI keyword generation</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                            <span className="text-xs text-slate-700">Campaign builder</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                            <span className="text-xs text-slate-700">CSV validation & export</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                            <span className="text-xs text-slate-700">24/7 support</span>
+                                        </li>
+                                    </ul>
+                                </CardContent>
+                                <CardFooter className="flex-shrink-0 pt-3 pb-4">
+                                    <Button 
+                                        className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm"
+                                        onClick={() => handleSubscribe("Lifetime Limited", "price_1ScnHdRfXPeepCvaHuURidFs")}
+                                        disabled={processing || billingInfo.plan === "Lifetime Limited"}
+                                    >
+                                        {billingInfo.plan === "Lifetime Limited" ? "Current Plan" : processing ? "Processing..." : "Get Started"}
+                                    </Button>
+                                </CardFooter>
+                            </Card>
+
+                            {/* Lifetime Unlimited Plan */}
+                            <Card className="border-2 border-indigo-400 hover:border-indigo-500 transition-all hover:shadow-xl relative bg-gradient-to-br from-indigo-50 to-purple-50 flex flex-col h-full">
+                                <div className="absolute top-2 right-2 z-10">
+                                    <Badge className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-0 text-xs">Popular</Badge>
+                                </div>
+                                <CardHeader className="flex-shrink-0 pb-3">
+                                    <div className="text-center">
+                                        <Badge className="mb-2 bg-indigo-100 text-indigo-700 border-indigo-200 text-xs">Lifetime</Badge>
+                                        <CardTitle className="text-lg mb-2">Lifetime Unlimited</CardTitle>
+                                        <div className="text-2xl font-bold text-slate-800 mb-1">$199</div>
+                                        <div className="text-xs text-slate-600">One-time payment</div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="flex-1 pb-3">
+                                    <ul className="space-y-2">
+                                        <li className="flex items-start gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                            <span className="text-xs text-slate-700 font-semibold">Unlimited campaigns</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                            <span className="text-xs text-slate-700 font-semibold">Unlimited access to all tools</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                            <span className="text-xs text-slate-700">AI keyword generation</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                            <span className="text-xs text-slate-700">Campaign builder</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                            <span className="text-xs text-slate-700">CSV validation & export</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                            <span className="text-xs text-slate-700">Priority support</span>
+                                        </li>
+                                    </ul>
+                                </CardContent>
+                                <CardFooter className="flex-shrink-0 pt-3 pb-4">
+                                    <Button 
+                                        className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg text-sm"
+                                        onClick={() => handleSubscribe("Lifetime Unlimited", "price_1ScnHdRfXPeepCva95wPdyod")}
+                                        disabled={processing || billingInfo.plan === "Lifetime Unlimited"}
+                                    >
+                                        {billingInfo.plan === "Lifetime Unlimited" ? "Current Plan" : processing ? "Processing..." : "Get Started"}
+                                    </Button>
+                                </CardFooter>
+                            </Card>
+
+                            {/* Monthly Limited Plan */}
+                            <Card className="border-2 border-slate-200 hover:border-indigo-300 transition-all hover:shadow-lg relative flex flex-col h-full">
+                                <CardHeader className="flex-shrink-0 pb-3">
+                                    <div className="text-center">
+                                        <Badge className="mb-2 bg-indigo-100 text-indigo-700 border-indigo-200 text-xs">Monthly</Badge>
+                                        <CardTitle className="text-lg mb-2">Monthly Limited</CardTitle>
+                                        <div className="text-2xl font-bold text-slate-800 mb-1">$49.99</div>
+                                        <div className="text-xs text-slate-600">per month</div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="flex-1 pb-3">
+                                    <ul className="space-y-2">
+                                        <li className="flex items-start gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                            <span className="text-xs text-slate-700">25 campaigns/month</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                            <span className="text-xs text-slate-700">Access to other tools</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                            <span className="text-xs text-slate-700">AI keyword generation</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                            <span className="text-xs text-slate-700">Campaign builder</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                            <span className="text-xs text-slate-700">CSV validation & export</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                            <span className="text-xs text-slate-700">24/7 support</span>
+                                        </li>
+                                    </ul>
+                                </CardContent>
+                                <CardFooter className="flex-shrink-0 pt-3 pb-4">
+                                    <Button 
+                                        className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm"
+                                        onClick={() => handleSubscribe("Monthly Limited", "price_1ScnHeRfXPeepCvahKDgpIJs")}
+                                        disabled={processing || billingInfo.plan === "Monthly Limited"}
+                                    >
+                                        {billingInfo.plan === "Monthly Limited" ? "Current Plan" : processing ? "Processing..." : "Get Started"}
+                                    </Button>
+                                </CardFooter>
+                            </Card>
+
+                            {/* Monthly Unlimited Plan */}
+                            <Card className="border-2 border-purple-300 hover:border-purple-400 transition-all hover:shadow-lg relative flex flex-col h-full">
+                                <CardHeader className="flex-shrink-0 pb-3">
+                                    <div className="text-center">
+                                        <Badge className="mb-2 bg-purple-100 text-purple-700 border-purple-200 text-xs">Monthly</Badge>
+                                        <CardTitle className="text-lg mb-2">Monthly Unlimited</CardTitle>
+                                        <div className="text-2xl font-bold text-slate-800 mb-1">$99.99</div>
+                                        <div className="text-xs text-slate-600">per month</div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="flex-1 pb-3">
+                                    <ul className="space-y-2">
+                                        <li className="flex items-start gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                            <span className="text-xs text-slate-700 font-semibold">Unlimited campaigns</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                            <span className="text-xs text-slate-700 font-semibold">Full access to all tools</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                            <span className="text-xs text-slate-700">AI keyword generation</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                            <span className="text-xs text-slate-700">Campaign builder</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                            <span className="text-xs text-slate-700">CSV validation & export</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                            <span className="text-xs text-slate-700">Priority support</span>
+                                        </li>
+                                    </ul>
+                                </CardContent>
+                                <CardFooter className="flex-shrink-0 pt-3 pb-4">
+                                    <Button 
+                                        className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm"
+                                        onClick={() => handleSubscribe("Monthly Unlimited", "price_1ScnHfRfXPeepCvadz2Po5tX")}
+                                        disabled={processing || billingInfo.plan === "Monthly Unlimited"}
+                                    >
+                                        {billingInfo.plan === "Monthly Unlimited" ? "Current Plan" : processing ? "Processing..." : "Get Started"}
+                                    </Button>
+                                </CardFooter>
+                            </Card>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Invoices */}
             <Card className="border-slate-200/60 bg-white/60 backdrop-blur-xl shadow-xl">
@@ -708,7 +903,7 @@ Generated on ${new Date().toLocaleDateString()}`;
                                     </div>
                                     <div className="flex items-center gap-3 sm:gap-4 justify-between sm:justify-end">
                                         <span className="font-mono text-slate-600 text-sm sm:text-base">{inv.amount}</span>
-                                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">{inv.status}</Badge>
+                                        <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200 text-xs">{inv.status}</Badge>
                                         <Button 
                                             variant="ghost" 
                                             size="icon" 
@@ -753,239 +948,6 @@ Generated on ${new Date().toLocaleDateString()}`;
                             disabled={processing}
                         >
                             {processing ? "Cancelling..." : "Yes, Cancel Subscription"}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            {/* View Pricing Dialog */}
-            <Dialog open={showPricingDialog} onOpenChange={setShowPricingDialog}>
-                <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0">
-                    <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-4">
-                        <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                                <DialogTitle className="text-xl sm:text-2xl mb-2">Choose Your Plan</DialogTitle>
-                                <DialogDescription className="text-sm">
-                                    Select the plan that best fits your needs. All plans include access to our powerful campaign building tools.
-                                </DialogDescription>
-                            </div>
-                        </div>
-                    </DialogHeader>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-6 pb-4 overflow-y-auto flex-1 min-h-0">
-                        {/* Lifetime Limited Plan */}
-                        <Card className="border-2 border-slate-200 hover:border-indigo-300 transition-all hover:shadow-lg relative flex flex-col h-full">
-                            <CardHeader className="flex-shrink-0 pb-3">
-                                <div className="text-center">
-                                    <Badge className="mb-2 bg-indigo-100 text-indigo-700 border-indigo-200 text-xs">Lifetime</Badge>
-                                    <CardTitle className="text-lg mb-2">Lifetime Limited</CardTitle>
-                                    <div className="text-2xl font-bold text-slate-800 mb-1">$99.99</div>
-                                    <div className="text-xs text-slate-600">One-time payment</div>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="flex-1 pb-3">
-                                <ul className="space-y-2">
-                                    <li className="flex items-start gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                                        <span className="text-xs text-slate-700">15 campaigns/month</span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                                        <span className="text-xs text-slate-700">All features included</span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                                        <span className="text-xs text-slate-700">AI keyword generation</span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                                        <span className="text-xs text-slate-700">Campaign builder</span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                                        <span className="text-xs text-slate-700">CSV validation & export</span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                                        <span className="text-xs text-slate-700">24/7 support</span>
-                                    </li>
-                                </ul>
-                            </CardContent>
-                            <CardFooter className="flex-shrink-0 pt-3 pb-4">
-                                <Button 
-                                    className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm"
-                                    onClick={() => {
-                                        setShowPricingDialog(false);
-                                        handleSubscribe("Lifetime Limited", "price_1ScnHdRfXPeepCvaHuURidFs");
-                                    }}
-                                    disabled={processing || billingInfo.plan === "Lifetime Limited"}
-                                >
-                                    {billingInfo.plan === "Lifetime Limited" ? "Current Plan" : processing ? "Processing..." : "Get Started"}
-                                </Button>
-                            </CardFooter>
-                        </Card>
-
-                        {/* Lifetime Unlimited Plan */}
-                        <Card className="border-2 border-indigo-400 hover:border-indigo-500 transition-all hover:shadow-xl relative bg-gradient-to-br from-indigo-50 to-purple-50 flex flex-col h-full">
-                            <div className="absolute top-2 right-2 z-10">
-                                <Badge className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-0 text-xs">Popular</Badge>
-                            </div>
-                            <CardHeader className="flex-shrink-0 pb-3">
-                                <div className="text-center">
-                                    <Badge className="mb-2 bg-indigo-100 text-indigo-700 border-indigo-200 text-xs">Lifetime</Badge>
-                                    <CardTitle className="text-lg mb-2">Lifetime Unlimited</CardTitle>
-                                    <div className="text-2xl font-bold text-slate-800 mb-1">$199</div>
-                                    <div className="text-xs text-slate-600">One-time payment</div>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="flex-1 pb-3">
-                                <ul className="space-y-2">
-                                    <li className="flex items-start gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                                        <span className="text-xs text-slate-700 font-semibold">Unlimited campaigns</span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                                        <span className="text-xs text-slate-700 font-semibold">Unlimited access to all tools</span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                                        <span className="text-xs text-slate-700">AI keyword generation</span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                                        <span className="text-xs text-slate-700">Campaign builder</span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                                        <span className="text-xs text-slate-700">CSV validation & export</span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                                        <span className="text-xs text-slate-700">Priority support</span>
-                                    </li>
-                                </ul>
-                            </CardContent>
-                            <CardFooter className="flex-shrink-0 pt-3 pb-4">
-                                <Button 
-                                    className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg text-sm"
-                                    onClick={() => {
-                                        setShowPricingDialog(false);
-                                        handleSubscribe("Lifetime Unlimited", "price_1ScnHdRfXPeepCva95wPdyod");
-                                    }}
-                                    disabled={processing || billingInfo.plan === "Lifetime Unlimited"}
-                                >
-                                    {billingInfo.plan === "Lifetime Unlimited" ? "Current Plan" : processing ? "Processing..." : "Get Started"}
-                                </Button>
-                            </CardFooter>
-                        </Card>
-
-                        {/* Monthly Limited Plan */}
-                        <Card className="border-2 border-slate-200 hover:border-indigo-300 transition-all hover:shadow-lg relative flex flex-col h-full">
-                            <CardHeader className="flex-shrink-0 pb-3">
-                                <div className="text-center">
-                                    <Badge className="mb-2 bg-green-100 text-green-700 border-green-200 text-xs">Monthly</Badge>
-                                    <CardTitle className="text-lg mb-2">Monthly Limited</CardTitle>
-                                    <div className="text-2xl font-bold text-slate-800 mb-1">$49.99</div>
-                                    <div className="text-xs text-slate-600">per month</div>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="flex-1 pb-3">
-                                <ul className="space-y-2">
-                                    <li className="flex items-start gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                                        <span className="text-xs text-slate-700">25 campaigns/month</span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                                        <span className="text-xs text-slate-700">Access to other tools</span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                                        <span className="text-xs text-slate-700">AI keyword generation</span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                                        <span className="text-xs text-slate-700">Campaign builder</span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                                        <span className="text-xs text-slate-700">CSV validation & export</span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                                        <span className="text-xs text-slate-700">24/7 support</span>
-                                    </li>
-                                </ul>
-                            </CardContent>
-                            <CardFooter className="flex-shrink-0 pt-3 pb-4">
-                                <Button 
-                                    className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm"
-                                    onClick={() => {
-                                        setShowPricingDialog(false);
-                                        handleSubscribe("Monthly Limited", "price_1ScnHeRfXPeepCvahKDgpIJs");
-                                    }}
-                                    disabled={processing || billingInfo.plan === "Monthly Limited"}
-                                >
-                                    {billingInfo.plan === "Monthly Limited" ? "Current Plan" : processing ? "Processing..." : "Get Started"}
-                                </Button>
-                            </CardFooter>
-                        </Card>
-
-                        {/* Monthly Unlimited Plan */}
-                        <Card className="border-2 border-purple-300 hover:border-purple-400 transition-all hover:shadow-lg relative flex flex-col h-full">
-                            <CardHeader className="flex-shrink-0 pb-3">
-                                <div className="text-center">
-                                    <Badge className="mb-2 bg-purple-100 text-purple-700 border-purple-200 text-xs">Monthly</Badge>
-                                    <CardTitle className="text-lg mb-2">Monthly Unlimited</CardTitle>
-                                    <div className="text-2xl font-bold text-slate-800 mb-1">$99.99</div>
-                                    <div className="text-xs text-slate-600">per month</div>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="flex-1 pb-3">
-                                <ul className="space-y-2">
-                                    <li className="flex items-start gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                                        <span className="text-xs text-slate-700 font-semibold">Unlimited campaigns</span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                                        <span className="text-xs text-slate-700 font-semibold">Full access to all tools</span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                                        <span className="text-xs text-slate-700">AI keyword generation</span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                                        <span className="text-xs text-slate-700">Campaign builder</span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                                        <span className="text-xs text-slate-700">CSV validation & export</span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                                        <span className="text-xs text-slate-700">Priority support</span>
-                                    </li>
-                                </ul>
-                            </CardContent>
-                            <CardFooter className="flex-shrink-0 pt-3 pb-4">
-                                <Button 
-                                    className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm"
-                                    onClick={() => {
-                                        setShowPricingDialog(false);
-                                        handleSubscribe("Monthly Unlimited", "price_1ScnHfRfXPeepCvadz2Po5tX");
-                                    }}
-                                    disabled={processing || billingInfo.plan === "Monthly Unlimited"}
-                                >
-                                    {billingInfo.plan === "Monthly Unlimited" ? "Current Plan" : processing ? "Processing..." : "Get Started"}
-                                </Button>
-                            </CardFooter>
-                        </Card>
-                    </div>
-                    <DialogFooter className="flex-shrink-0 px-6 pb-6 pt-4 border-t border-slate-200">
-                        <Button variant="outline" onClick={() => setShowPricingDialog(false)} className="w-full sm:w-auto">
-                            Close
                         </Button>
                     </DialogFooter>
                 </DialogContent>

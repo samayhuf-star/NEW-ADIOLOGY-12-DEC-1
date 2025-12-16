@@ -2999,7 +2999,7 @@ const CustomDomainModal = ({ website, onClose }: { website: SavedWebsite; onClos
                       className="p-1 hover:bg-gray-200 rounded transition text-gray-500 hover:text-indigo-600"
                       title="Copy record"
                     >
-                      {copied === record.type + idx ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                      {copied === record.type + idx ? <Check className="w-4 h-4 text-indigo-600" /> : <Copy className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>
@@ -3016,7 +3016,7 @@ const CustomDomainModal = ({ website, onClose }: { website: SavedWebsite; onClos
           {verificationStatus !== 'idle' && (
             <div className={`rounded-lg p-4 flex items-start gap-3 ${
               verificationStatus === 'verified' 
-                ? 'bg-green-50 border border-green-200' 
+                ? 'bg-indigo-50 border border-indigo-200' 
                 : 'bg-red-50 border border-red-200'
             }`}>
               {verificationStatus === 'verified' ? (
@@ -3024,7 +3024,7 @@ const CustomDomainModal = ({ website, onClose }: { website: SavedWebsite; onClos
                   <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm text-green-800 font-semibold">DNS Verified Successfully!</p>
-                    <p className="text-sm text-green-700 mt-1">{verificationMessage}</p>
+                    <p className="text-sm text-indigo-700 mt-1">{verificationMessage}</p>
                   </div>
                 </>
               ) : (
@@ -3065,7 +3065,7 @@ const CustomDomainModal = ({ website, onClose }: { website: SavedWebsite; onClos
             </button>
             <button
               onClick={() => window.open('https://www.youtube.com/results?search_query=how+to+add+dns+records', '_blank')}
-              className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium"
+              className="flex-1 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition font-medium"
             >
               Watch Tutorial
             </button>
@@ -3076,16 +3076,25 @@ const CustomDomainModal = ({ website, onClose }: { website: SavedWebsite; onClos
   );
 };
 
-export const WebTemplates = () => {
+interface WebTemplatesProps {
+  initialTab?: 'templates' | 'saved' | 'connected';
+}
+
+export const WebTemplates = ({ initialTab = 'templates' }: WebTemplatesProps) => {
   const [previewTemplate, setPreviewTemplate] = useState<TemplateData | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [savedWebsites, setSavedWebsites] = useState<SavedWebsite[]>([]);
   const [editingWebsite, setEditingWebsite] = useState<SavedWebsite | null>(null);
-  const [activeTab, setActiveTab] = useState<'templates' | 'saved'>('templates');
+  const [activeTab, setActiveTab] = useState<'templates' | 'saved' | 'connected'>(initialTab);
   const [listView, setListView] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'recent' | 'name'>('recent');
   const [domainModalWebsite, setDomainModalWebsite] = useState<SavedWebsite | null>(null);
+  
+  // Update activeTab when initialTab prop changes (for menu navigation)
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
 
   const templates = [
     {
@@ -3515,7 +3524,7 @@ export const WebTemplates = () => {
           onClick={() => setActiveTab('templates')}
           className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
             activeTab === 'templates'
-              ? 'bg-indigo-600 text-white shadow-lg'
+              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
@@ -3526,7 +3535,7 @@ export const WebTemplates = () => {
           onClick={() => setActiveTab('saved')}
           className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
             activeTab === 'saved'
-              ? 'bg-indigo-600 text-white shadow-lg'
+              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
@@ -3535,6 +3544,22 @@ export const WebTemplates = () => {
           {savedWebsites.length > 0 && (
             <span className={`px-2 py-0.5 rounded-full text-xs ${activeTab === 'saved' ? 'bg-white/20' : 'bg-indigo-100 text-indigo-700'}`}>
               {savedWebsites.length}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab('connected')}
+          className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+            activeTab === 'connected'
+              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          <Globe className="w-4 h-4" />
+          Connected Websites
+          {savedWebsites.filter(w => (w as any).customDomain).length > 0 && (
+            <span className={`px-2 py-0.5 rounded-full text-xs ${activeTab === 'connected' ? 'bg-white/20' : 'bg-indigo-100 text-indigo-700'}`}>
+              {savedWebsites.filter(w => (w as any).customDomain).length}
             </span>
           )}
         </button>
@@ -3549,7 +3574,7 @@ export const WebTemplates = () => {
                 onClick={() => setSelectedCategory(category)}
                 className={`px-4 py-2 rounded-lg font-medium transition-all ${
                   selectedCategory === category
-                    ? 'bg-indigo-600 text-white shadow-lg'
+                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -3586,7 +3611,7 @@ export const WebTemplates = () => {
                     </button>
                     <button
                       onClick={() => handleEditTemplate(template)}
-                      className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-indigo-700 transition-colors"
+                      className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:from-indigo-700 hover:to-purple-700 transition-colors"
                     >
                       <Edit3 className="w-4 h-4" />
                       Edit Template
@@ -3608,14 +3633,14 @@ export const WebTemplates = () => {
                   <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                     <button
                       onClick={() => setPreviewTemplate(template.data)}
-                      className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium text-sm transition-colors"
+                      className="flex items-center gap-2 text-indigo-600 hover:text-green-700 font-medium text-sm transition-colors"
                     >
                       <Eye className="w-4 h-4" />
                       View Live
                     </button>
                     <button
                       onClick={() => handleEditTemplate(template)}
-                      className="flex items-center gap-2 bg-indigo-600 text-white px-3 py-1.5 rounded-lg font-medium text-sm hover:bg-indigo-700 transition-colors"
+                      className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-3 py-1.5 rounded-lg font-medium text-sm hover:from-indigo-700 hover:to-purple-700 transition-colors"
                     >
                       <Sparkles className="w-4 h-4" />
                       Edit with AI
@@ -3645,7 +3670,7 @@ export const WebTemplates = () => {
               <p className="text-gray-500 mb-6">Start by editing a template to create your first website</p>
               <button
                 onClick={() => setActiveTab('templates')}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Browse Templates
@@ -3708,7 +3733,7 @@ export const WebTemplates = () => {
                           <div className="flex items-center gap-2 ml-4">
                             <button
                               onClick={() => handleEditSavedWebsite(website)}
-                              className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium text-sm hover:bg-indigo-700 transition-colors"
+                              className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-lg font-medium text-sm hover:from-indigo-700 hover:to-purple-700 transition-colors"
                             >
                               <Sparkles className="w-4 h-4" />
                               Edit
@@ -3764,7 +3789,7 @@ export const WebTemplates = () => {
                           <div className="flex flex-col gap-2">
                             <button
                               onClick={() => handleEditSavedWebsite(website)}
-                              className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-3 py-2 rounded-lg font-medium text-sm hover:bg-indigo-700 transition-colors w-full"
+                              className="flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-3 py-2 rounded-lg font-medium text-sm hover:from-indigo-700 hover:to-purple-700 transition-colors w-full"
                             >
                               <Sparkles className="w-4 h-4" />
                               Edit
@@ -3800,6 +3825,99 @@ export const WebTemplates = () => {
               )}
             </>
           )}
+        </div>
+      )}
+
+      {activeTab === 'connected' && (
+        <div>
+          {(() => {
+            const connectedSites = savedWebsites.filter(w => (w as any).customDomain);
+            
+            if (connectedSites.length === 0) {
+              return (
+                <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
+                  <div className="text-gray-400 text-6xl mb-4">🌐</div>
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">No connected websites</h3>
+                  <p className="text-gray-500 mb-6">Connect a custom domain to your saved websites to see them here</p>
+                  <button
+                    onClick={() => setActiveTab('saved')}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-colors"
+                  >
+                    <FolderOpen className="w-4 h-4" />
+                    View Saved Websites
+                  </button>
+                </div>
+              );
+            }
+            
+            return (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-gray-800">
+                    Websites with Custom Domains ({connectedSites.length})
+                  </h2>
+                </div>
+                
+                <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                  <div className="divide-y divide-gray-200">
+                    {connectedSites.map((website) => (
+                      <div key={website.id} className="p-5 hover:bg-gray-50 transition-colors">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3">
+                              <h3 className="font-bold text-lg text-gray-800">{website.name}</h3>
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
+                                <CheckCircle className="w-3 h-3" />
+                                Connected
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-4 mt-2">
+                              <a 
+                                href={`https://${(website as any).customDomain}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 text-indigo-600 hover:text-green-700 font-medium text-sm"
+                              >
+                                <Globe className="w-4 h-4" />
+                                {(website as any).customDomain}
+                              </a>
+                              <span className="text-sm text-gray-500">
+                                <Clock className="w-4 h-4 inline mr-1" />
+                                Updated {new Date(website.updatedAt).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleEditSavedWebsite(website)}
+                              className="p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                              title="Edit Website"
+                            >
+                              <Edit3 className="w-5 h-5" />
+                            </button>
+                            <button
+                              onClick={() => setDomainModalWebsite(website)}
+                              className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Manage Domain"
+                            >
+                              <Globe className="w-5 h-5" />
+                            </button>
+                            <button
+                              onClick={() => handleDownloadSavedWebsite(website)}
+                              className="p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                              title="Download"
+                            >
+                              <Download className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
 

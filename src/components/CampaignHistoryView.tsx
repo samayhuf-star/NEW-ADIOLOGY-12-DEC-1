@@ -11,8 +11,11 @@ import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { TerminalCard, TerminalLine } from './ui/terminal-card';
 import { historyService } from '../utils/historyService';
 import { notifications } from '../utils/notifications';
+import { getStatusBadgeClasses, getStructureBadgeClasses } from '../utils/badgeTheme';
 import { campaignStructureToCSVRows, GOOGLE_ADS_EDITOR_HEADERS } from '../utils/googleAdsEditorCSVExporter';
 import { validateAndFixAds, formatValidationReport } from '../utils/adValidationUtils';
 import Papa from 'papaparse';
@@ -66,8 +69,18 @@ interface SavedCampaign {
   status?: 'draft' | 'completed' | 'in_progress';
 }
 
+interface HistoryEntry {
+  id: string;
+  type: string;
+  name: string;
+  timestamp: string;
+  data: any;
+  status?: string;
+}
+
 export const CampaignHistoryView: React.FC<CampaignHistoryViewProps> = ({ onLoadCampaign }) => {
   const [savedCampaigns, setSavedCampaigns] = useState<SavedCampaign[]>([]);
+  const [allHistory, setAllHistory] = useState<HistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -210,12 +223,19 @@ export const CampaignHistoryView: React.FC<CampaignHistoryViewProps> = ({ onLoad
       setError(null);
       setLoading(true);
       
-      const allHistory = await historyService.getAll();
+      const historyItems = await historyService.getAll();
       
-      console.log('📋 All history items:', allHistory);
-      console.log('📋 History items count:', allHistory.length);
+      console.log('📋 All history items:', historyItems);
+      console.log('📋 History items count:', historyItems.length);
       
-      const campaigns = allHistory.filter(item => {
+      // Store ALL history items for the History tab (sorted by timestamp, newest first)
+      const sortedHistory = [...historyItems].sort((a, b) => 
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      );
+      setAllHistory(sortedHistory);
+      
+      // Filter for campaigns only (for Saved Campaigns tab)
+      const campaigns = historyItems.filter(item => {
         const type = (item.type || '').toLowerCase();
         const matches = type === 'builder-2-campaign' || 
                type === 'campaign' ||
@@ -223,7 +243,7 @@ export const CampaignHistoryView: React.FC<CampaignHistoryViewProps> = ({ onLoad
                type.includes('campaign') ||
                type.includes('builder');
         
-        if (allHistory.length > 0) {
+        if (historyItems.length > 0) {
           console.log(`🔍 Filtering item: type="${item.type}" (normalized: "${type}"), matches=${matches}`);
         }
         
@@ -417,18 +437,11 @@ export const CampaignHistoryView: React.FC<CampaignHistoryViewProps> = ({ onLoad
   };
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <Badge className="bg-green-100 text-green-700 border-green-300">Completed</Badge>;
-      case 'in_progress':
-        return <Badge className="bg-blue-100 text-blue-700 border-blue-300">In Progress</Badge>;
-      case 'started':
-        return <Badge className="bg-slate-100 text-slate-700 border-slate-300">Started</Badge>;
-      case 'draft':
-        return <Badge className="bg-amber-100 text-amber-700 border-amber-300">Draft</Badge>;
-      default:
-        return <Badge className="bg-slate-100 text-slate-700 border-slate-300">Unknown</Badge>;
-    }
+    const statusLabel = status === 'in_progress' ? 'In Progress' : 
+                        status === 'completed' ? 'Completed' :
+                        status === 'draft' ? 'Draft' :
+                        status === 'started' ? 'Started' : 'Unknown';
+    return <Badge className={getStatusBadgeClasses(status)}>{statusLabel}</Badge>;
   };
 
   const getStepLabel = (stepNum: number) => {
@@ -552,15 +565,15 @@ export const CampaignHistoryView: React.FC<CampaignHistoryViewProps> = ({ onLoad
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Google Ads Connection Card */}
-        <Card className={`mb-6 border-2 ${googleAdsConnected ? 'border-green-200 bg-green-50' : 'border-blue-200 bg-blue-50'}`}>
+        <Card className={`mb-6 border-2 ${googleAdsConnected ? 'border-indigo-200 bg-indigo-50' : 'border-blue-200 bg-blue-50'}`}>
           <CardContent className="p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${googleAdsConnected ? 'bg-green-100' : 'bg-blue-100'}`}>
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${googleAdsConnected ? 'bg-indigo-100' : 'bg-blue-100'}`}>
                   {googleAdsLoading ? (
                     <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
                   ) : googleAdsConnected ? (
-                    <Link2 className="w-6 h-6 text-green-600" />
+                    <Link2 className="w-6 h-6 text-indigo-600" />
                   ) : (
                     <Unlink className="w-6 h-6 text-blue-600" />
                   )}
@@ -569,7 +582,7 @@ export const CampaignHistoryView: React.FC<CampaignHistoryViewProps> = ({ onLoad
                   <h3 className={`font-semibold ${googleAdsConnected ? 'text-green-800' : 'text-blue-800'}`}>
                     {googleAdsLoading ? 'Checking Connection...' : googleAdsConnected ? 'Google Ads Connected' : 'Connect Google Ads'}
                   </h3>
-                  <p className={`text-sm ${googleAdsConnected ? 'text-green-600' : 'text-blue-600'}`}>
+                  <p className={`text-sm ${googleAdsConnected ? 'text-indigo-600' : 'text-blue-600'}`}>
                     {googleAdsConnected 
                       ? 'Push campaigns directly to your Google Ads account' 
                       : 'Connect your Google Ads account to push campaigns with one click'}
@@ -592,24 +605,16 @@ export const CampaignHistoryView: React.FC<CampaignHistoryViewProps> = ({ onLoad
                 )}
                 
                 {!googleAdsLoading && (
-                  <Button
-                    onClick={googleAdsConnected ? () => checkGoogleAdsConnection() : connectGoogleAds}
-                    className={googleAdsConnected 
-                      ? 'bg-green-600 hover:bg-green-700 text-white' 
-                      : 'bg-blue-600 hover:bg-blue-700 text-white'}
-                  >
-                    {googleAdsConnected ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        Refresh
-                      </>
-                    ) : (
-                      <>
-                        <Link2 className="w-4 h-4 mr-2" />
-                        Connect Account
-                      </>
-                    )}
-                  </Button>
+                  <div className="relative">
+                    <Button
+                      disabled
+                      className="bg-gray-400 cursor-not-allowed text-white opacity-70"
+                    >
+                      <Link2 className="w-4 h-4 mr-2" />
+                      Connect Account
+                    </Button>
+                    <Badge className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs px-2 py-0.5">Coming Soon</Badge>
+                  </div>
                 )}
               </div>
             </div>
@@ -633,7 +638,7 @@ export const CampaignHistoryView: React.FC<CampaignHistoryViewProps> = ({ onLoad
                 <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-medium text-green-800">Campaign Pushed Successfully</p>
-                  <p className="text-sm text-green-700">{pushSuccess.message}</p>
+                  <p className="text-sm text-indigo-700">{pushSuccess.message}</p>
                 </div>
                 <button onClick={() => setPushSuccess(null)} className="ml-auto text-green-600 hover:text-green-800">
                   <X className="w-4 h-4" />
@@ -679,8 +684,50 @@ export const CampaignHistoryView: React.FC<CampaignHistoryViewProps> = ({ onLoad
           </div>
         </div>
 
-        {/* Search & Filters Card */}
-        <Card className="border-slate-200/60 bg-white shadow-xl mb-6">
+        {/* Terminal-Style Stats */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+          <TerminalCard title="Campaign Statistics" showDots={true} variant="compact">
+            <div className="space-y-1.5">
+              <TerminalLine prefix="$" label="saved_campaigns:" value={`${savedCampaigns.length}`} valueColor="green" />
+              <TerminalLine prefix="$" label="filtered_results:" value={`${filteredCampaigns.length}`} valueColor="cyan" />
+              <TerminalLine prefix="$" label="history_items:" value={`${allHistory.length}`} valueColor="yellow" />
+              <TerminalLine prefix="$" label="view_mode:" value={viewMode.toUpperCase()} valueColor="purple" />
+            </div>
+          </TerminalCard>
+
+          <TerminalCard title="Connection Status" showDots={true} variant="compact">
+            <div className="space-y-1.5">
+              <TerminalLine prefix=">" label="google_ads:" value={googleAdsConnected ? 'CONNECTED' : googleAdsLoading ? 'CHECKING...' : 'DISCONNECTED'} valueColor={googleAdsConnected ? 'green' : googleAdsLoading ? 'slate' : 'yellow'} />
+              <TerminalLine prefix=">" label="accounts:" value={`${googleAdsAccounts.length}`} valueColor="cyan" />
+              <TerminalLine prefix=">" label="selected_account:" value={selectedAccount ? selectedAccount.substring(0, 12) + '...' : 'NONE'} valueColor={selectedAccount ? 'green' : 'slate'} />
+              <TerminalLine prefix=">" label="status:" value={loading ? 'LOADING' : error ? 'ERROR' : 'READY'} valueColor={loading ? 'yellow' : error ? 'yellow' : 'green'} />
+            </div>
+          </TerminalCard>
+        </div>
+
+        {/* Tabs Section */}
+        <Tabs defaultValue="saved-campaigns" className="w-full">
+          <TabsList className="mb-6 bg-white border border-slate-200 p-1 rounded-lg shadow-sm">
+            <TabsTrigger 
+              value="saved-campaigns" 
+              className="px-6 py-2.5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-md transition-all"
+            >
+              <FolderOpen className="w-4 h-4 mr-2" />
+              Saved Campaigns
+            </TabsTrigger>
+            <TabsTrigger 
+              value="history" 
+              className="px-6 py-2.5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-md transition-all"
+            >
+              <Clock className="w-4 h-4 mr-2" />
+              History
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Saved Campaigns Tab */}
+          <TabsContent value="saved-campaigns" className="mt-0">
+            {/* Search & Filters Card */}
+            <Card className="border-slate-200/60 bg-white shadow-xl mb-6">
           <CardContent className="p-4 sm:p-6">
             {/* Search Bar */}
             <div className="flex gap-3 items-center mb-4">
@@ -709,7 +756,7 @@ export const CampaignHistoryView: React.FC<CampaignHistoryViewProps> = ({ onLoad
                 <Filter className="w-4 h-4" />
                 Filters
                 {hasActiveFilters && (
-                  <Badge className="bg-purple-600 text-white text-xs px-1.5 py-0 ml-1">
+                  <Badge className="bg-indigo-600 text-white text-xs px-1.5 py-0 ml-1">
                     {[filterStructure !== 'all', filterStatus !== 'all', filterStep !== 'all'].filter(Boolean).length}
                   </Badge>
                 )}
@@ -948,7 +995,7 @@ export const CampaignHistoryView: React.FC<CampaignHistoryViewProps> = ({ onLoad
                           variant="outline"
                           onClick={() => pushCampaignToGoogleAds(campaign)}
                           disabled={pushingCampaign === campaign.id}
-                          className="text-green-600 hover:text-green-700 hover:bg-green-50 flex-shrink-0 px-3"
+                          className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 flex-shrink-0 px-3"
                           title="Push to Google Ads (Paused)"
                         >
                           {pushingCampaign === campaign.id ? (
@@ -1119,7 +1166,7 @@ export const CampaignHistoryView: React.FC<CampaignHistoryViewProps> = ({ onLoad
                               size="sm"
                               onClick={() => pushCampaignToGoogleAds(campaign)}
                               disabled={pushingCampaign === campaign.id}
-                              className="w-8 h-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                              className="w-8 h-8 p-0 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
                               title="Push to Google Ads (Paused)"
                             >
                               {pushingCampaign === campaign.id ? (
@@ -1200,7 +1247,7 @@ export const CampaignHistoryView: React.FC<CampaignHistoryViewProps> = ({ onLoad
                               size="sm"
                               onClick={() => pushCampaignToGoogleAds(campaign)}
                               disabled={pushingCampaign === campaign.id}
-                              className="w-9 h-9 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                              className="w-9 h-9 p-0 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
                               title="Push to Google Ads (Paused)"
                             >
                               {pushingCampaign === campaign.id ? (
@@ -1237,6 +1284,100 @@ export const CampaignHistoryView: React.FC<CampaignHistoryViewProps> = ({ onLoad
             </CardContent>
           </Card>
         )}
+          </TabsContent>
+
+          {/* History Tab */}
+          <TabsContent value="history" className="mt-0">
+            <Card className="border-slate-200/60 bg-white shadow-xl">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Clock className="w-5 h-5 text-indigo-600" />
+                  Campaign History
+                </CardTitle>
+                <CardDescription>
+                  View your campaign activity and changes over time
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="flex flex-col items-center justify-center py-16">
+                    <Loader2 className="w-10 h-10 text-indigo-600 animate-spin mb-4" />
+                    <p className="text-slate-600">Loading history...</p>
+                  </div>
+                ) : savedCampaigns.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+                      <Clock className="w-8 h-8 text-slate-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-700 mb-2">No History Yet</h3>
+                    <p className="text-slate-500 max-w-md">
+                      Your campaign activity will appear here once you start creating campaigns.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {savedCampaigns.map((campaign) => {
+                      const data = campaign.data || campaign;
+                      const timestamp = new Date(campaign.timestamp);
+                      const formattedDate = timestamp.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      });
+                      const formattedTime = timestamp.toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      });
+
+                      return (
+                        <div 
+                          key={campaign.id}
+                          className="flex items-start gap-4 p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                        >
+                          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                            <FileText className="w-5 h-5 text-indigo-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="font-medium text-slate-900 truncate">
+                                {campaign.name || data.campaignName || 'Untitled Campaign'}
+                              </h4>
+                              {getStatusBadge(campaign.status || 'started')}
+                            </div>
+                            <p className="text-sm text-slate-600 mb-2">
+                              {data.structureType ? `${STRUCTURE_TYPES.find(s => s.id === data.structureType)?.name || data.structureType} structure` : 'Campaign created'}
+                              {data.selectedKeywords?.length > 0 && ` with ${data.selectedKeywords.length} keywords`}
+                            </p>
+                            <div className="flex items-center gap-4 text-xs text-slate-500">
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                {formattedDate} at {formattedTime}
+                              </span>
+                              {data.url && (
+                                <span className="truncate max-w-[200px]" title={data.url}>
+                                  {data.url}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => loadCampaignData(data)}
+                            className="flex-shrink-0 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

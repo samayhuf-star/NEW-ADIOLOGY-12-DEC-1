@@ -11,16 +11,29 @@ interface CampaignPresetsProps {
   onLoadPreset: (presetData: any) => void;
 }
 
+const STRUCTURE_CATEGORIES = [
+  { id: 'all', label: 'All' },
+  { id: 'SKAG', label: 'SKAG' },
+  { id: 'STAG', label: 'STAG' },
+  { id: 'GEO', label: 'GEO-Segmented' },
+  { id: 'INTENT', label: 'Intent-Based' },
+  { id: 'FUNNEL', label: 'Funnel-Based' },
+];
+
 export const CampaignPresets: React.FC<CampaignPresetsProps> = ({ onLoadPreset }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPreset, setSelectedPreset] = useState<CampaignPreset | null>(null);
   const [showReview, setShowReview] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
-  const filteredPresets = campaignPresets.filter(preset =>
-    preset.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    preset.slug.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredPresets = campaignPresets.filter(preset => {
+    const matchesSearch = preset.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      preset.slug.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || 
+      (preset.structure && preset.structure.toUpperCase().includes(selectedCategory.toUpperCase()));
+    return matchesSearch && matchesCategory;
+  });
 
   const handleSelectPreset = async (preset: CampaignPreset) => {
     setSelectedPreset(preset);
@@ -353,7 +366,7 @@ export const CampaignPresets: React.FC<CampaignPresetsProps> = ({ onLoadPreset }
           {/* Sidebar Actions */}
           <div className="space-y-6">
             {/* Bug_69: Ensure all buttons are visible by removing overflow constraints */}
-            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+            <div className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl shadow-lg p-6 text-white">
               <h3 className="text-base font-semibold mb-3">Ready to Launch</h3>
               <p className="text-sm text-indigo-100 mb-6">
                 This preset is optimized for high-intent pay-per-call campaigns. Review the details and export when ready.
@@ -425,7 +438,7 @@ export const CampaignPresets: React.FC<CampaignPresetsProps> = ({ onLoadPreset }
         </div>
 
         {/* Search and View Toggle */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 mb-4">
           <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none z-10" />
           <input
@@ -435,7 +448,6 @@ export const CampaignPresets: React.FC<CampaignPresetsProps> = ({ onLoadPreset }
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-11 pr-10 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           />
-          {/* Bug_68: Cross icon to reset search box */}
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
@@ -473,11 +485,28 @@ export const CampaignPresets: React.FC<CampaignPresetsProps> = ({ onLoadPreset }
             </button>
           </div>
         </div>
+        
+        {/* Category Filters */}
+        <div className="flex flex-wrap items-center gap-2">
+          {STRUCTURE_CATEGORIES.map((category) => (
+            <button
+              key={category.id}
+              onClick={() => setSelectedCategory(category.id)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                selectedCategory === category.id
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
+              }`}
+            >
+              {category.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Presets Grid/List - Simple flat display */}
       <div className={viewMode === 'grid' 
-        ? 'grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3' 
+        ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4' 
         : 'space-y-3'
       }>
         {filteredPresets.map((preset) => {

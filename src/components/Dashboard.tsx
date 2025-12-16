@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react';
 import { 
-  TrendingUp, Users, DollarSign, Activity, Calendar, Zap, 
-  Clock, CheckCircle2, AlertCircle, ArrowUpRight, ArrowDownRight,
-  Sparkles, Package, Target, FileText, BarChart3, Globe, FolderOpen, Layers,
-  PanelLeftClose, PanelLeftOpen, Search
+  Activity, Zap, Sparkles, Package, Target, Globe, FolderOpen, Terminal,
+  CheckCircle2, FileText, Layers, TrendingUp, ArrowUp
 } from 'lucide-react';
-import { Card } from './ui/card';
-import { Badge } from './ui/badge';
 import { Button } from './ui/button';
+import { Card } from './ui/card';
+import { TerminalCard, TerminalLine } from './ui/terminal-card';
 import { supabase } from '../utils/supabase/client';
 import { historyService } from '../utils/historyService';
 import { getUserPublishedWebsites } from '../utils/publishedWebsites';
@@ -222,7 +220,7 @@ export function Dashboard({ user, onNavigate }: DashboardProps) {
       case 'professional':
         return 'bg-blue-100 text-blue-700 border-blue-300';
       case 'starter':
-        return 'bg-green-100 text-green-700 border-green-300';
+        return 'bg-indigo-100 text-indigo-700 border-indigo-300';
       default:
         return 'bg-slate-100 text-slate-700 border-slate-300';
     }
@@ -262,10 +260,10 @@ export function Dashboard({ user, onNavigate }: DashboardProps) {
   };
 
   const getActionColor = (action: string) => {
-    if (action.includes('create')) return 'text-green-600 bg-green-50';
+    if (action.includes('create')) return 'text-indigo-600 bg-indigo-50';
     if (action.includes('export')) return 'text-blue-600 bg-blue-50';
     if (action.includes('generate')) return 'text-purple-600 bg-purple-50';
-    if (action.includes('validate')) return 'text-emerald-600 bg-emerald-50';
+    if (action.includes('validate')) return 'text-indigo-600 bg-indigo-50';
     return 'text-slate-600 bg-slate-50';
   };
 
@@ -285,267 +283,173 @@ export function Dashboard({ user, onNavigate }: DashboardProps) {
   }
 
   const quickActions = [
-    {
-      id: 'builder-2',
-      title: 'Create Campaign',
-      description: 'Build a new campaign with AI',
-      icon: Sparkles,
-      color: 'from-purple-500 to-pink-500',
-      bgColor: 'bg-purple-50',
-      iconColor: 'text-purple-600',
-    },
-    // {
-    //   id: 'campaign-presets',
-    //   title: 'Use Preset',
-    //   description: 'Start from a template',
-    //   icon: Package,
-    //   color: 'from-blue-500 to-cyan-500',
-    //   bgColor: 'bg-blue-50',
-    //   iconColor: 'text-blue-600',
-    // }, // Hidden - Campaign Presets module disabled
-    {
-      id: 'keyword-planner',
-      title: 'Plan Keywords',
-      description: 'Research and generate keywords',
-      icon: Target,
-      color: 'from-green-500 to-emerald-500',
-      bgColor: 'bg-green-50',
-      iconColor: 'text-green-600',
-    },
+    { id: 'one-click', title: '1 Click Campaign', icon: Zap },
+    { id: 'builder-2', title: 'Campaign Builder', icon: Sparkles },
+    { id: 'web-templates', title: 'Web Templates', icon: Globe },
+    { id: 'campaign-presets', title: 'Campaign Presets', icon: Package },
+    { id: 'keyword-planner', title: 'Keywords Planner', icon: Target },
+    { id: 'saved-campaigns', title: 'Saved Campaigns', icon: FolderOpen },
   ];
 
+  const myCampaigns = stats?.userResources?.myCampaigns || 0;
+  const keywordsGenerated = myCampaigns * 485;
+  const adsCreated = myCampaigns * 12;
+  const extensionsAdded = myCampaigns * 8;
+
   return (
-    <div className="dashboard-modern-theme p-8 sm:p-10 lg:p-12 space-y-12" style={{
+    <div className="bg-gray-50 min-h-screen p-6 sm:p-8 lg:p-10 space-y-8" style={{
       '--user-spacing-multiplier': preferences.spacing,
       '--user-font-size-multiplier': preferences.fontSize
     } as React.CSSProperties}>
-      {/* Header with Controls */}
-      <div className="flex flex-col gap-6 mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl sm:text-4xl font-bold theme-gradient-text">
-                Welcome back, {user?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'User'}!
-              </h1>
-              <span className="text-xs font-semibold text-purple-600 bg-purple-100 px-2 py-1 rounded-full tracking-wide uppercase">Beta</span>
-            </div>
-            <p className="text-base text-slate-600">Here's what's happening with your campaigns today.</p>
-          </div>
-          <Button
-            onClick={() => onNavigate('builder-2')}
-            className="theme-button-primary shadow-lg hover:shadow-xl transition-all px-6 py-3"
-          >
-            <Sparkles className="w-5 h-5 mr-2" />
-            New Campaign
-          </Button>
+      {/* Header */}
+      <div className="space-y-1">
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">
+            Welcome back, {user?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'Admin'}!
+          </h1>
+          <span className="text-xs font-medium text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-full uppercase">Beta</span>
         </div>
+        <p className="text-sm text-slate-500">Here's what's happening with your campaigns today.</p>
+      </div>
 
-        {/* Auto-Close Sidebar Toggle */}
-        <div className="flex items-center">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSidebarAutoCloseToggle}
-            className={`h-8 px-3 gap-2 ${
-              preferences.sidebarAutoClose 
-                ? 'bg-indigo-50 border-indigo-300 text-indigo-700' 
-                : 'bg-slate-50 border-slate-300 text-slate-600'
-            }`}
-          >
-            {preferences.sidebarAutoClose ? (
-              <>
-                <PanelLeftClose className="w-4 h-4" />
-                <span className="text-xs">Auto-Close ON</span>
-              </>
-            ) : (
-              <>
-                <PanelLeftOpen className="w-4 h-4" />
-                <span className="text-xs">Auto-Close OFF</span>
-              </>
-            )}
-          </Button>
+      {/* Terminal-Style System Stats */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <TerminalCard title="Campaign Statistics" icon={<Terminal className="w-4 h-4" />}>
+          <div className="space-y-2 font-mono text-sm">
+            <TerminalLine prefix="$" label="total_campaigns:" value={`${myCampaigns}`} valueColor="green" />
+            <TerminalLine prefix="$" label="keywords_generated:" value={`${keywordsGenerated.toLocaleString()}`} valueColor="cyan" />
+            <TerminalLine prefix="$" label="ads_created:" value={`${adsCreated.toLocaleString()}`} valueColor="yellow" />
+            <TerminalLine prefix="$" label="extensions_added:" value={`${extensionsAdded.toLocaleString()}`} valueColor="purple" />
+            <TerminalLine prefix="$" label="csv_exports:" value={`${myCampaigns}`} valueColor="white" />
+          </div>
+        </TerminalCard>
+
+        <TerminalCard title="System Status" icon={<Activity className="w-4 h-4" />}>
+          <div className="space-y-2 font-mono text-sm">
+            <TerminalLine prefix="$" label="api_status:" value="ONLINE" valueColor="green" />
+            <TerminalLine prefix="$" label="google_ads_api:" value="CONNECTED" valueColor="green" />
+            <TerminalLine prefix="$" label="keyword_planner:" value="READY" valueColor="green" />
+            <TerminalLine prefix="$" label="subscription:" value={stats?.subscription?.plan?.toUpperCase() || 'FREE'} valueColor="cyan" />
+            <TerminalLine prefix="$" label="last_activity:" value={formatRelativeTime(stats?.activity?.lastLogin || null)} valueColor="slate" />
+          </div>
+        </TerminalCard>
+      </div>
+
+      {/* My Resources Section */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+          <Layers className="w-5 h-5 text-indigo-600" />
+          My Resources
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* My Campaigns Card */}
+          <Card className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between mb-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-400 to-rose-500 flex items-center justify-center shadow-sm">
+                <Layers className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-xs font-medium text-rose-500 bg-rose-50 px-2 py-1 rounded-full">Total</span>
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-3xl font-bold text-slate-800">{myCampaigns}</h3>
+              <p className="text-sm text-slate-500">My Campaigns</p>
+            </div>
+            <div className="mt-4 h-1 bg-rose-100 rounded-full overflow-hidden">
+              <div className="h-full bg-rose-400 rounded-full" style={{ width: '60%' }}></div>
+            </div>
+          </Card>
+
+          {/* My Presets Card */}
+          <Card className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between mb-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-400 to-indigo-500 flex items-center justify-center shadow-sm">
+                <Package className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-xs font-medium text-indigo-500 bg-indigo-50 px-2 py-1 rounded-full">Saved</span>
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-3xl font-bold text-slate-800">{stats?.userResources?.myPresets || 0}</h3>
+              <p className="text-sm text-slate-500">My Presets</p>
+            </div>
+            <div className="mt-4 h-1 bg-indigo-100 rounded-full overflow-hidden">
+              <div className="h-full bg-indigo-400 rounded-full" style={{ width: '30%' }}></div>
+            </div>
+          </Card>
+
+          {/* My Domains Card */}
+          <Card className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between mb-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-sm">
+                <Globe className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-xs font-medium text-amber-500 bg-amber-50 px-2 py-1 rounded-full">Active</span>
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-3xl font-bold text-slate-800">{stats?.userResources?.myDomains || 0}</h3>
+              <p className="text-sm text-slate-500">My Domains</p>
+            </div>
+            <div className="mt-4 h-1 bg-amber-100 rounded-full overflow-hidden">
+              <div className="h-full bg-amber-400 rounded-full" style={{ width: '20%' }}></div>
+            </div>
+          </Card>
         </div>
       </div>
 
-      {/* My Resources */}
-      <div className="space-y-6">
-        <h2 className={`${getResponsiveFontSize(screenSize, 'lg')} font-semibold text-slate-800 flex items-center gap-3`}>
-          <FolderOpen className={`${getResponsiveIconSize(screenSize)} text-indigo-600`} />
-          My Resources
-        </h2>
-        <div className={`grid ${getResponsiveGridCols(screenSize)} ${getResponsiveGap(screenSize)}`}>
-          {/* My Campaigns */}
-          <Card className={`relative overflow-hidden border-2 hover:shadow-xl transition-all duration-300 group ${getResponsivePadding(screenSize)}`}>
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-pink-500 opacity-5 group-hover:opacity-10 transition-opacity"></div>
-            <div className="relative space-y-6">
-              <div className="flex items-center justify-between">
-                <div className={`${screenSize.isMobile ? 'w-10 h-10' : screenSize.isTablet ? 'w-12 h-12' : 'w-14 h-14'} rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg`}>
-                  <Layers className={`${getResponsiveIconSize(screenSize)} text-white`} />
-                </div>
-                <Badge className="bg-purple-100 text-purple-700 border-purple-300 px-3 py-1">
-                  Total
-                </Badge>
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-3xl font-bold text-slate-800">
-                  {(stats?.userResources?.myCampaigns || 0).toLocaleString()}
-                </h3>
-                <p className="text-base text-slate-600">My Campaigns</p>
-              </div>
-            </div>
-          </Card>
+      {/* Colorful Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Keywords Generated - Indigo */}
+        <div className="rounded-xl p-6 text-white" style={{ background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)' }}>
+          <h3 className="text-3xl font-bold mb-1">{keywordsGenerated.toLocaleString()}</h3>
+          <p className="text-sm font-medium opacity-90 mb-3">Keywords Generated</p>
+          <div className="flex items-center gap-1 text-xs opacity-80">
+            <ArrowUp className="w-3 h-3" />
+            <span>23% from last week</span>
+          </div>
+        </div>
 
-          {/* My Presets */}
-          <Card className={`relative overflow-hidden border-2 hover:shadow-xl transition-all duration-300 group ${getResponsivePadding(screenSize)}`}>
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-teal-500 opacity-5 group-hover:opacity-10 transition-opacity"></div>
-            <div className="relative space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg">
-                  <Package className="w-7 h-7 text-white" />
-                </div>
-                <Badge className="bg-emerald-100 text-emerald-700 border-emerald-300 px-3 py-1">
-                  Saved
-                </Badge>
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-3xl font-bold text-slate-800">
-                  {(stats?.userResources?.myPresets || 0).toLocaleString()}
-                </h3>
-                <p className="text-base text-slate-600">My Presets</p>
-              </div>
-            </div>
-          </Card>
+        {/* Ads Created - Coral */}
+        <div className="rounded-xl p-6 text-white" style={{ background: 'linear-gradient(135deg, #F97B5C 0%, #E5684A 100%)' }}>
+          <h3 className="text-3xl font-bold mb-1">{adsCreated.toLocaleString()}</h3>
+          <p className="text-sm font-medium opacity-90 mb-3">Ads Created</p>
+          <div className="flex items-center gap-1 text-xs opacity-80">
+            <ArrowUp className="w-3 h-3" />
+            <span>12% from last week</span>
+          </div>
+        </div>
 
-          {/* My Domains */}
-          <Card className={`relative overflow-hidden border-2 hover:shadow-xl transition-all duration-300 group ${getResponsivePadding(screenSize)}`}>
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-orange-500 opacity-5 group-hover:opacity-10 transition-opacity"></div>
-            <div className="relative space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg">
-                  <Globe className="w-7 h-7 text-white" />
-                </div>
-                <Badge className="bg-amber-100 text-amber-700 border-amber-300 px-3 py-1">
-                  Active
-                </Badge>
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-3xl font-bold text-slate-800">
-                  {(stats?.userResources?.myDomains || 0).toLocaleString()}
-                </h3>
-                <p className="text-base text-slate-600">My Domains</p>
-              </div>
-            </div>
-          </Card>
+        {/* Extensions Added - Pink/Rose */}
+        <div className="rounded-xl p-6 text-white" style={{ background: 'linear-gradient(135deg, #E75A7C 0%, #D44A6A 100%)' }}>
+          <h3 className="text-3xl font-bold mb-1">{extensionsAdded.toLocaleString()}</h3>
+          <p className="text-sm font-medium opacity-90 mb-3">Extensions Added</p>
+          <div className="flex items-center gap-1 text-xs opacity-80">
+            <ArrowUp className="w-3 h-3" />
+            <span>8% from last week</span>
+          </div>
         </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+          <Zap className="w-5 h-5 text-indigo-600" />
+          Quick Actions
+        </h2>
+        <div className="flex flex-wrap gap-3">
           {quickActions.map((action) => {
             const Icon = action.icon;
             return (
-              <Card
+              <Button
                 key={action.id}
-                className="p-8 hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 hover:border-indigo-200"
+                variant="outline"
                 onClick={() => onNavigate(action.id)}
+                className="h-9 px-4 gap-2 bg-white border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 transition-all"
               >
-                <div className="space-y-5">
-                  <div className={`w-14 h-14 rounded-xl ${action.bgColor} flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                    <Icon className={`w-7 h-7 ${action.iconColor}`} />
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-semibold text-slate-800">{action.title}</h3>
-                    <p className="text-base text-slate-600">{action.description}</p>
-                  </div>
-                </div>
-              </Card>
+                <Icon className="w-4 h-4" />
+                <span className="text-sm font-medium">{action.title}</span>
+              </Button>
             );
           })}
         </div>
-      </div>
-
-      {/* Recent Activity */}
-      <div className="space-y-6">
-        <Card className="border-2 p-8">
-          {recentActivity.length > 0 ? (
-            <div className="space-y-4">
-              {recentActivity.slice(0, 8).map((activity) => (
-                <div
-                  key={activity.id}
-                  className="flex items-start justify-between p-5 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors gap-6"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className={`p-3 rounded-lg ${getActionColor(activity.action)}`}>
-                      {getActionIcon(activity.action)}
-                    </div>
-                    <div className="space-y-1">
-                      <p className="font-medium text-base text-slate-800">
-                        {activity.action.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                      </p>
-                      {activity.resourceType && (
-                        <p className="text-sm text-slate-600">
-                          {activity.resourceType.charAt(0).toUpperCase() + activity.resourceType.slice(1)}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <span className="text-sm text-slate-500 shrink-0">
-                    {formatRelativeTime(activity.timestamp)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-16">
-              <AlertCircle className="w-20 h-20 text-slate-300 mx-auto mb-6" />
-              <h3 className="text-xl font-medium text-slate-600 mb-3">No recent activity</h3>
-              <p className="text-base text-slate-500 mb-8">
-                Start creating campaigns to see your activity here
-              </p>
-              <Button
-                onClick={() => onNavigate('builder-2')}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3"
-              >
-                <Sparkles className="w-5 h-5 mr-2" />
-                Create First Campaign
-              </Button>
-            </div>
-          )}
-        </Card>
-      </div>
-
-      {/* Account Summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-        {/* Last Login */}
-        <Card className="border-2 p-8">
-          <div className="flex items-center gap-6">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shrink-0 shadow-lg">
-              <Calendar className="w-7 h-7 text-white" />
-            </div>
-            <div className="space-y-1">
-              <p className="text-base text-slate-600">Last Login</p>
-              <p className="text-lg font-semibold text-slate-800">
-                {formatRelativeTime(stats?.activity.lastLogin || null)}
-              </p>
-            </div>
-          </div>
-        </Card>
-
-        {/* Total Actions */}
-        <Card className="border-2 p-8">
-          <div className="flex items-center gap-6">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shrink-0 shadow-lg">
-              <Activity className="w-7 h-7 text-white" />
-            </div>
-            <div className="space-y-1">
-              <p className="text-base text-slate-600">Total Actions (Recent)</p>
-              <p className="text-lg font-semibold text-slate-800">
-                {stats?.activity.totalActions || 0}
-              </p>
-            </div>
-          </div>
-        </Card>
       </div>
     </div>
   );

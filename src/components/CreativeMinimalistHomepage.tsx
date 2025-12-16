@@ -655,7 +655,7 @@ function TemplatesPresetsSection({ onGetStarted }: { onGetStarted?: () => void }
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
           >
-            <span className="inline-block px-4 py-2 bg-green-100 text-green-600 rounded-full text-sm font-medium mb-6">
+            <span className="inline-block px-4 py-2 bg-indigo-100 text-indigo-600 rounded-full text-sm font-medium mb-6">
               Ready to Launch in 30 Seconds
             </span>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
@@ -675,7 +675,7 @@ function TemplatesPresetsSection({ onGetStarted }: { onGetStarted?: () => void }
                   transition={{ delay: index * 0.1 }}
                   className="flex items-start gap-3"
                 >
-                  <div className="w-6 h-6 rounded-full bg-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center flex-shrink-0 mt-0.5">
                     <Check className="w-4 h-4 text-white" />
                   </div>
                   <div>
@@ -791,7 +791,7 @@ function TemplatesPresetsSection({ onGetStarted }: { onGetStarted?: () => void }
         >
           <span className="text-gray-500 text-sm">Available for:</span>
           {industries.map((industry) => (
-            <span key={industry} className="px-4 py-2 bg-white border border-gray-200 rounded-full text-sm text-gray-600 hover:border-teal-300 hover:text-teal-600 transition-colors cursor-default">
+            <span key={industry} className="px-4 py-2 bg-white border border-gray-200 rounded-full text-sm text-gray-600 hover:border-indigo-300 hover:text-indigo-600 transition-colors cursor-default">
               {industry}
             </span>
           ))}
@@ -896,7 +896,7 @@ function AIAdCreationSection({ onGetStarted }: { onGetStarted?: () => void }) {
               {/* Card Header */}
               <div className="p-6 border-b border-gray-100">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                  <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
                     <span className="text-2xl">🧩</span>
                   </div>
                   <div>
@@ -926,8 +926,8 @@ function AIAdCreationSection({ onGetStarted }: { onGetStarted?: () => void }) {
                     <div className="text-2xl font-bold text-purple-600">10/10</div>
                     <div className="text-xs text-gray-500">Quality Score</div>
                   </div>
-                  <div className="text-center p-3 bg-green-50 rounded-xl">
-                    <div className="text-2xl font-bold text-green-600">+340%</div>
+                  <div className="text-center p-3 bg-indigo-50 rounded-xl">
+                    <div className="text-2xl font-bold text-indigo-600">+340%</div>
                     <div className="text-xs text-gray-500">CTR Boost</div>
                   </div>
                   <div className="text-center p-3 bg-orange-50 rounded-xl">

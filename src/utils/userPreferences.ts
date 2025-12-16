@@ -11,14 +11,14 @@ export interface UserPreferences {
   colorTheme: 'default' | 'blue' | 'green' | 'custom' | 'ocean-breeze' | 'sunset-glow' | 'forest-canopy' | 'royal-purple' | 'rose-gold' | 'midnight-blue' | 'tropical-paradise'; // Color theme option
   customColor?: string; // Custom color hex value (e.g., '#6366f1')
   colorCombination?: string; // Color combination ID
-  sidebarAutoClose: boolean; // Auto-close sidebar after selection (default: true)
+  sidebarAutoClose: boolean; // Auto-close sidebar after selection (default: false - manual close only)
 }
 
 const DEFAULT_PREFERENCES: UserPreferences = {
   spacing: 1.0,
   fontSize: 1.0,
   colorTheme: 'default',
-  sidebarAutoClose: true // Default: auto-close enabled
+  sidebarAutoClose: false // Default: sidebar stays open, manual close only
 };
 
 const STORAGE_KEY = 'user_preferences';

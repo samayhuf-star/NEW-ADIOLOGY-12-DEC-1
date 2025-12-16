@@ -20,6 +20,7 @@ import {
   SheetTitle,
 } from './components/ui/sheet';
 import { CampaignBuilder3 } from './components/CampaignBuilder3';
+import { OneClickCampaignBuilder } from './components/OneClickCampaignBuilder';
 import { GoogleAdsCSVExport } from './components/GoogleAdsCSVExport';
 import { KeywordPlanner } from './components/KeywordPlanner';
 import { KeywordMixer } from './components/KeywordMixer';
@@ -36,7 +37,7 @@ import { PaymentSuccess } from './components/PaymentSuccess';
 import { SettingsPanel } from './components/SettingsPanel';
 import { SupportHelpCombined } from './components/SupportHelpCombined';
 import { ResetPassword } from './components/ResetPassword';
-import { PresetCampaigns } from './components/PresetCampaigns';
+import { CampaignPresets } from './components/CampaignPresets';
 import { Dashboard } from './components/Dashboard';
 import { HistoryPanel } from './components/HistoryPanel';
 import { CampaignHistoryView } from './components/CampaignHistoryView';
@@ -121,6 +122,7 @@ const App = () => {
     'dashboard',
     'preset-campaigns',
     'builder-3',
+    'one-click-builder',
     'campaign-history',
     'keyword-planner',
     'keyword-mixer',
@@ -130,6 +132,8 @@ const App = () => {
     'support',
     'support-help',
     'web-templates',
+    'saved-websites',
+    'connected-websites',
   ]);
 
   // Safe setActiveTab wrapper that validates and redirects to dashboard if invalid
@@ -761,7 +765,8 @@ const App = () => {
       label: 'Campaigns', 
       icon: Sparkles,
       submenu: [
-        { id: 'builder-3', label: 'Builder 3.0', icon: Zap },
+        { id: 'one-click-builder', label: '1 Click Builder', icon: Zap },
+        { id: 'builder-3', label: 'Builder 3.0', icon: Sparkles },
         { id: 'preset-campaigns', label: 'Preset Campaigns', icon: Package },
         { id: 'campaign-history', label: 'Campaign History', icon: Clock },
       ]
@@ -776,7 +781,16 @@ const App = () => {
         { id: 'negative-keywords', label: 'Negatives', icon: MinusCircle },
       ]
     },
-    { id: 'web-templates', label: 'Web Templates', icon: Globe },
+    { 
+      id: 'web-templates', 
+      label: 'Web Templates', 
+      icon: Globe,
+      submenu: [
+        { id: 'web-templates', label: 'Templates', icon: Globe },
+        { id: 'saved-websites', label: 'Saved Websites', icon: FolderOpen },
+        { id: 'connected-websites', label: 'Connected Websites', icon: Globe },
+      ]
+    },
     { id: 'settings', label: 'Settings', icon: Settings },
     { id: 'support-help', label: 'Support & Help', icon: HelpCircle },
   ];
@@ -1134,12 +1148,14 @@ const App = () => {
     
     switch (activeTab) {
       case 'preset-campaigns':
-        return <PresetCampaigns onLoadPreset={(presetData) => {
+        return <CampaignPresets onLoadPreset={(presetData) => {
           setHistoryData(presetData);
           setActiveTabSafe('builder-3');
         }} />;
       case 'builder-3':
         return <CampaignBuilder3 initialData={activeTab === 'builder-3' ? historyData : null} />;
+      case 'one-click-builder':
+        return <OneClickCampaignBuilder />;
       case 'campaign-history':
         // Campaign History - Show only saved campaigns, not all activity history
         return <CampaignHistoryView onLoadCampaign={(data) => {
@@ -1161,6 +1177,10 @@ const App = () => {
         return <KeywordSavedLists />;
       case 'web-templates':
         return <WebTemplates />;
+      case 'saved-websites':
+        return <WebTemplates initialTab="saved" />;
+      case 'connected-websites':
+        return <WebTemplates initialTab="connected" />;
       case 'support-help':
         return <SupportHelpCombined />;
       case 'support':
@@ -1214,7 +1234,7 @@ const App = () => {
           (sidebarOpen || (userPrefs.sidebarAutoClose && sidebarHovered)) ? 'md:w-64' : 'md:w-20'
         } transition-all duration-300 bg-white/80 backdrop-blur-xl border-r border-indigo-100/60 shadow-2xl relative z-10 flex-shrink-0 overflow-y-auto`}
         style={{
-          background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(238, 242, 255, 0.95) 100%)'
+          background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240, 253, 250, 0.95) 100%)'
         }}
         onMouseEnter={() => {
           if (userPrefs.sidebarAutoClose) {
@@ -1239,7 +1259,7 @@ const App = () => {
               </div>
               <div className="flex flex-col">
                 <span className="font-bold theme-gradient-text">Adiology</span>
-                <span className="text-[10px] font-semibold text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded-full tracking-wide uppercase">Beta</span>
+                <span className="text-[10px] font-semibold text-indigo-600 bg-indigo-100 px-1.5 py-0.5 rounded-full tracking-wide uppercase">Beta</span>
               </div>
             </div>
           )}
@@ -1344,8 +1364,14 @@ const App = () => {
           })}
         </nav>
 
-        {/* Bottom Section - Billing & Logout */}
+        {/* Bottom Section - Feedback, Billing & Logout */}
         <div className="mt-auto p-4 border-t border-slate-200/60 space-y-2">
+          <FeedbackButton 
+            variant="sidebar" 
+            sidebarOpen={sidebarOpen} 
+            sidebarHovered={userPrefs.sidebarAutoClose && sidebarHovered}
+            currentPage={activeTab}
+          />
           <button
             onClick={() => setActiveTabSafe('billing')}
             className={`w-full flex items-center gap-2 py-2.5 rounded-xl transition-all duration-200 group cursor-pointer ${
@@ -1494,7 +1520,7 @@ const App = () => {
       <div className="flex-1 flex flex-col overflow-hidden min-w-0 w-full">
         {/* Header */}
         <header className="h-16 bg-white/60 backdrop-blur-xl border-b border-slate-200/60 flex items-center justify-between px-4 sm:px-6 lg:px-8 shadow-sm flex-shrink-0">
-          <div className="flex items-center gap-2 md:gap-4 flex-1 max-w-2xl">
+          <div className="flex items-center gap-2 md:gap-4">
             {/* Mobile menu button */}
             <button
               onClick={() => setMobileMenuOpen(true)}
@@ -1502,70 +1528,6 @@ const App = () => {
             >
               <Menu className="w-5 h-5 text-slate-600" />
             </button>
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400 z-10" />
-              <input
-                type="text"
-                placeholder="Search campaigns, keywords, tools..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => searchQuery.trim() && setShowSearchSuggestions(true)}
-                onBlur={() => {
-                  // Delay to allow click on suggestion
-                  setTimeout(() => setShowSearchSuggestions(false), 200);
-                }}
-                onKeyDown={(e) => {
-                  // Bug_63: Handle Enter key to execute search
-                  if (e.key === 'Enter' && searchQuery.trim()) {
-                    e.preventDefault();
-                    if (searchSuggestions.length > 0) {
-                      handleSearchSuggestionClick(searchSuggestions[0]);
-                    } else {
-                      // If no suggestions, try to find matching menu item
-                      const matchingItem = menuItems.find(item => 
-                        item.label.toLowerCase().includes(searchQuery.toLowerCase())
-                      );
-                      if (matchingItem) {
-                        setActiveTabSafe(matchingItem.id);
-                        setSearchQuery('');
-                        setShowSearchSuggestions(false);
-                        return;
-                      }
-                      // Check submenu items
-                      for (const item of menuItems) {
-                        if (item.submenu) {
-                          const matchingSubItem = item.submenu.find(sub => 
-                            sub.label.toLowerCase().includes(searchQuery.toLowerCase())
-                          );
-                          if (matchingSubItem) {
-                            setActiveTabSafe(matchingSubItem.id);
-                            setSearchQuery('');
-                            setShowSearchSuggestions(false);
-                            return;
-                          }
-                        }
-                      }
-                    }
-                  }
-                }}
-                className="w-full pl-11 pr-4 py-2.5 bg-indigo-50/50 border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400/50 focus:bg-white transition-all h-11"
-              />
-              {/* Bug_64: Search suggestions dropdown */}
-              {showSearchSuggestions && searchSuggestions.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-lg z-50 max-h-64 overflow-y-auto">
-                  {searchSuggestions.map((suggestion, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleSearchSuggestionClick(suggestion)}
-                      className="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition-colors flex items-center gap-2"
-                    >
-                      <Search className="w-4 h-4 text-slate-400" />
-                      <span className="text-slate-700">{suggestion}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
           
           <div className="flex items-center gap-3">
@@ -1717,11 +1679,6 @@ const App = () => {
         </main>
       </div>
 
-      {/* Floating Feedback Button */}
-      {appView === 'user' && (
-        <FeedbackButton variant="floating" />
-      )}
-      
     </div>
   );
 };

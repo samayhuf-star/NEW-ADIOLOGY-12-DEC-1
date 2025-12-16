@@ -203,7 +203,7 @@ export const LogicalFlowTesting: React.FC = () => {
       case 'logic':
         return 'bg-blue-100 text-blue-700 border-blue-300';
       case 'functionality':
-        return 'bg-green-100 text-green-700 border-green-300';
+        return 'bg-indigo-100 text-indigo-700 border-indigo-300';
       case 'ui':
         return 'bg-purple-100 text-purple-700 border-purple-300';
       case 'data':
@@ -218,7 +218,7 @@ export const LogicalFlowTesting: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
-        return 'bg-green-100 text-green-700 border-green-300';
+        return 'bg-indigo-100 text-indigo-700 border-indigo-300';
       case 'draft':
         return 'bg-yellow-100 text-yellow-700 border-yellow-300';
       case 'archived':
@@ -535,7 +535,7 @@ export const LogicalFlowTesting: React.FC = () => {
                               <Badge
                                 className={
                                   testCase.status === 'passed'
-                                    ? 'bg-green-100 text-green-700'
+                                    ? 'bg-indigo-100 text-indigo-700'
                                     : testCase.status === 'failed'
                                     ? 'bg-red-100 text-red-700'
                                     : 'bg-yellow-100 text-yellow-700'

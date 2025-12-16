@@ -24,18 +24,26 @@ function generateSectionHtml(section: Section): string {
     bgColor === 'green-50' ? '#f0fdf4' :
     bgColor === 'purple-50' ? '#faf5ff' : '#ffffff';
 
+  const imageUrl = section.data.imageUrl;
+  const hasImage = imageUrl && imageUrl.trim() !== '';
+  const heroBackground = hasImage 
+    ? `background: linear-gradient(rgba(99, 102, 241, 0.85), rgba(139, 92, 246, 0.9)), url('${imageUrl}') center/cover no-repeat;`
+    : `background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);`;
+  const textColor = hasImage || !section.data.bgColor ? '#ffffff' : '#1f2937';
+  const subtextColor = hasImage || !section.data.bgColor ? 'rgba(255,255,255,0.9)' : '#6b7280';
+
   switch (section.type) {
     case 'hero':
       return `
-        <section class="section-hero" style="background-color: ${bgClass}; padding: 80px 20px; text-align: center;">
+        <section class="section-hero" style="${heroBackground} padding: 80px 20px; text-align: center; min-height: 400px; display: flex; align-items: center; justify-content: center;">
           <div style="max-width: 1200px; margin: 0 auto;">
-            <h1 style="font-size: 3rem; font-weight: bold; margin-bottom: 20px; color: #1f2937;">
+            <h1 style="font-size: 3rem; font-weight: bold; margin-bottom: 20px; color: ${textColor}; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
               ${section.data.heading || 'Welcome to Our Site'}
             </h1>
-            ${section.data.subheading ? `<p style="font-size: 1.25rem; color: #6b7280; margin-bottom: 30px;">${section.data.subheading}</p>` : ''}
-            ${section.data.description ? `<p style="font-size: 1rem; color: #4b5563; max-width: 600px; margin: 0 auto 30px;">${section.data.description}</p>` : ''}
-            <button style="background-color: #3b82f6; color: white; padding: 12px 32px; border-radius: 8px; font-size: 1rem; border: none; cursor: pointer;">
-              Get Started
+            ${section.data.subheading ? `<p style="font-size: 1.25rem; color: ${subtextColor}; margin-bottom: 30px;">${section.data.subheading}</p>` : ''}
+            ${section.data.description ? `<p style="font-size: 1rem; color: ${subtextColor}; max-width: 600px; margin: 0 auto 30px;">${section.data.description}</p>` : ''}
+            <button style="background-color: #ffffff; color: #6366f1; padding: 12px 32px; border-radius: 8px; font-size: 1rem; border: none; cursor: pointer; font-weight: 600; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+              ${section.data.ctaText || 'Get Started'}
             </button>
           </div>
         </section>`;
@@ -470,7 +478,7 @@ function generateCss(): string {
 
 const SECTION_TYPES = [
   { type: 'hero', name: 'Hero Section', color: 'bg-blue-50', icon: '🎯' },
-  { type: 'features', name: 'Features', color: 'bg-green-50', icon: '⭐' },
+  { type: 'features', name: 'Features', color: 'bg-indigo-50', icon: '⭐' },
   { type: 'services', name: 'Services', color: 'bg-purple-50', icon: '🔧' },
   { type: 'testimonials', name: 'Testimonials', color: 'bg-yellow-50', icon: '💬' },
   { type: 'team', name: 'Team', color: 'bg-pink-50', icon: '👥' },
@@ -480,7 +488,7 @@ const SECTION_TYPES = [
   { type: 'blog', name: 'Blog', color: 'bg-cyan-50', icon: '📝' },
   { type: 'partners', name: 'Partners', color: 'bg-lime-50', icon: '🤝' },
   { type: 'cta', name: 'Call to Action', color: 'bg-amber-50', icon: '🚀' },
-  { type: 'contact', name: 'Contact', color: 'bg-teal-50', icon: '📧' },
+  { type: 'contact', name: 'Contact', color: 'bg-indigo-50', icon: '📧' },
   { type: 'about', name: 'About Us', color: 'bg-fuchsia-50', icon: '📖' },
   { type: 'form', name: 'Lead Form', color: 'bg-rose-50', icon: '📋' },
   { type: 'policies', name: 'Policies', color: 'bg-slate-50', icon: '📜' },
@@ -512,7 +520,7 @@ export default function SectionsEditor({ templateData, onUpdate, onSave }: Secti
         id: 'hero',
         type: 'hero',
         name: 'Hero',
-        data: data.hero
+        data: { ...data.hero, imageUrl: data.hero_image }
       });
     }
     
@@ -708,6 +716,36 @@ export default function SectionsEditor({ templateData, onUpdate, onSave }: Secti
                 placeholder="Main text for the section"
               />
             </div>
+
+            {/* Background Image URL (for Hero sections) */}
+            {editingSection.type === 'hero' && (
+              <div>
+                <label className="block text-sm font-medium mb-1">Background Image URL</label>
+                <input
+                  type="text"
+                  value={editingSection.data.imageUrl || ''}
+                  onChange={(e) => updateSection(editingSection.id, {
+                    ...editingSection.data,
+                    imageUrl: e.target.value
+                  })}
+                  className="w-full px-3 py-2 border rounded-lg text-sm"
+                  placeholder="https://example.com/image.jpg"
+                />
+                {editingSection.data.imageUrl && (
+                  <div className="mt-2 relative rounded-lg overflow-hidden h-24">
+                    <img 
+                      src={editingSection.data.imageUrl} 
+                      alt="Background preview" 
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+                <p className="text-xs text-gray-500 mt-1">Image will be displayed behind the hero text with a gradient overlay</p>
+              </div>
+            )}
 
             {/* Color customization */}
             <div>

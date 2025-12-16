@@ -35,7 +35,7 @@ export const PaymentSuccess: React.FC<PaymentSuccessProps> = ({
         <Card className="border border-slate-200 shadow-2xl bg-white backdrop-blur-xl">
           <CardHeader className="text-center space-y-4">
             <div className="flex justify-center mb-4">
-              <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center animate-pulse">
+              <div className="w-20 h-20 rounded-full bg-indigo-100 flex items-center justify-center animate-pulse">
                 <CheckCircle className="w-12 h-12 text-green-600" />
               </div>
             </div>
@@ -55,21 +55,21 @@ export const PaymentSuccess: React.FC<PaymentSuccessProps> = ({
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Success Details */}
-            <div className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-200">
+            <div className="p-6 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg border border-indigo-200">
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-slate-700">Plan</span>
-                  <Badge className="bg-green-100 text-green-700 border-green-200">
+                  <Badge className="bg-indigo-100 text-indigo-700 border-indigo-200">
                     {planName}
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-slate-700">Amount Paid</span>
-                  <span className="text-lg font-bold text-green-600">{amount}</span>
+                  <span className="text-lg font-bold text-indigo-600">{amount}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-slate-700">Status</span>
-                  <span className="text-sm font-semibold text-green-600 flex items-center gap-1">
+                  <span className="text-sm font-semibold text-indigo-600 flex items-center gap-1">
                     <CheckCircle2 className="w-4 h-4" />
                     Active
                   </span>
@@ -82,15 +82,15 @@ export const PaymentSuccess: React.FC<PaymentSuccessProps> = ({
               <h3 className="text-sm font-semibold text-indigo-900 mb-2">What's Next?</h3>
               <ul className="space-y-2 text-sm text-indigo-700">
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-indigo-600 mt-0.5 flex-shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
                   <span>Your subscription is now active</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-indigo-600 mt-0.5 flex-shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
                   <span>Invoice has been sent to your email</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-indigo-600 mt-0.5 flex-shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
                   <span>Start building your first campaign</span>
                 </li>
               </ul>

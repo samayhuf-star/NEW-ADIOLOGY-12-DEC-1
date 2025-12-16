@@ -458,7 +458,7 @@ function CampaignStructuresFeature({ onGetStarted }: CampaignStructuresFeaturePr
                     <div className="text-xs text-gray-500">Setup Time</div>
                   </div>
                   <div className="bg-white p-3 rounded-lg text-center">
-                    <div className="text-xl font-bold text-green-600">✓</div>
+                    <div className="text-xl font-bold text-indigo-600">✓</div>
                     <div className="text-xs text-gray-500">Ready</div>
                   </div>
                 </div>
@@ -602,7 +602,7 @@ function AIAdBuilderFeature({ onGetStarted }: AIAdBuilderFeatureProps) {
                   <div className="text-xs text-gray-500">CTR Boost</div>
                 </div>
                 <div className="p-3 bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">{'<10s'}</div>
+                  <div className="text-2xl font-bold text-indigo-600">{'<10s'}</div>
                   <div className="text-xs text-gray-500">Generation</div>
                 </div>
               </div>
@@ -801,7 +801,7 @@ const pricingPlans = [
     period: 'per month',
     icon: '📈',
     color: 'from-green-400 to-green-600',
-    borderColor: 'border-green-200',
+    borderColor: 'border-indigo-200',
     features: ['25/month campaigns', 'AI keyword generation', 'All campaign structures', 'CSV export', '24/7 priority support'],
     buttonStyle: 'bg-white text-gray-900 border-2 border-gray-200 hover:border-gray-300',
     popular: false

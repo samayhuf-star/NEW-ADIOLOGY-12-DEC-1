@@ -93,7 +93,7 @@ export function CTA() {
                 key={benefit}
                 className="flex items-center justify-center gap-2 text-slate-300"
               >
-                <div className="w-5 h-5 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                <div className="w-5 h-5 bg-indigo-500/20 rounded-full flex items-center justify-center flex-shrink-0">
                   <Check size={14} className="text-green-400" />
                 </div>
                 <span className="text-sm">{benefit}</span>

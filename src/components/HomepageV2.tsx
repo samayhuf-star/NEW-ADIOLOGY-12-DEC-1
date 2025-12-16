@@ -122,16 +122,23 @@ export default function HomepageV2() {
           <h3 className="text-2xl md:text-3xl font-bold">Choose Your Plan</h3>
           <p className="text-slate-600 mt-2">No hidden fees • Cancel anytime • 14-day money back</p>
 
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
             <div className="bg-white rounded-2xl p-6 shadow min-w-0">
-              <div className="text-slate-900 text-lg font-bold">$49.99</div>
-              <div className="mt-4 text-slate-600 text-sm">Growth - per month</div>
+              <div className="text-slate-900 text-lg font-bold">$69.99</div>
+              <div className="mt-4 text-slate-600 text-sm">Basic - per month</div>
               <button className="mt-6 w-full px-4 py-2 rounded-lg border border-slate-200">Get Started</button>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 shadow min-w-0 ring-2 ring-indigo-500">
+              <div className="text-slate-900 text-lg font-bold">$129.99</div>
+              <div className="mt-4 text-slate-600 text-sm">Pro - per month</div>
+              <div className="text-xs text-indigo-600 mt-1">Most Popular</div>
+              <button className="mt-6 w-full px-4 py-2 rounded-lg bg-indigo-600 text-white">Get Started</button>
             </div>
 
             <div className="bg-white rounded-2xl p-6 shadow min-w-0">
               <div className="text-slate-900 text-lg font-bold">$99.99</div>
-              <div className="mt-4 text-slate-600 text-sm">Enterprise - per month</div>
+              <div className="mt-4 text-slate-600 text-sm">Lifetime - one-time</div>
               <button className="mt-6 w-full px-4 py-2 rounded-lg border border-slate-200">Get Started</button>
             </div>
           </div>

@@ -329,7 +329,7 @@ export const MyWebsites: React.FC = () => {
     switch (status) {
       case 'ready':
         return (
-          <Badge className="bg-green-100 text-green-700 border-green-300">
+          <Badge className="bg-indigo-100 text-indigo-700 border-indigo-300">
             <CheckCircle className="w-3 h-3 mr-1" />
             Live
           </Badge>

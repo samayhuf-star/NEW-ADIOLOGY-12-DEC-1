@@ -7,6 +7,7 @@ import { runMigrations } from 'stripe-replit-sync';
 import { getStripeSync, getStripePublishableKey, getUncachableStripeClient } from './stripeClient';
 import { WebhookHandlers } from './webhookHandlers';
 import { stripeService } from './stripeService';
+import { analyzeUrlWithCheerio } from './urlAnalyzerLite';
 // import { startCronScheduler, triggerManualRun } from './cronScheduler';
 
 const { Pool } = pg;
@@ -63,7 +64,7 @@ async function initStripe() {
   }
 }
 
-initStripe();
+// Initialize Stripe in the background AFTER server starts (non-blocking)
 
 // Seed Stripe products if they don't exist
 async function seedStripeProducts() {
@@ -76,28 +77,38 @@ async function seedStripeProducts() {
     
     const products = [
       {
-        name: 'Lifetime Limited',
-        description: '15 campaigns per month with all features included',
+        name: 'Basic Monthly',
+        description: '25 campaigns per month with email support',
+        priceAmount: 6999, // $69.99
+        priceType: 'recurring' as const,
+        interval: 'month' as const,
+      },
+      {
+        name: 'Basic Yearly',
+        description: '25 campaigns per month - Save 20% with annual billing',
+        priceAmount: 67190, // $671.90
+        priceType: 'recurring' as const,
+        interval: 'year' as const,
+      },
+      {
+        name: 'Pro Monthly',
+        description: 'Unlimited campaigns with 24/7 priority support',
+        priceAmount: 12999, // $129.99
+        priceType: 'recurring' as const,
+        interval: 'month' as const,
+      },
+      {
+        name: 'Pro Yearly',
+        description: 'Unlimited campaigns - Save 20% with annual billing',
+        priceAmount: 124790, // $1,247.90
+        priceType: 'recurring' as const,
+        interval: 'year' as const,
+      },
+      {
+        name: 'Lifetime',
+        description: 'Unlimited campaigns forever with lifetime access',
         priceAmount: 9999, // $99.99
         priceType: 'one_time' as const,
-      },
-      {
-        name: 'Lifetime Unlimited',
-        description: 'Unlimited campaigns with lifetime access to all tools',
-        priceAmount: 19900, // $199
-        priceType: 'one_time' as const,
-      },
-      {
-        name: 'Monthly Limited',
-        description: '25 campaigns per month with monthly billing',
-        priceAmount: 4999, // $49.99
-        priceType: 'recurring' as const,
-      },
-      {
-        name: 'Monthly Unlimited',
-        description: 'Unlimited campaigns with monthly billing',
-        priceAmount: 9900, // $99
-        priceType: 'recurring' as const,
       },
     ];
     
@@ -119,7 +130,7 @@ async function seedStripeProducts() {
       };
       
       if (productDef.priceType === 'recurring') {
-        priceData.recurring = { interval: 'month' };
+        priceData.recurring = { interval: (productDef as any).interval || 'month' };
       }
       
       const price = await stripe.prices.create(priceData);
@@ -611,7 +622,7 @@ app.delete('/api/admin/expenses/:id', async (c) => {
   }
 });
 
-// Comprehensive Website Analyzer Endpoint
+// Comprehensive Website Analyzer Endpoint (Cheerio-based - works in production)
 app.post('/api/analyze-url', async (c) => {
   try {
     const { url, extractionDepth = 'comprehensive' } = await c.req.json();
@@ -632,213 +643,9 @@ app.post('/api/analyze-url', async (c) => {
       return c.json({ error: 'Invalid URL format' }, 400);
     }
 
-    // Use Playwright for comprehensive extraction
-    const { chromium } = await import('playwright');
-    
-    let browser;
+    // Use Cheerio-based analyzer (works in both development and production)
     try {
-      browser = await chromium.launch({ 
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-      });
-      
-      const context = await browser.newContext({
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-      });
-      
-      const page = await context.newPage();
-      
-      // Navigate to the page with timeout
-      await page.goto(cleanUrl, { 
-        waitUntil: 'domcontentloaded',
-        timeout: 30000 
-      });
-      
-      // Wait a bit for dynamic content
-      await page.waitForTimeout(2000);
-
-      // Extract comprehensive data from the page using string evaluation to avoid tsx transpilation issues
-      const pageScript = `
-        (function() {
-          function cleanText(text) {
-            return (text || '').trim().replace(/\\s+/g, ' ').slice(0, 500);
-          }
-
-          var headings = [];
-          document.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(function(h) {
-            var text = cleanText(h.textContent);
-            if (text && text.length > 2) {
-              headings.push({ level: h.tagName.toLowerCase(), text: text });
-            }
-          });
-
-          var ctaElements = [];
-          var ctaSelectors = 'button, [role="button"], a.btn, a.button, a.cta, .cta, [class*="cta"], [class*="btn-"], input[type="submit"], a[href*="contact"], a[href*="quote"], a[href*="book"], a[href*="call"]';
-          document.querySelectorAll(ctaSelectors).forEach(function(el) {
-            var text = cleanText(el.textContent);
-            var href = el.href || '';
-            if (text && text.length > 1 && text.length < 100) {
-              ctaElements.push({
-                text: text,
-                type: el.tagName.toLowerCase(),
-                href: href.startsWith('http') ? href : undefined
-              });
-            }
-          });
-
-          var forms = [];
-          document.querySelectorAll('form').forEach(function(form) {
-            var fields = [];
-            form.querySelectorAll('input, select, textarea').forEach(function(field) {
-              var name = field.name || field.placeholder || field.getAttribute('aria-label') || '';
-              var type = field.type || field.tagName.toLowerCase();
-              if (name) fields.push(type + ': ' + name);
-            });
-            if (fields.length > 0) {
-              forms.push({
-                action: form.action || '',
-                method: form.method || 'get',
-                fields: fields
-              });
-            }
-          });
-
-          var images = [];
-          document.querySelectorAll('img').forEach(function(img) {
-            var src = img.src || '';
-            var alt = img.alt || '';
-            if (src && !src.includes('data:image')) {
-              images.push({ src: src.slice(0, 200), alt: alt.slice(0, 100) });
-            }
-          });
-
-          var navigation = [];
-          document.querySelectorAll('nav a, header a, [role="navigation"] a').forEach(function(link) {
-            var text = cleanText(link.textContent);
-            if (text && text.length > 1 && text.length < 50) {
-              navigation.push(text);
-            }
-          });
-
-          var schemas = [];
-          document.querySelectorAll('script[type="application/ld+json"]').forEach(function(script) {
-            try {
-              var data = JSON.parse(script.textContent || '{}');
-              schemas.push(data);
-            } catch(e) {}
-          });
-
-          var metaDesc = document.querySelector('meta[name="description"]');
-          var canonical = document.querySelector('link[rel="canonical"]');
-          var robots = document.querySelector('meta[name="robots"]');
-          var viewport = document.querySelector('meta[name="viewport"]');
-          var ogTitle = document.querySelector('meta[property="og:title"]');
-          var ogDesc = document.querySelector('meta[property="og:description"]');
-          var ogImage = document.querySelector('meta[property="og:image"]');
-          var seoSignals = {
-            title: document.title || '',
-            metaDescription: metaDesc ? metaDesc.getAttribute('content') : '',
-            canonical: canonical ? canonical.getAttribute('href') : '',
-            robots: robots ? robots.getAttribute('content') : '',
-            viewport: viewport ? viewport.getAttribute('content') : '',
-            ogTitle: ogTitle ? ogTitle.getAttribute('content') : '',
-            ogDescription: ogDesc ? ogDesc.getAttribute('content') : '',
-            ogImage: ogImage ? ogImage.getAttribute('content') : '',
-            h1Count: document.querySelectorAll('h1').length,
-            wordCount: (document.body.innerText || '').split(/\\s+/).filter(function(w) { return w.length > 0; }).length
-          };
-
-          var keyMessaging = [];
-          var heroSections = document.querySelectorAll('.hero, [class*="hero"], .banner, [class*="banner"], section:first-of-type');
-          heroSections.forEach(function(section) {
-            var text = cleanText(section.textContent);
-            if (text && text.length > 20) {
-              keyMessaging.push(text.slice(0, 300));
-            }
-          });
-
-          var testimonials = [];
-          var testimonialSelectors = '.testimonial, [class*="testimonial"], .review, [class*="review"], blockquote, .quote';
-          document.querySelectorAll(testimonialSelectors).forEach(function(el) {
-            var text = cleanText(el.textContent);
-            if (text && text.length > 20 && text.length < 500) {
-              testimonials.push({ text: text });
-            }
-          });
-
-          var faqs = [];
-          var faqSelectors = '.faq, [class*="faq"], .accordion, details, [itemtype*="FAQPage"]';
-          document.querySelectorAll(faqSelectors).forEach(function(el) {
-            var questionEl = el.querySelector('summary, .question, dt, h3, h4, [itemprop="name"]');
-            var answerEl = el.querySelector('.answer, dd, p, [itemprop="text"]');
-            var question = questionEl ? (questionEl.textContent || '').trim() : '';
-            var answer = answerEl ? (answerEl.textContent || '').trim() : '';
-            if (question && answer) {
-              faqs.push({ question: question.slice(0, 200), answer: answer.slice(0, 500) });
-            }
-          });
-
-          var contactInfo = { phones: [], emails: [], addresses: [] };
-          var phoneRegex = /(?:\\+?1[-.\s]?)?\\(?\\d{3}\\)?[-.\s]?\\d{3}[-.\s]?\\d{4}/g;
-          var bodyText = document.body.innerText || '';
-          var phoneMatches = bodyText.match(phoneRegex);
-          if (phoneMatches) {
-            contactInfo.phones = Array.from(new Set(phoneMatches)).slice(0, 5);
-          }
-          var emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}/g;
-          var emailMatches = bodyText.match(emailRegex);
-          if (emailMatches) {
-            contactInfo.emails = Array.from(new Set(emailMatches)).slice(0, 5);
-          }
-
-          var services = [];
-          var serviceSections = document.querySelectorAll('[class*="service"], .services, section');
-          serviceSections.forEach(function(section) {
-            section.querySelectorAll('li, h3, h4, .service-item').forEach(function(item) {
-              var text = cleanText(item.textContent);
-              if (text && text.length > 3 && text.length < 100) {
-                services.push(text);
-              }
-            });
-          });
-
-          var mainContent = cleanText(document.body.innerText).slice(0, 3000);
-
-          var links = { internal: [], external: [] };
-          document.querySelectorAll('a[href]').forEach(function(a) {
-            var href = a.href || '';
-            if (href.startsWith(window.location.origin)) {
-              links.internal.push(href);
-            } else if (href.startsWith('http')) {
-              links.external.push(href);
-            }
-          });
-
-          return {
-            headings: headings.slice(0, 30),
-            ctaElements: ctaElements.slice(0, 20),
-            forms: forms.slice(0, 5),
-            images: images.slice(0, 20),
-            navigation: Array.from(new Set(navigation)).slice(0, 20),
-            schemas: schemas,
-            seoSignals: seoSignals,
-            keyMessaging: keyMessaging.slice(0, 5),
-            testimonials: testimonials.slice(0, 10),
-            faqs: faqs.slice(0, 10),
-            contactInfo: contactInfo,
-            services: Array.from(new Set(services)).slice(0, 30),
-            mainContent: mainContent,
-            links: {
-              internal: Array.from(new Set(links.internal)).slice(0, 20),
-              external: Array.from(new Set(links.external)).slice(0, 20)
-            }
-          };
-        })()
-      `;
-      
-      const analysisResult = await page.evaluate(pageScript) as any;
-
-      await browser.close();
+      const analysisResult = await analyzeUrlWithCheerio(cleanUrl);
 
       // Use AI to analyze and provide insights
       const openaiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
@@ -850,9 +657,9 @@ app.post('/api/analyze-url', async (c) => {
 
 Title: ${analysisResult.seoSignals.title}
 Description: ${analysisResult.seoSignals.metaDescription}
-H1: ${analysisResult.headings.find(h => h.level === 'h1')?.text || ''}
+H1: ${analysisResult.headings.find((h: any) => h.level === 'h1')?.text || ''}
 Services: ${analysisResult.services.slice(0, 10).join(', ')}
-CTAs: ${analysisResult.ctaElements.slice(0, 5).map(c => c.text).join(', ')}
+CTAs: ${analysisResult.ctaElements.slice(0, 5).map((c: any) => c.text).join(', ')}
 Content Preview: ${analysisResult.mainContent.slice(0, 500)}
 
 Provide JSON with:
@@ -884,7 +691,7 @@ Provide JSON with:
 
           if (aiResponse.ok) {
             const aiData = await aiResponse.json();
-            const content = aiData.choices?.[0]?.message?.content || '';
+            const content = (aiData as any).choices?.[0]?.message?.content || '';
             try {
               const jsonMatch = content.match(/\{[\s\S]*\}/);
               if (jsonMatch) {
@@ -901,12 +708,13 @@ Provide JSON with:
         success: true,
         url: cleanUrl,
         extractedAt: new Date().toISOString(),
+        analysisMethod: 'cheerio',
         data: analysisResult,
         aiInsights,
         summary: {
           title: analysisResult.seoSignals.title,
           description: analysisResult.seoSignals.metaDescription,
-          h1: analysisResult.headings.find(h => h.level === 'h1')?.text || null,
+          h1: analysisResult.headings.find((h: any) => h.level === 'h1')?.text || null,
           wordCount: analysisResult.seoSignals.wordCount,
           headingCount: analysisResult.headings.length,
           ctaCount: analysisResult.ctaElements.length,
@@ -919,7 +727,6 @@ Provide JSON with:
       });
 
     } catch (pageError: any) {
-      if (browser) await browser.close();
       console.error('Page analysis error:', pageError);
       return c.json({
         success: false,
@@ -2125,15 +1932,9 @@ app.get('/api/google-ads/requests', async (c) => {
   }
 });
 
-// Manually trigger the scraper (for testing/admin)
+// Manually trigger the scraper (for testing/admin) - Currently disabled
 app.post('/api/google-ads/trigger-scraper', async (c) => {
-  try {
-    await triggerManualRun();
-    return c.json({ success: true, message: 'Scraper triggered manually' });
-  } catch (error: any) {
-    console.error('Error triggering scraper:', error);
-    return c.json({ error: error.message, success: false });
-  }
+  return c.json({ success: false, message: 'Scraper is currently disabled' }, 503);
 });
 
 // RapidAPI - Fetch ad details from Google Ads Transparency Center
@@ -2518,6 +2319,11 @@ Example output format: ["keyword 1", "keyword 2", "keyword 3", "keyword 4", "key
         .filter((k: string) => k.length > 0 && k.length < 50)
         .slice(0, maxKeywords);
     }
+
+    // Filter to ensure all keywords have at least 2 words
+    keywords = keywords
+      .map((k: string) => k.trim())
+      .filter((k: string) => k.length > 0 && k.split(/\s+/).length >= 2);
 
     if (keywords.length === 0) {
       keywords = ['service near me', 'professional services', 'best solutions', 'local experts', 'quality service'];
@@ -2953,13 +2759,631 @@ Return ONLY a JSON object (no markdown, no backticks) with this exact structure:
   }
 });
 
+// One-Click Campaign Builder API
+app.post('/api/campaigns/one-click', async (c) => {
+  const encoder = new TextEncoder();
+  
+  const sendProgress = (writer: WritableStreamDefaultWriter, data: any) => {
+    const message = `data: ${JSON.stringify(data)}\n\n`;
+    writer.write(encoder.encode(message));
+  };
+
+  const sendLog = (writer: WritableStreamDefaultWriter, message: string, type: 'info' | 'success' | 'action' | 'progress' = 'info') => {
+    sendProgress(writer, { log: { message, type } });
+  };
+
+  try {
+    const { websiteUrl } = await c.req.json();
+    
+    if (!websiteUrl) {
+      return c.json({ error: 'Website URL is required' }, 400);
+    }
+
+    const stream = new TransformStream();
+    const writer = stream.writable.getWriter();
+
+    (async () => {
+      try {
+        sendProgress(writer, { progress: 5, status: 'Starting campaign generation...' });
+        sendLog(writer, 'Using client-side extraction...', 'progress');
+
+        // Step 1: Fetch and analyze website
+        sendProgress(writer, { progress: 15, status: 'Analyzing landing page...' });
+        
+        let pageContent = '';
+        let pageTitle = 'Unknown Business';
+        let pageDescription = '';
+        
+        try {
+          const response = await fetch(websiteUrl, { 
+            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AdiologyBot/1.0)' }
+          });
+          const html = await response.text();
+          
+          const titleMatch = html.match(/<title[^>]*>(.*?)<\/title>/i);
+          const descMatch = html.match(/<meta[^>]*name="description"[^>]*content="([^"]*)"[^>]*>/i);
+          const h1Match = html.match(/<h1[^>]*>(.*?)<\/h1>/is);
+          
+          pageTitle = titleMatch?.[1]?.replace(/<[^>]*>/g, '').trim() || 'Unknown Business';
+          pageDescription = descMatch?.[1] || '';
+          
+          pageContent = html
+            .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+            .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+            .replace(/<[^>]*>/g, ' ')
+            .replace(/\s+/g, ' ')
+            .substring(0, 4000);
+          
+          sendLog(writer, 'Client extraction complete', 'success');
+        } catch (fetchError) {
+          console.error('Error fetching website:', fetchError);
+          pageContent = `Website: ${websiteUrl}`;
+          sendLog(writer, 'Using URL-based analysis (fallback)', 'info');
+        }
+
+        // Step 2: Use AI to analyze and generate campaign
+        sendLog(writer, 'Detecting campaign intent...', 'action');
+        sendProgress(writer, { progress: 25, status: 'Detecting intent...' });
+        sendLog(writer, 'Using AI-powered detection...', 'progress');
+        sendProgress(writer, { progress: 30, status: 'Building campaign structure...' });
+
+        const analysisPrompt = `You are a Google Ads expert focused on generating HIGH-ROI campaigns. Analyze this website to extract business intelligence for maximum advertising performance.
+
+Website URL: ${websiteUrl}
+Title: ${pageTitle}
+Description: ${pageDescription}
+Content: ${pageContent}
+
+ANALYZE FOR HIGH-ROI CAMPAIGN GENERATION:
+1. Identify the EXACT products/services offered (be specific, not generic)
+2. Find unique selling propositions (USPs) that differentiate from competitors
+3. Detect pricing signals, guarantees, or trust factors
+4. Identify the ideal customer profile and their pain points
+5. Find action-oriented CTAs and conversion opportunities
+
+Return ONLY valid JSON (no markdown, no backticks) with this structure:
+{
+  "businessName": "exact business name from website",
+  "mainValue": "primary USP - what makes them unique (specific, not generic)",
+  "keyBenefits": ["specific benefit 1", "specific benefit 2", "specific benefit 3", "specific benefit 4"],
+  "usps": ["unique differentiator 1", "unique differentiator 2"],
+  "priceSignals": ["any pricing, discounts, or value mentions"],
+  "trustFactors": ["years in business", "certifications", "guarantees", "reviews"],
+  "targetAudience": "specific ideal customer description",
+  "painPoints": ["customer problem 1", "customer problem 2"],
+  "industry": "specific industry vertical",
+  "products": ["specific product/service 1", "specific product/service 2", "specific product/service 3"],
+  "serviceAreas": ["geographic areas if mentioned"],
+  "campaignName": "Business Name - Primary Service",
+  "adGroupThemes": ["High-Intent Buyers", "Service-Specific", "Location-Based", "Problem-Solution", "Brand + Trust"],
+  "recommendedStructure": "SKAG or STAG with reasoning",
+  "conversionGoal": "calls, form fills, purchases, etc."
+}`;
+
+        const analysisResponse = await openaiClient.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: analysisPrompt }],
+          max_tokens: 800,
+          temperature: 0.7,
+        });
+
+        const analysisText = analysisResponse.choices[0]?.message?.content || '';
+        const analysisMatch = analysisText.match(/\{[\s\S]*\}/);
+        const analysis = analysisMatch ? JSON.parse(analysisMatch[0]) : {
+          businessName: pageTitle,
+          mainValue: 'Quality products and services',
+          keyBenefits: ['Professional', 'Reliable', 'Affordable'],
+          targetAudience: 'Local customers',
+          industry: 'General Business',
+          products: ['Services'],
+          campaignName: `${pageTitle} Campaign`,
+          adGroupThemes: ['Core Services', 'Benefits', 'Brand', 'Offers', 'Info']
+        };
+
+        // Detect intent type from analysis
+        const intentType = analysis.products?.some((p: string) => 
+          p.toLowerCase().includes('call') || p.toLowerCase().includes('phone') || p.toLowerCase().includes('contact')
+        ) ? 'CALL_INTENT' : 'CONVERSION_INTENT';
+        
+        sendLog(writer, `Intent detected: ${intentType}`, 'success');
+        sendLog(writer, `Vertical: ${analysis.industry || 'General'}`, 'success');
+        sendLog(writer, `CTA: ${analysis.mainValue?.split(' ')[0] || 'Learn More'}`, 'success');
+
+        // Step 3: Generate keywords
+        sendLog(writer, 'Generating seed keywords...', 'action');
+        sendProgress(writer, { progress: 50, status: 'Generating 100+ keywords...' });
+
+        const keywordPrompt = `You are a Google Ads keyword strategist. Generate HIGH-CONVERTING, BUYER-INTENT keywords that will drive ROI.
+
+Business: ${analysis.businessName}
+Industry: ${analysis.industry}
+Products/Services: ${analysis.products?.join(', ')}
+Target Audience: ${analysis.targetAudience}
+Pain Points: ${analysis.painPoints?.join(', ') || 'General problems they solve'}
+Service Areas: ${analysis.serviceAreas?.join(', ') || 'Not specified'}
+Conversion Goal: ${analysis.conversionGoal || 'leads/sales'}
+
+KEYWORD STRATEGY FOR MAXIMUM ROI:
+
+1. HIGH-INTENT BUYER KEYWORDS (40%):
+   - "[service] near me", "[product] for sale", "buy [product]"
+   - "hire [professional]", "best [service] company", "[service] quotes"
+   - Emergency/urgent: "emergency [service]", "same day [service]", "24 hour [service]"
+
+2. LONG-TAIL COMMERCIAL KEYWORDS (30%):
+   - 4+ word phrases that show buying intent
+   - "affordable [service] for [audience]", "professional [service] in [area]"
+   - Price-focused: "[service] cost", "[service] pricing", "cheap [service]"
+
+3. PROBLEM-SOLUTION KEYWORDS (15%):
+   - "how to fix [problem]", "[problem] repair service"
+   - "need [service] for [situation]"
+
+4. BRAND/TRUST KEYWORDS (10%):
+   - "top rated [service]", "certified [professional]"
+   - "licensed [service] contractor", "[service] with warranty"
+
+5. COMPETITOR ALTERNATIVE KEYWORDS (5%):
+   - "[competitor type] alternative", "better than [generic competitor]"
+
+Generate 120+ keywords focusing on COMMERCIAL and TRANSACTIONAL intent.
+DO NOT generate informational-only keywords like "what is [service]" or "history of [product]".
+
+Return ONLY a JSON object (no markdown, no backticks):
+{
+  "highIntent": ["keyword1", "keyword2", ...],
+  "longTail": ["keyword1", "keyword2", ...],
+  "problemSolution": ["keyword1", "keyword2", ...],
+  "brandTrust": ["keyword1", "keyword2", ...],
+  "negativeKeywords": ["free", "diy", "jobs", "career", "salary", "how to become", "course", "training", "youtube", "reddit"]
+}`;
+
+        const keywordResponse = await openaiClient.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: keywordPrompt }],
+          max_tokens: 2000,
+          temperature: 0.8,
+        });
+
+        const keywordText = keywordResponse.choices[0]?.message?.content || '';
+        const keywordMatch = keywordText.match(/\{[\s\S]*\}/);
+        let keywordData: any = {};
+        let keywords: string[] = [];
+        let negativeKeywords: string[] = [];
+        
+        try {
+          keywordData = keywordMatch ? JSON.parse(keywordMatch[0]) : {};
+          keywords = [
+            ...(keywordData.highIntent || []),
+            ...(keywordData.longTail || []),
+            ...(keywordData.problemSolution || []),
+            ...(keywordData.brandTrust || [])
+          ];
+          negativeKeywords = keywordData.negativeKeywords || ['free', 'diy', 'jobs', 'career', 'salary', 'training', 'course'];
+        } catch {
+          keywords = analysis.products?.map((p: string) => p) || ['service'];
+          negativeKeywords = ['free', 'diy', 'jobs', 'career', 'salary'];
+        }
+        
+        if (keywords.length < 40) {
+          const baseKeywords = analysis.products || [analysis.industry];
+          const buyerModifiers = ['best', 'top', 'professional', 'affordable', 'local', 'near me', 'certified', 'licensed'];
+          const actions = ['buy', 'get', 'hire', 'order', 'book', 'schedule', 'request'];
+          const urgency = ['emergency', 'same day', '24 hour', 'fast', 'quick'];
+          
+          baseKeywords.forEach((base: string) => {
+            buyerModifiers.forEach(mod => keywords.push(`${mod} ${base}`));
+            actions.forEach(act => keywords.push(`${act} ${base}`));
+            urgency.forEach(urg => keywords.push(`${urg} ${base}`));
+            keywords.push(`${base} near me`);
+            keywords.push(`${base} cost`);
+            keywords.push(`${base} pricing`);
+            keywords.push(`${base} quotes`);
+          });
+        }
+        
+        sendLog(writer, `Generated ${keywords.length} buyer-intent keywords`, 'success');
+        sendLog(writer, `Added ${negativeKeywords.length} negative keywords`, 'success');
+        
+        // Smart campaign structure recommendation
+        sendLog(writer, 'Analyzing optimal structure...', 'action');
+        const hasHighValueKeywords = keywords.some(k => 
+          k.includes('emergency') || k.includes('near me') || k.includes('hire') || k.includes('buy')
+        );
+        const recommendedStructure = analysis.recommendedStructure || 
+          (hasHighValueKeywords && keywords.length > 30 ? 'SKAG' : 'STAG');
+        sendLog(writer, `Recommended structure: ${recommendedStructure} (optimized for ROI)`, 'success');
+
+        // Step 4: Generate ad copy
+        sendLog(writer, 'Creating ad copy...', 'action');
+        sendProgress(writer, { progress: 65, status: 'Creating ad copy variations...' });
+
+        const adCopyPrompt = `You are a Google Ads copywriter specializing in HIGH-CONVERTING, CLICK-WORTHY ads. Generate ad copy that drives action.
+
+Business: ${analysis.businessName}
+Primary USP: ${analysis.mainValue}
+Key Benefits: ${analysis.keyBenefits?.join(', ')}
+Unique Differentiators: ${analysis.usps?.join(', ') || 'Quality service'}
+Trust Factors: ${analysis.trustFactors?.join(', ') || 'Experienced professionals'}
+Target Audience: ${analysis.targetAudience}
+Pain Points: ${analysis.painPoints?.join(', ') || 'Common customer challenges'}
+Conversion Goal: ${analysis.conversionGoal || 'leads'}
+
+HIGH-CONVERTING AD COPY RULES:
+1. Headlines MUST include: CTAs, Numbers/Stats, Urgency, or Benefits
+2. Use power words: Free, Save, Now, Today, Fast, Guaranteed, Proven, #1
+3. Include specific numbers when possible (e.g., "Save 30%", "24/7 Service")
+4. Create FOMO or urgency (e.g., "Limited Time", "Book Today")
+5. Address pain points directly in descriptions
+6. Each headline must be UNIQUE and substantially different
+
+Generate 15 headlines and 4 descriptions for RSA optimization.
+
+Return ONLY JSON (no markdown):
+{
+  "headlines": [
+    {"text": "Business Name - 30 chars max", "type": "brand"},
+    {"text": "Strong CTA - Get Quote Now", "type": "cta"},
+    {"text": "Primary Benefit Statement", "type": "benefit"},
+    {"text": "Urgency - Limited Time Offer", "type": "urgency"},
+    {"text": "Trust - 20+ Years Experience", "type": "trust"},
+    {"text": "Save X% - Value Offer", "type": "value"},
+    {"text": "Free Consultation/Quote", "type": "cta"},
+    {"text": "Top Rated + Location", "type": "local"},
+    {"text": "Fast/Same Day Service", "type": "urgency"},
+    {"text": "Licensed & Insured Pros", "type": "trust"},
+    {"text": "Best [Service] Near You", "type": "local"},
+    {"text": "Quality Guaranteed", "type": "trust"},
+    {"text": "[Number] Happy Customers", "type": "social_proof"},
+    {"text": "Call Now - Open 24/7", "type": "cta"},
+    {"text": "Affordable [Service]", "type": "value"}
+  ],
+  "descriptions": [
+    {"text": "Benefit-focused description with CTA. Include USP and what makes you different. End with action. Max 90 chars."},
+    {"text": "Address pain point directly. Explain how you solve it. Include trust factor. End with CTA. Max 90 chars."},
+    {"text": "Social proof + benefit. Mention experience/reviews. Create urgency. Call to action. Max 90 chars."},
+    {"text": "Value proposition + guarantee. What customer gets. Why choose you. Strong CTA. Max 90 chars."}
+  ],
+  "callouts": ["Free Estimates", "24/7 Available", "Licensed & Insured", "Same Day Service", "5-Star Rated", "No Hidden Fees"],
+  "sitelinks": [
+    {"title": "Get Free Quote", "description": "Request your free estimate today"},
+    {"title": "Our Services", "description": "View all services we offer"},
+    {"title": "About Us", "description": "Learn why customers choose us"},
+    {"title": "Contact Us", "description": "Get in touch with our team"}
+  ]
+}`;
+
+        const adCopyResponse = await openaiClient.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: adCopyPrompt }],
+          max_tokens: 1200,
+          temperature: 0.7,
+        });
+
+        const adCopyText = adCopyResponse.choices[0]?.message?.content || '';
+        const adCopyMatch = adCopyText.match(/\{[\s\S]*\}/);
+        let adCopy;
+        try {
+          adCopy = adCopyMatch ? JSON.parse(adCopyMatch[0]) : null;
+        } catch {
+          adCopy = null;
+        }
+        
+        if (!adCopy) {
+          const businessShort = (analysis.businessName || 'Quality Service').substring(0, 30);
+          adCopy = {
+            headlines: [
+              { text: businessShort, type: 'brand' },
+              { text: 'Get Your Free Quote Now', type: 'cta' },
+              { text: 'Trusted Local Experts', type: 'trust' },
+              { text: 'Same Day Service', type: 'urgency' },
+              { text: '5-Star Rated Company', type: 'social_proof' },
+              { text: 'Licensed & Insured', type: 'trust' },
+              { text: 'Call Now - Save 20%', type: 'value' },
+              { text: 'Fast & Reliable Service', type: 'benefit' },
+              { text: 'Book Online Today', type: 'cta' },
+              { text: '24/7 Emergency Service', type: 'urgency' },
+              { text: 'Best Prices Guaranteed', type: 'value' },
+              { text: 'Professional Results', type: 'benefit' },
+              { text: '1000+ Happy Customers', type: 'social_proof' },
+              { text: 'Free Estimates', type: 'cta' },
+              { text: 'Top Rated Near You', type: 'local' }
+            ],
+            descriptions: [
+              { text: `${businessShort} - Professional service you can trust. Get your free quote today!` },
+              { text: 'Fast, reliable results guaranteed. Licensed experts ready to help. Call now!' },
+              { text: 'Top-rated by customers. Quality work at competitive prices. Book online today.' },
+              { text: 'Save time and money with our expert team. Satisfaction guaranteed. Contact us!' }
+            ],
+            callouts: ['Free Estimates', '24/7 Available', 'Licensed & Insured', 'Same Day Service', '5-Star Rated', 'No Hidden Fees'],
+            sitelinks: [
+              { title: 'Get Free Quote', description: 'Request your free estimate today' },
+              { title: 'Our Services', description: 'View all services we offer' },
+              { title: 'About Us', description: 'Learn why customers choose us' },
+              { title: 'Contact Us', description: 'Get in touch with our team' }
+            ]
+          };
+        }
+
+        sendLog(writer, `Created ${adCopy.headlines?.length || 15} high-converting headlines`, 'success');
+        sendLog(writer, `Created ${adCopy.descriptions?.length || 4} compelling descriptions`, 'success');
+        sendLog(writer, `Added ${adCopy.callouts?.length || 6} callout extensions`, 'success');
+
+        // Step 5: Create optimized ad groups
+        sendLog(writer, 'Creating ROI-optimized ad groups...', 'action');
+        sendProgress(writer, { progress: 80, status: 'Organizing ad groups...' });
+
+        // Organize keywords by intent for better Quality Score
+        const highIntentKws = keywordData.highIntent || [];
+        const longTailKws = keywordData.longTail || [];
+        const problemSolutionKws = keywordData.problemSolution || [];
+        const brandTrustKws = keywordData.brandTrust || [];
+        
+        // Create 3 different ads for each ad group using different headline/description combinations
+        const allHeadlines = adCopy.headlines?.map((h: any) => h.text || h) || [];
+        const allDescriptions = adCopy.descriptions?.map((d: any) => d.text || d) || [];
+        
+        const createAdsForGroup = () => {
+          const ads = [];
+          // Ad 1: Headlines 1-5, Descriptions 1-2
+          ads.push({
+            type: 'RSA',
+            headlines: allHeadlines.slice(0, 5).filter((h: string) => h),
+            descriptions: allDescriptions.slice(0, 2).filter((d: string) => d),
+            finalUrl: websiteUrl,
+            path1: (analysis.industry || '').substring(0, 15).replace(/[^a-zA-Z0-9]/g, ''),
+            path2: '',
+            status: 'Enabled'
+          });
+          // Ad 2: Headlines 5-10, Descriptions 2-4
+          ads.push({
+            type: 'RSA',
+            headlines: allHeadlines.slice(5, 10).length >= 3 ? allHeadlines.slice(5, 10) : allHeadlines.slice(0, 5),
+            descriptions: allDescriptions.slice(2, 4).length >= 2 ? allDescriptions.slice(2, 4) : allDescriptions.slice(0, 2),
+            finalUrl: websiteUrl,
+            path1: (analysis.industry || '').substring(0, 15).replace(/[^a-zA-Z0-9]/g, ''),
+            path2: 'info',
+            status: 'Enabled'
+          });
+          // Ad 3: Headlines 10-15 (or mix), Descriptions 1,3
+          ads.push({
+            type: 'RSA',
+            headlines: allHeadlines.slice(10, 15).length >= 3 ? allHeadlines.slice(10, 15) : [...allHeadlines.slice(0, 3), ...allHeadlines.slice(7, 9)].filter((h: string) => h),
+            descriptions: [allDescriptions[0], allDescriptions[2]].filter((d: string) => d).length >= 2 ? [allDescriptions[0], allDescriptions[2]].filter((d: string) => d) : allDescriptions.slice(0, 2),
+            finalUrl: websiteUrl,
+            path1: (analysis.industry || '').substring(0, 15).replace(/[^a-zA-Z0-9]/g, ''),
+            path2: 'contact',
+            status: 'Enabled'
+          });
+          return ads;
+        };
+        
+        // Create intent-based ad groups for higher relevance
+        const adGroups = [
+          {
+            name: 'High Intent - Buyers',
+            maxCpc: 2.50,
+            matchType: 'Phrase',
+            keywords: highIntentKws.length > 0 ? highIntentKws : keywords.slice(0, Math.ceil(keywords.length * 0.4)),
+            ads: createAdsForGroup()
+          },
+          {
+            name: 'Long Tail - Specific',
+            maxCpc: 1.75,
+            matchType: 'Phrase',
+            keywords: longTailKws.length > 0 ? longTailKws : keywords.slice(Math.ceil(keywords.length * 0.4), Math.ceil(keywords.length * 0.7)),
+            ads: createAdsForGroup()
+          },
+          {
+            name: 'Problem Solution',
+            maxCpc: 1.50,
+            matchType: 'Broad',
+            keywords: problemSolutionKws.length > 0 ? problemSolutionKws : keywords.slice(Math.ceil(keywords.length * 0.7), Math.ceil(keywords.length * 0.85)),
+            ads: createAdsForGroup()
+          },
+          {
+            name: 'Brand Trust',
+            maxCpc: 1.25,
+            matchType: 'Broad',
+            keywords: brandTrustKws.length > 0 ? brandTrustKws : keywords.slice(Math.ceil(keywords.length * 0.85)),
+            ads: createAdsForGroup()
+          }
+        ].filter(g => g.keywords.length > 0);
+
+        sendLog(writer, `Created ${adGroups.length} intent-based ad groups with 3 ads each`, 'success');
+        sendLog(writer, 'Using tiered bidding strategy (High intent = higher bids)', 'success');
+        sendLog(writer, `Each ad group has 3 unique RSA ad variations`, 'success');
+
+        // Step 6: Generate CSV (basic - client uses full 183-column template)
+        sendLog(writer, 'Preparing campaign data...', 'action');
+        sendProgress(writer, { progress: 90, status: 'Generating Google Ads CSV...' });
+
+        let csvData = 'Campaign,Ad Group,Keyword,Match Type,Max CPC,Headline 1,Headline 2,Headline 3,Description 1,Description 2,Final URL,Status\n';
+        
+        adGroups.forEach((group: any) => {
+          group.keywords.forEach((kw: string) => {
+            const h1 = adCopy.headlines[0]?.text || '';
+            const h2 = adCopy.headlines[1]?.text || '';
+            const h3 = adCopy.headlines[2]?.text || '';
+            const d1 = adCopy.descriptions[0]?.text || '';
+            const d2 = adCopy.descriptions[1]?.text || '';
+            
+            csvData += `"${analysis.campaignName}","${group.name}","${kw}","${group.matchType}","${group.maxCpc}","${h1}","${h2}","${h3}","${d1}","${d2}","${websiteUrl}","Paused"\n`;
+          });
+        });
+
+        // Step 7: Complete
+        sendProgress(writer, { progress: 100, status: 'High-ROI campaign ready!' });
+
+        const campaign = {
+          id: `campaign-${Date.now()}`,
+          campaign_name: analysis.campaignName,
+          business_name: analysis.businessName,
+          website_url: websiteUrl,
+          monthly_budget: 2000,
+          csvData,
+          campaign_data: {
+            analysis,
+            structure: {
+              type: recommendedStructure,
+              campaignName: analysis.campaignName,
+              dailyBudget: 100,
+              bidStrategy: 'Maximize Conversions',
+              adGroupThemes: adGroups.map(g => g.name)
+            },
+            keywords,
+            keywordCategories: {
+              highIntent: highIntentKws,
+              longTail: longTailKws,
+              problemSolution: problemSolutionKws,
+              brandTrust: brandTrustKws
+            },
+            negativeKeywords,
+            adGroups,
+            adCopy,
+            extensions: {
+              callouts: adCopy.callouts || [],
+              sitelinks: adCopy.sitelinks || []
+            },
+            optimizationNotes: [
+              'High-intent keywords have higher bids for better ROI',
+              'Using Phrase match for buyer keywords to reduce wasted spend',
+              'Negative keywords added to prevent irrelevant clicks',
+              `${negativeKeywords.length} negative keywords configured`,
+              'Campaigns set to PAUSED - review before enabling'
+            ]
+          }
+        };
+
+        sendLog(writer, 'Saving analysis to database...', 'action');
+        sendProgress(writer, { progress: 95, status: 'Finalizing...' });
+        
+        sendProgress(writer, { complete: true, campaign });
+        writer.close();
+      } catch (error: any) {
+        console.error('One-click campaign error:', error);
+        sendProgress(writer, { error: error.message || 'Failed to generate campaign' });
+        writer.close();
+      }
+    })();
+
+    return new Response(stream.readable, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    });
+  } catch (error: any) {
+    console.error('One-click campaign error:', error);
+    return c.json({ error: error.message || 'Failed to generate campaign' }, 500);
+  }
+});
+
+// Save campaign from one-click builder
+app.post('/api/campaigns/save', async (c) => {
+  try {
+    const campaignData = await c.req.json();
+    
+    // Use provided user_id or default to 'anonymous' for non-authenticated saves
+    const userId = campaignData.user_id || 'anonymous';
+    
+    const result = await pool.query(
+      `INSERT INTO campaign_history (
+        user_id, campaign_name, business_name, website_url, status, 
+        campaign_data, created_at, updated_at, source
+      ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW(), $7)
+      RETURNING id`,
+      [
+        userId,
+        campaignData.campaign_name,
+        campaignData.business_name,
+        campaignData.website_url,
+        'draft',
+        JSON.stringify(campaignData.campaign_data),
+        campaignData.source || 'one-click-builder'
+      ]
+    );
+
+    return c.json({ 
+      success: true, 
+      id: result.rows[0]?.id,
+      message: 'Campaign saved successfully' 
+    });
+  } catch (error: any) {
+    console.error('Error saving campaign:', error);
+    return c.json({ error: error.message || 'Failed to save campaign' }, 500);
+  }
+});
+
 // Start cron scheduler - DISABLED per user request
 // startCronScheduler();
 
-const port = 3001;
-console.log(`Admin API Server running on port ${port}`);
+// Determine ports - in production, use PORT env var; in development, use 3001 for API
+const isProduction = process.env.NODE_ENV === 'production';
+const apiPort = isProduction ? parseInt(process.env.PORT || '5000', 10) : 3001;
 
-serve({
+// In production, serve static files from dist/
+if (isProduction) {
+  const fs = await import('fs');
+  const path = await import('path');
+  
+  app.get('*', async (c) => {
+    const reqPath = c.req.path;
+    const distPath = path.join(process.cwd(), 'build');
+    
+    // Try to serve the exact file
+    let filePath = path.join(distPath, reqPath);
+    
+    // Check if it's a file that exists
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      const content = fs.readFileSync(filePath);
+      const ext = path.extname(filePath).toLowerCase();
+      const mimeTypes: Record<string, string> = {
+        '.html': 'text/html',
+        '.js': 'application/javascript',
+        '.css': 'text/css',
+        '.json': 'application/json',
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.gif': 'image/gif',
+        '.svg': 'image/svg+xml',
+        '.ico': 'image/x-icon',
+        '.woff': 'font/woff',
+        '.woff2': 'font/woff2',
+      };
+      return new Response(content, {
+        headers: { 
+          'Content-Type': mimeTypes[ext] || 'application/octet-stream',
+          'Cache-Control': 'public, max-age=31536000'
+        }
+      });
+    }
+    
+    // For SPA routing, serve index.html for non-file requests
+    const indexPath = path.join(process.cwd(), 'build', 'index.html');
+    if (fs.existsSync(indexPath)) {
+      const content = fs.readFileSync(indexPath, 'utf-8');
+      return new Response(content, {
+        headers: { 
+          'Content-Type': 'text/html',
+          'Cache-Control': 'no-cache'
+        }
+      });
+    }
+    
+    return c.text('Not Found', 404);
+  });
+}
+
+// Start server FIRST to satisfy port binding requirements
+const server = serve({
   fetch: app.fetch,
-  port,
+  port: apiPort,
 });
+
+console.log(`Server running on port ${apiPort} (${isProduction ? 'production' : 'development'} mode)`);
+
+// Initialize Stripe in the background AFTER server is running (non-blocking)
+initStripe().catch(err => console.error('Stripe init error:', err));

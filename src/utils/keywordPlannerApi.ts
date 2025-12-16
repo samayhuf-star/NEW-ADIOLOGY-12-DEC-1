@@ -163,7 +163,7 @@ export async function getKeywordForecast(params: {
 export function formatCompetition(competition: string | null): { label: string; color: string } {
   switch (competition) {
     case 'LOW':
-      return { label: 'Low', color: 'text-green-600 bg-green-50' };
+      return { label: 'Low', color: 'text-indigo-600 bg-indigo-50' };
     case 'MEDIUM':
       return { label: 'Medium', color: 'text-yellow-600 bg-yellow-50' };
     case 'HIGH':

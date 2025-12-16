@@ -227,16 +227,16 @@ ${exportedHtml || templateData.rawHtml || ''}
         <div className="flex items-center gap-2">
           <button
             onClick={handleDomainInfoClick}
-            className="flex items-center gap-2 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg font-medium text-sm hover:bg-slate-200 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 border border-slate-300 bg-white text-slate-700 rounded-lg font-medium text-sm hover:bg-slate-50 transition-colors"
             title="Domain & DNS Settings"
           >
             <Globe className="w-4 h-4" />
-            <Info className="w-3 h-3" />
+            Connect Domain
           </button>
           <button
             onClick={handlePublishClick}
             disabled={isPublishing}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg font-medium text-sm hover:bg-purple-700 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg font-medium text-sm hover:bg-green-700 transition-colors disabled:opacity-50"
           >
             <Upload className="w-4 h-4" />
             {isPublishing ? 'Publishing...' : 'Publish'}
@@ -342,7 +342,7 @@ ${exportedHtml || templateData.rawHtml || ''}
                       Verify Domain
                     </button>
                     {domainVerified && (
-                      <div className="flex items-center gap-2 text-green-600 text-sm">
+                      <div className="flex items-center gap-2 text-indigo-600 text-sm">
                         <CheckCircle className="w-4 h-4" />
                         Domain verified and connected!
                       </div>

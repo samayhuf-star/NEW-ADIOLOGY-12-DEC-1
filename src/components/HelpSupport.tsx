@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
     Book, HelpCircle, MessageSquare, Search, ChevronRight, ChevronDown,
-    Zap, BarChart3, CheckCircle2, AlertCircle, Target, FileText, Upload, Download, Settings
+    Zap, BarChart3, CheckCircle2, AlertCircle, Target, FileText, Upload, Download, Settings, Image, X, Camera
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { Badge } from './ui/badge';
+import { supabase } from '../utils/supabase';
 
 
 const documentationSections = [
@@ -443,6 +444,56 @@ export const HelpSupport = () => {
     const [selectedArticle, setSelectedArticle] = useState<any>(null);
     const [showArticleDialog, setShowArticleDialog] = useState(false);
     const [viewMode, setViewMode] = useState<'list' | 'article'>('list');
+    const [userEmail, setUserEmail] = useState<string | null>(null);
+    const [articleImages, setArticleImages] = useState<Record<string, string>>({});
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const ALLOWED_UPLOAD_EMAIL = 'd@d';
+
+    useEffect(() => {
+        const loadUserAndImages = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            setUserEmail(user?.email || null);
+            
+            const savedImages = localStorage.getItem('helpDocImages');
+            if (savedImages) {
+                setArticleImages(JSON.parse(savedImages));
+            }
+        };
+        loadUserAndImages();
+    }, []);
+
+    const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file || !selectedArticle) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const base64 = e.target?.result as string;
+            const articleKey = `${selectedArticle.sectionTitle}-${selectedArticle.title}`.replace(/\s+/g, '-').toLowerCase();
+            const newImages = { ...articleImages, [articleKey]: base64 };
+            setArticleImages(newImages);
+            localStorage.setItem('helpDocImages', JSON.stringify(newImages));
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleRemoveImage = () => {
+        if (!selectedArticle) return;
+        const articleKey = `${selectedArticle.sectionTitle}-${selectedArticle.title}`.replace(/\s+/g, '-').toLowerCase();
+        const newImages = { ...articleImages };
+        delete newImages[articleKey];
+        setArticleImages(newImages);
+        localStorage.setItem('helpDocImages', JSON.stringify(newImages));
+    };
+
+    const getArticleImage = () => {
+        if (!selectedArticle) return null;
+        const articleKey = `${selectedArticle.sectionTitle}-${selectedArticle.title}`.replace(/\s+/g, '-').toLowerCase();
+        return articleImages[articleKey] || null;
+    };
+
+    const canUploadImages = userEmail === ALLOWED_UPLOAD_EMAIL;
 
     const handleSearchFilter = (item: any) => {
         if (!searchQuery) return true;
@@ -517,7 +568,7 @@ export const HelpSupport = () => {
                                                 <ul className="space-y-2 ml-4">
                                                     {paragraph.split('\n').filter(line => line.trim()).map((line, i) => (
                                                         <li key={i} className="flex items-start gap-3 text-slate-700">
-                                                            <CheckCircle2 className="w-5 h-5 text-indigo-500 mt-0.5 flex-shrink-0" />
+                                                            <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                                                             <span>{line.replace(/^[-\d.]\s*/, '')}</span>
                                                         </li>
                                                     ))}
@@ -531,22 +582,65 @@ export const HelpSupport = () => {
                                     ))}
                                 </div>
 
-                                {/* Visual Example Placeholder */}
+                                {/* Visual Example Section */}
                                 <div className="mt-8 p-8 bg-gradient-to-br from-slate-100 to-blue-100 rounded-xl border-2 border-indigo-200">
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <div className="bg-indigo-600 rounded-lg p-2">
-                                            <AlertCircle className="w-5 h-5 text-white" />
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="bg-indigo-600 rounded-lg p-2">
+                                                <AlertCircle className="w-5 h-5 text-white" />
+                                            </div>
+                                            <h4 className="font-normal text-slate-700 text-base">Visual Example</h4>
                                         </div>
-                                        <h4 className="font-normal text-slate-700 text-base">Visual Example</h4>
+                                        {canUploadImages && (
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    ref={fileInputRef}
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={handleImageUpload}
+                                                    className="hidden"
+                                                />
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                    className="gap-2 bg-white hover:bg-indigo-50 border-indigo-300"
+                                                >
+                                                    <Camera className="w-4 h-4" />
+                                                    Upload Screenshot
+                                                </Button>
+                                                {getArticleImage() && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={handleRemoveImage}
+                                                        className="gap-2 bg-white hover:bg-red-50 border-red-300 text-red-600"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                        Remove
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="bg-white rounded-lg border-2 border-slate-300 p-6 mb-4">
-                                        <div className="aspect-video bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg flex items-center justify-center border border-slate-200">
-                                            <div className="text-center">
-                                                <BarChart3 className="w-16 h-16 text-indigo-400 mx-auto mb-3" />
-                                                <p className="text-slate-500 font-medium">Screenshot Placeholder</p>
-                                                <p className="text-xs text-slate-400 mt-1">Visual guide for {selectedArticle.title}</p>
+                                        {getArticleImage() ? (
+                                            <div className="rounded-lg overflow-hidden">
+                                                <img 
+                                                    src={getArticleImage()!} 
+                                                    alt={`Visual guide for ${selectedArticle.title}`}
+                                                    className="w-full h-auto rounded-lg"
+                                                />
                                             </div>
-                                        </div>
+                                        ) : (
+                                            <div className="aspect-video bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg flex items-center justify-center border border-slate-200">
+                                                <div className="text-center">
+                                                    <BarChart3 className="w-16 h-16 text-indigo-400 mx-auto mb-3" />
+                                                    <p className="text-slate-500 font-medium">Screenshot Placeholder</p>
+                                                    <p className="text-xs text-slate-400 mt-1">Visual guide for {selectedArticle.title}</p>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                     <p className="text-sm text-slate-600 leading-relaxed">
                                         📸 <span className="font-normal">Pro Tip:</span> Follow the steps above while looking at your dashboard. 
@@ -555,22 +649,22 @@ export const HelpSupport = () => {
                                 </div>
 
                                 {/* Quick Tips Box */}
-                                <div className="mt-8 p-6 bg-emerald-50 rounded-xl border-2 border-emerald-200">
+                                <div className="mt-8 p-6 bg-indigo-50 rounded-xl border-2 border-indigo-200">
                                     <div className="flex items-center gap-2 mb-3">
-                                        <Zap className="w-5 h-5 text-emerald-600" />
+                                        <Zap className="w-5 h-5 text-indigo-600" />
                                         <h4 className="font-normal text-emerald-800">Quick Tips</h4>
                                     </div>
                                     <ul className="space-y-2 text-sm text-emerald-800">
                                         <li className="flex items-start gap-2">
-                                            <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
+                                            <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
                                             Take your time to explore each feature as you go
                                         </li>
                                         <li className="flex items-start gap-2">
-                                            <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
+                                            <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
                                             Use the search bar if you need to find specific tools quickly
                                         </li>
                                         <li className="flex items-start gap-2">
-                                            <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
+                                            <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
                                             Check the FAQ section if you have additional questions
                                         </li>
                                     </ul>

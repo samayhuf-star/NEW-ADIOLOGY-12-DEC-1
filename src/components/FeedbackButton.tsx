@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, X, Send, Sparkles, MessageCircleHeart, Camera, Upload, Image as ImageIcon, Trash2 } from 'lucide-react';
+import { MessageSquare, X, Send, Sparkles, MessageCircleHeart, Camera, Upload, Image as ImageIcon, Trash2, AlertCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
 import { Textarea } from './ui/textarea';
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from './ui/checkbox';
 import { notifications } from '../utils/notifications';
 import { submitFeedback } from '../utils/feedbackService';
+import html2canvas from 'html2canvas';
 
 interface FeedbackButtonProps {
   variant?: 'floating' | 'sidebar';
@@ -39,61 +40,30 @@ export const FeedbackButton: React.FC<FeedbackButtonProps> = ({
     }
   }, [isOpen]);
 
+  const [screenshotError, setScreenshotError] = useState(false);
+
   const captureScreenshot = async () => {
     setIsCapturingScreenshot(true);
+    setScreenshotError(false);
     try {
-      // Use html2canvas-like approach with canvas
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
+      const mainContent = document.querySelector('main') || document.body;
       
-      // Get the main content area (excluding the dialog)
-      const body = document.body;
-      const rect = body.getBoundingClientRect();
+      const canvas = await html2canvas(mainContent as HTMLElement, {
+        backgroundColor: '#f8fafc',
+        scale: 0.5,
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
+        ignoreElements: (element) => {
+          return element.closest('[role="dialog"]') !== null;
+        }
+      });
       
-      // Set canvas size
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      
-      if (ctx) {
-        // Create a simple visual representation
-        ctx.fillStyle = '#f8fafc';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Draw a simplified representation
-        ctx.fillStyle = '#1e293b';
-        ctx.font = '14px system-ui';
-        ctx.fillText(`Page: ${currentPage || window.location.pathname}`, 20, 30);
-        ctx.fillText(`URL: ${window.location.href}`, 20, 50);
-        ctx.fillText(`Timestamp: ${new Date().toLocaleString()}`, 20, 70);
-        ctx.fillText(`Screen: ${window.innerWidth}x${window.innerHeight}`, 20, 90);
-        
-        // Draw a border
-        ctx.strokeStyle = '#e2e8f0';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(10, 10, canvas.width - 20, 100);
-      }
-      
-      // Convert to base64
-      const screenshot = canvas.toDataURL('image/png');
+      const screenshot = canvas.toDataURL('image/png', 0.8);
       setAutoScreenshot(screenshot);
     } catch (error) {
       console.error('Failed to capture screenshot:', error);
-      // Create a fallback info card
-      const canvas = document.createElement('canvas');
-      canvas.width = 400;
-      canvas.height = 120;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.fillStyle = '#fef3c7';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#92400e';
-        ctx.font = '12px system-ui';
-        ctx.fillText(`Page: ${currentPage}`, 10, 25);
-        ctx.fillText(`URL: ${window.location.href}`, 10, 45);
-        ctx.fillText(`Time: ${new Date().toLocaleString()}`, 10, 65);
-        ctx.fillText(`Browser: ${navigator.userAgent.slice(0, 50)}...`, 10, 85);
-      }
-      setAutoScreenshot(canvas.toDataURL('image/png'));
+      setScreenshotError(true);
     } finally {
       setIsCapturingScreenshot(false);
     }
@@ -299,12 +269,12 @@ export const FeedbackButton: React.FC<FeedbackButtonProps> = ({
             </p>
           </div>
 
-          {/* Auto-captured Screenshot */}
+          {/* Screenshot Section */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label className="flex items-center gap-2">
                 <Camera className="w-4 h-4 text-indigo-600" />
-                Page Screenshot (Auto-captured)
+                Page Screenshot
               </Label>
               {isCapturingScreenshot && (
                 <span className="text-xs text-slate-500 animate-pulse">Capturing...</span>
@@ -316,11 +286,11 @@ export const FeedbackButton: React.FC<FeedbackButtonProps> = ({
                 <div className="border rounded-lg overflow-hidden bg-slate-50 p-2">
                   <img 
                     src={autoScreenshot} 
-                    alt="Auto-captured screenshot" 
-                    className="w-full h-24 object-contain rounded"
+                    alt="Captured screenshot" 
+                    className="w-full h-32 object-contain rounded"
                   />
                   <div className="mt-2 text-xs text-slate-500 flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded">Auto-captured</span>
+                    <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded">Captured</span>
                     <span>{currentPage}</span>
                   </div>
                 </div>
@@ -332,6 +302,37 @@ export const FeedbackButton: React.FC<FeedbackButtonProps> = ({
                   <Trash2 className="w-3 h-3" />
                 </button>
               </div>
+            ) : screenshotError ? (
+              <div className="border-2 border-dashed border-amber-200 rounded-lg p-4 bg-amber-50">
+                <div className="flex items-start gap-2 mb-3">
+                  <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-amber-700 font-medium">Auto-capture unavailable</p>
+                    <p className="text-xs text-amber-600">Please upload a screenshot manually or retry</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={captureScreenshot}
+                    disabled={isCapturingScreenshot}
+                  >
+                    <Camera className="w-4 h-4 mr-2" />
+                    Retry
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Instead
+                  </Button>
+                </div>
+              </div>
             ) : (
               <div className="border-2 border-dashed border-slate-200 rounded-lg p-4 text-center">
                 <Button
@@ -342,7 +343,7 @@ export const FeedbackButton: React.FC<FeedbackButtonProps> = ({
                   disabled={isCapturingScreenshot}
                 >
                   <Camera className="w-4 h-4 mr-2" />
-                  Capture Screenshot
+                  {isCapturingScreenshot ? 'Capturing...' : 'Capture Screenshot'}
                 </Button>
               </div>
             )}

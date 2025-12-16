@@ -352,7 +352,7 @@ export const KeywordMixer = ({ initialData }: { initialData?: any }) => {
                                     Phrase Match "keyword"
                                 </span>
                             </label>
-                            <label htmlFor="exact" className="flex items-center gap-2.5 px-3 py-2 rounded-lg border-2 border-emerald-200 bg-emerald-50/50 hover:bg-emerald-50 hover:border-emerald-300 cursor-pointer transition-all duration-200 group">
+                            <label htmlFor="exact" className="flex items-center gap-2.5 px-3 py-2 rounded-lg border-2 border-indigo-200 bg-indigo-50/50 hover:bg-indigo-50 hover:border-indigo-300 cursor-pointer transition-all duration-200 group">
                                 <Checkbox 
                                     id="exact" 
                                     checked={matchTypes.exact}

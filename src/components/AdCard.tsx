@@ -29,7 +29,7 @@ export const AdCard = ({
                 <div className="text-blue-600 hover:underline cursor-pointer mb-1">
                     {headline}
                 </div>
-                <div className="text-green-700 text-sm mb-1">
+                <div className="text-indigo-700 text-sm mb-1">
                     {displayUrl}
                 </div>
                 <div className="text-slate-600 text-sm">
@@ -39,7 +39,7 @@ export const AdCard = ({
 
             {/* Extension (if present) */}
             {extension && (
-                <div className="bg-green-50 border border-green-200 rounded px-3 py-2 mb-3">
+                <div className="bg-indigo-50 border border-indigo-200 rounded px-3 py-2 mb-3">
                     <div className="flex items-center gap-2">
                         <Badge variant="outline" className="bg-white border-red-300 text-red-600 text-xs">
                             ❌ 20% OFF Today | Spring Sales

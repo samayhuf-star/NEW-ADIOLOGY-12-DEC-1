@@ -465,7 +465,7 @@ export const DocumentationManager: React.FC<DocumentationManagerProps> = () => {
                     <h4 className="font-semibold text-gray-900">{doc.title}</h4>
                     <span className={`text-xs px-2 py-1 rounded ${
                       doc.status === 'published' 
-                        ? 'bg-green-100 text-green-700' 
+                        ? 'bg-indigo-100 text-indigo-700' 
                         : 'bg-yellow-100 text-yellow-700'
                     }`}>
                       {doc.status}

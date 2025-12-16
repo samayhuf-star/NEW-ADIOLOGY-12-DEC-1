@@ -445,8 +445,8 @@ export const CSVCompare: React.FC = () => {
                     <p className="text-2xl font-bold">{comparisonResult.totalRows}</p>
                     <p className="text-sm text-muted-foreground">Total Rows</p>
                   </div>
-                  <div className="p-4 border rounded-lg bg-green-50">
-                    <p className="text-2xl font-bold text-green-600">
+                  <div className="p-4 border rounded-lg bg-indigo-50">
+                    <p className="text-2xl font-bold text-indigo-600">
                       {comparisonResult.matchedRows}
                     </p>
                     <p className="text-sm text-muted-foreground">Matched</p>

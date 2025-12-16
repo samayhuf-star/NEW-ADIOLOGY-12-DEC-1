@@ -95,7 +95,7 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onSuccess, onBackT
         <Card className="border border-slate-200 shadow-2xl bg-white backdrop-blur-xl max-w-md w-full">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+              <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center">
                 <CheckCircle className="w-10 h-10 text-green-600" />
               </div>
             </div>

@@ -278,6 +278,7 @@ interface CampaignData {
   csvErrors: any[];
   startDate?: string;
   endDate?: string;
+  selectedGeoCountries?: string[];
 }
 
 interface CampaignBuilder3Props {
@@ -335,6 +336,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
     locations: { countries: [], states: [], cities: [], zipCodes: [] },
     csvData: null,
     csvErrors: [],
+    selectedGeoCountries: [],
   });
 
   // Handle initial data from Keyword Planner or saved campaigns
@@ -709,6 +711,13 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
       let cta: string | null;
       let seedKeywords: string[];
       
+      // Helper function to ensure all seed keywords have at least 2 words
+      const filterValidSeedKeywords = (keywords: string[]): string[] => {
+        return keywords
+          .map(k => k.trim())
+          .filter(k => k.length > 0 && k.split(/\s+/).length >= 2);
+      };
+
       if (comprehensiveData?.aiInsights) {
         const ai = comprehensiveData.aiInsights;
         intentResult = {
@@ -721,7 +730,8 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
         };
         vertical = ai.businessType || detectVertical(landingData);
         cta = ai.conversionGoal || detectCTA(landingData, vertical);
-        seedKeywords = ai.suggestedKeywords?.slice(0, 5) || await generateSeedKeywords(landingData, intentResult);
+        const rawKeywords = ai.suggestedKeywords?.slice(0, 5) || await generateSeedKeywords(landingData, intentResult);
+        seedKeywords = filterValidSeedKeywords(rawKeywords);
         
         addAnalysisLog(`Intent detected: ${intentResult.intentLabel}`, 'success');
         addAnalysisLog(`Vertical: ${vertical}`, 'success');
@@ -736,7 +746,8 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
         );
         vertical = detectVertical(landingData);
         cta = detectCTA(landingData, vertical);
-        seedKeywords = await generateSeedKeywords(landingData, intentResult);
+        const rawKeywords = await generateSeedKeywords(landingData, intentResult);
+        seedKeywords = filterValidSeedKeywords(rawKeywords);
         
         addAnalysisLog(`Intent detected: ${intentResult.intentLabel}`, 'success');
         addAnalysisLog(`Vertical: ${vertical}`, 'success');
@@ -744,7 +755,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
       }
       
       addAnalysisLog('Generating seed keywords...', 'step');
-      addAnalysisLog(`Generated ${seedKeywords.length} seed keywords`, 'success');
+      addAnalysisLog(`Generated ${seedKeywords.length} seed keywords (2+ words each)`, 'success');
 
       setCampaignData(prev => ({
         ...prev,
@@ -2339,30 +2350,102 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
         snippets: snippets.slice(0, 2)
       };
       
-      // Add ads to their respective ad groups
-      (campaignData.ads || []).forEach((ad: any) => {
-        const adGroupName = ad.adGroup || 'Ad Group 1';
-        let targetGroup = v5CampaignData.adGroups.find((ag: any) => ag.name === adGroupName);
-        
-        if (!targetGroup && v5CampaignData.adGroups.length > 0) {
-          targetGroup = v5CampaignData.adGroups[0];
+      // Add ads to ALL ad groups - each ad group should have the same ads
+      // This ensures every ad group has RSAs for proper campaign structure
+      const adsToDistribute = (campaignData.ads || []).map((ad: any) => {
+        // Handle both structures: headlines array OR headline1/headline2/etc properties
+        let headlines: string[] = [];
+        if (ad.headlines && Array.isArray(ad.headlines)) {
+          // RSA ads with headlines array
+          headlines = ad.headlines.map((h: any) => typeof h === 'string' ? h : (h.text || '')).filter((h: string) => h);
+        } else {
+          // DKI/Call ads with headline1, headline2, etc.
+          headlines = [
+            ad.headline1 || '',
+            ad.headline2 || '',
+            ad.headline3 || '',
+            ad.headline4 || '',
+            ad.headline5 || '',
+            ad.headline6 || '',
+            ad.headline7 || '',
+            ad.headline8 || '',
+            ad.headline9 || '',
+            ad.headline10 || '',
+            ad.headline11 || '',
+            ad.headline12 || '',
+            ad.headline13 || '',
+            ad.headline14 || '',
+            ad.headline15 || ''
+          ].filter((h: string) => h);
         }
         
-        if (targetGroup) {
-          targetGroup.ads.push({
+        // Handle both structures: descriptions array OR description1/description2/etc properties
+        let descriptions: string[] = [];
+        if (ad.descriptions && Array.isArray(ad.descriptions)) {
+          descriptions = ad.descriptions.map((d: any) => typeof d === 'string' ? d : (d.text || '')).filter((d: string) => d);
+        } else {
+          descriptions = [
+            ad.description1 || '',
+            ad.description2 || '',
+            ad.description3 || '',
+            ad.description4 || ''
+          ].filter((d: string) => d);
+        }
+        
+        return {
+          type: ad.type === 'call_only' ? 'CallOnly' : 
+                ad.type === 'dki' ? 'DKI' : 'RSA',
+          headlines,
+          descriptions,
+          finalUrl: ad.finalUrl || campaignData.url || '',
+          path1: ad.path1 || '',
+          path2: ad.path2 || '',
+          status: 'Enabled'
+        };
+      });
+      
+      // Distribute ads to ALL ad groups
+      v5CampaignData.adGroups.forEach((group: any) => {
+        group.ads = [...adsToDistribute];
+      });
+      
+      // Legacy code kept for backwards compatibility - adds any ads with specific ad group assignments
+      (campaignData.ads || []).forEach((ad: any) => {
+        const adGroupName = ad.adGroup || '';
+        if (!adGroupName) return; // Skip if no specific ad group assigned
+        
+        let targetGroup = v5CampaignData.adGroups.find((ag: any) => ag.name === adGroupName);
+        
+        if (!targetGroup) return; // Skip if ad group not found
+        
+        // Check if this ad is already added (avoid duplicates)
+        const adKey = `${ad.headline1}::${ad.headline2}::${ad.description1}`;
+        const existingAd = targetGroup.ads.find((existing: any) => 
+          `${existing.headlines[0]}::${existing.headlines[1]}::${existing.descriptions[0]}` === adKey
+        );
+        
+        if (existingAd) return; // Already added
+        
+        // Handle both structures for legacy code
+        let legacyHeadlines: string[] = [];
+        if (ad.headlines && Array.isArray(ad.headlines)) {
+          legacyHeadlines = ad.headlines.map((h: any) => typeof h === 'string' ? h : (h.text || '')).filter((h: string) => h);
+        } else {
+          legacyHeadlines = [ad.headline1, ad.headline2, ad.headline3, ad.headline4, ad.headline5].filter((h: string) => h);
+        }
+        
+        let legacyDescriptions: string[] = [];
+        if (ad.descriptions && Array.isArray(ad.descriptions)) {
+          legacyDescriptions = ad.descriptions.map((d: any) => typeof d === 'string' ? d : (d.text || '')).filter((d: string) => d);
+        } else {
+          legacyDescriptions = [ad.description1, ad.description2].filter((d: string) => d);
+        }
+        
+        targetGroup.ads.push({
             type: ad.type === 'call_only' ? 'CallOnly' : 
                   ad.type === 'dki' ? 'DKI' : 'RSA',
-            headlines: [
-              ad.headline1 || '',
-              ad.headline2 || '',
-              ad.headline3 || '',
-              ad.headline4 || '',
-              ad.headline5 || ''
-            ].filter((h: string) => h),
-            descriptions: [
-              ad.description1 || '',
-              ad.description2 || ''
-            ].filter((d: string) => d),
+            headlines: legacyHeadlines,
+            descriptions: legacyDescriptions,
             path1: ad.path1 || '',
             path2: ad.path2 || '',
             finalUrl: ad.finalUrl || campaignData.url || '',
@@ -2370,7 +2453,6 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
             verificationUrl: ad.verificationUrl || '',
             businessName: ad.businessName || ''
           });
-        }
       });
       
       // If no specific locations, add the target country
@@ -2468,21 +2550,84 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
     setShowExportDialog(true);
   };
 
-  const confirmDownloadCSV = () => {
+  const confirmDownloadCSV = async () => {
     if (!campaignData.csvData) return;
     
-    const filename = `${(campaignData.campaignName || 'campaign').replace(/[^a-z0-9]/gi, '_')}_google_ads_editor_${new Date().toISOString().split('T')[0]}.csv`;
-    const blob = new Blob([campaignData.csvData], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
+    const baseFilename = (campaignData.campaignName || 'campaign').replace(/[^a-z0-9]/gi, '_');
+    const dateStr = new Date().toISOString().split('T')[0];
+    
+    const selectedCountries = (campaignData.selectedGeoCountries || []).filter(c => c);
+    const isGeoMultiCountry = campaignData.selectedStructure === 'geo' && selectedCountries.length > 1;
+    
+    const generateCountrySpecificCSV = (csvData: string, country: string, originalCampaignName: string): string => {
+      const parsed = Papa.parse(csvData, { header: true });
+      const rows = parsed.data as Record<string, string>[];
+      const newCampaignName = `${originalCampaignName} - ${country}`;
+      
+      const filteredRows = rows.filter(row => row['Row Type'] !== 'Location');
+      
+      const processedRows = filteredRows.map(row => {
+        const newRow = { ...row };
+        if (newRow['Campaign'] === originalCampaignName) {
+          newRow['Campaign'] = newCampaignName;
+        }
+        return newRow;
+      });
+      
+      const campaignRowIndex = processedRows.findIndex(row => row['Row Type'] === 'Campaign');
+      if (campaignRowIndex !== -1) {
+        const locationRow: Record<string, string> = {};
+        Object.keys(processedRows[0] || {}).forEach(key => locationRow[key] = '');
+        locationRow['Row Type'] = 'Location';
+        locationRow['Action'] = 'Add';
+        locationRow['Campaign'] = newCampaignName;
+        locationRow['Location'] = country;
+        processedRows.splice(campaignRowIndex + 1, 0, locationRow);
+      }
+      
+      return Papa.unparse(processedRows);
+    };
+    
+    if (isGeoMultiCountry) {
+      const zip = new JSZip();
+      
+      for (const country of selectedCountries) {
+        const countrySlug = country.replace(/[^a-z0-9]/gi, '_');
+        const csvContent = generateCountrySpecificCSV(campaignData.csvData, country, campaignData.campaignName || 'Campaign');
+        const filename = `${baseFilename}_${countrySlug}_google_ads_editor_${dateStr}.csv`;
+        zip.file(filename, csvContent);
+      }
+      
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${baseFilename}_multi_country_${dateStr}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else if (campaignData.selectedStructure === 'geo' && selectedCountries.length === 1) {
+      const csvContent = generateCountrySpecificCSV(campaignData.csvData, selectedCountries[0], campaignData.campaignName || 'Campaign');
+      const filename = `${baseFilename}_google_ads_editor_${dateStr}.csv`;
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else {
+      const filename = `${baseFilename}_google_ads_editor_${dateStr}.csv`;
+      const blob = new Blob([campaignData.csvData], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
     
     setShowExportDialog(false);
     
-    // Redirect to dashboard
     setTimeout(() => {
       const event = new CustomEvent('navigate', { detail: { tab: 'dashboard' } });
       window.dispatchEvent(event);
@@ -2530,7 +2675,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
   const renderStep1 = () => (
     <div className="max-w-4xl mx-auto p-6">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-slate-800 mb-2">Enter Your Website URL</h2>
+        <h3 className="text-lg font-semibold text-slate-800 mb-2">Enter Your Website URL</h3>
         <p className="text-slate-600">AI will analyze your website to identify intent, CTA, and vertical</p>
       </div>
 
@@ -2594,7 +2739,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                 <div className="flex gap-1.5">
                   <div className="w-3 h-3 rounded-full bg-red-500"></div>
                   <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                  <div className="w-3 h-3 rounded-full bg-indigo-500"></div>
                 </div>
                 <span className="text-slate-400 text-sm font-mono">Website Analysis Console</span>
               </div>
@@ -2625,13 +2770,13 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                     ${log.type === 'step' ? 'text-cyan-400 font-semibold' : ''}
                     ${log.type === 'success' ? 'text-green-400' : ''}
                     ${log.type === 'data' ? 'text-yellow-300' : ''}
-                    ${log.type === 'ai' ? 'text-purple-400' : ''}
+                    ${log.type === 'ai' ? 'text-indigo-400' : ''}
                     ${log.type === 'info' ? 'text-slate-400' : ''}
                   `}>
                     {log.type === 'step' && <span className="text-cyan-500 mr-1">{'>'}</span>}
                     {log.type === 'success' && <span className="text-green-500 mr-1">✓</span>}
                     {log.type === 'data' && <span className="text-yellow-500 mr-1">•</span>}
-                    {log.type === 'ai' && <span className="text-purple-500 mr-1">★</span>}
+                    {log.type === 'ai' && <span className="text-indigo-500 mr-1">★</span>}
                     {log.type === 'info' && <span className="text-slate-500 mr-1">→</span>}
                     {log.message}
                   </span>
@@ -2665,7 +2810,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
   const renderStep2 = () => (
     <div className="max-w-6xl mx-auto p-6">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-slate-800 mb-2">Select Campaign Structure</h2>
+        <h3 className="text-lg font-semibold text-slate-800 mb-2">Select Campaign Structure</h3>
         <p className="text-slate-600">AI has ranked the best structures for your vertical. Choose the one that fits your needs.</p>
       </div>
 
@@ -2723,6 +2868,193 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
         })}
       </div>
 
+      {/* Inline Structure Details */}
+      {campaignData.selectedStructure && (() => {
+        const selectedStruct = CAMPAIGN_STRUCTURES.find(s => s.id === campaignData.selectedStructure);
+        const ranking = campaignData.structureRankings.findIndex(r => r.id === campaignData.selectedStructure);
+        const isBest = ranking === 0;
+        const Icon = selectedStruct?.icon || Target;
+        
+        const structureDetails: { [key: string]: { hierarchy: { name: string; desc: string; color: string }[]; benefits: string[]; bestFor: string } } = {
+          skag: {
+            hierarchy: [
+              { name: 'Ad Group 1', desc: '→ keyword 1', color: 'border-indigo-200 bg-indigo-50' },
+              { name: 'Ad Group 2', desc: '→ keyword 2', color: 'border-indigo-200 bg-indigo-50' },
+              { name: 'Ad Group 3', desc: '→ keyword 3', color: 'border-indigo-200 bg-indigo-50' },
+              { name: 'Ad Group 4', desc: '→ keyword 4', color: 'border-indigo-200 bg-indigo-50' },
+            ],
+            benefits: ['Maximum control & relevance', 'Highest Quality Score potential', 'Easy to optimize per keyword', 'Best for high-value keywords'],
+            bestFor: 'High-value keywords, maximum control, best performance'
+          },
+          stag: {
+            hierarchy: [
+              { name: 'Theme Group 1', desc: '5-10 related keywords', color: 'border-blue-200 bg-blue-50' },
+              { name: 'Theme Group 2', desc: '5-10 related keywords', color: 'border-blue-200 bg-blue-50' },
+              { name: 'Theme Group 3', desc: '5-10 related keywords', color: 'border-blue-200 bg-blue-50' },
+            ],
+            benefits: ['Organized by themes', 'Easier to manage at scale', 'Better ad relevance', 'Good balance of control'],
+            bestFor: 'Medium to large keyword sets, themed campaigns'
+          },
+          intent: {
+            hierarchy: [
+              { name: 'Informational Intent', desc: '"what is", "how to", "guide"', color: 'border-indigo-200 bg-indigo-50' },
+              { name: 'Commercial Intent', desc: '"best", "review", "compare"', color: 'border-blue-200 bg-blue-50' },
+              { name: 'Transactional Intent', desc: '"buy", "price", "deal"', color: 'border-indigo-200 bg-indigo-50' },
+            ],
+            benefits: ['Intent-aligned messaging', 'Better conversion rates', 'Targeted ad copy', 'Improved relevance'],
+            bestFor: 'Different messaging per search intent'
+          },
+          funnel: {
+            hierarchy: [
+              { name: 'Top of Funnel (Awareness)', desc: 'General keywords, educational content', color: 'border-cyan-200 bg-cyan-50' },
+              { name: 'Middle of Funnel (Consideration)', desc: 'Comparison keywords, features', color: 'border-blue-200 bg-blue-50' },
+              { name: 'Bottom of Funnel (Decision)', desc: 'Buy keywords, pricing, deals', color: 'border-indigo-200 bg-indigo-50' },
+            ],
+            benefits: ['Funnel-aligned messaging', 'Different goals per stage', 'Better conversion tracking', 'Optimized for each stage'],
+            bestFor: 'Full funnel strategy, different messaging per stage'
+          },
+          alpha_beta: {
+            hierarchy: [
+              { name: 'Alpha Campaign', desc: 'Proven winners, exact match', color: 'border-indigo-200 bg-indigo-50' },
+              { name: 'Beta Campaign', desc: 'Discovery, broad match', color: 'border-amber-200 bg-amber-50' },
+            ],
+            benefits: ['Test new keywords safely', 'Protect top performers', 'Systematic optimization', 'Clear budget allocation'],
+            bestFor: 'Continuous optimization, testing new keywords'
+          },
+          match_type: {
+            hierarchy: [
+              { name: 'Broad Match Campaign', desc: 'Maximum reach, discovery', color: 'border-amber-200 bg-amber-50' },
+              { name: 'Phrase Match Campaign', desc: 'Balanced reach & control', color: 'border-blue-200 bg-blue-50' },
+              { name: 'Exact Match Campaign', desc: 'Maximum control & relevance', color: 'border-indigo-200 bg-indigo-50' },
+            ],
+            benefits: ['Clear match type control', 'Easy budget allocation', 'Performance comparison', 'Bid optimization per type'],
+            bestFor: 'Match type testing, budget control per match type'
+          },
+          geo: {
+            hierarchy: [
+              { name: 'Location 1 Campaign', desc: 'City/Region specific', color: 'border-blue-200 bg-blue-50' },
+              { name: 'Location 2 Campaign', desc: 'City/Region specific', color: 'border-blue-200 bg-blue-50' },
+              { name: 'Location 3 Campaign', desc: 'City/Region specific', color: 'border-blue-200 bg-blue-50' },
+            ],
+            benefits: ['Location-specific messaging', 'Geo bid adjustments', 'Local relevance', 'Market-specific budgets'],
+            bestFor: 'Multi-location businesses, local services'
+          },
+          brand_split: {
+            hierarchy: [
+              { name: 'Brand Terms', desc: 'Your brand keywords', color: 'border-indigo-200 bg-indigo-50' },
+              { name: 'Non-Brand Terms', desc: 'Generic product/service keywords', color: 'border-slate-200 bg-slate-50' },
+            ],
+            benefits: ['Protect brand terms', 'Clear performance analysis', 'Budget allocation control', 'Competitor defense'],
+            bestFor: 'Established brands, brand protection'
+          },
+          competitor: {
+            hierarchy: [
+              { name: 'Competitor A Keywords', desc: 'Direct competitor terms', color: 'border-red-200 bg-red-50' },
+              { name: 'Competitor B Keywords', desc: 'Direct competitor terms', color: 'border-red-200 bg-red-50' },
+              { name: 'Generic Comparison', desc: '"alternatives to", "vs"', color: 'border-amber-200 bg-amber-50' },
+            ],
+            benefits: ['Capture competitor traffic', 'Comparison positioning', 'Market share growth', 'Competitive messaging'],
+            bestFor: 'Competitive markets, market share capture'
+          },
+          ngram: {
+            hierarchy: [
+              { name: 'Pattern Cluster 1', desc: 'Keywords with shared n-grams', color: 'border-violet-200 bg-violet-50' },
+              { name: 'Pattern Cluster 2', desc: 'Keywords with shared n-grams', color: 'border-violet-200 bg-violet-50' },
+              { name: 'Pattern Cluster 3', desc: 'Keywords with shared n-grams', color: 'border-violet-200 bg-violet-50' },
+            ],
+            benefits: ['Pattern-based grouping', 'Automated organization', 'Discover hidden themes', 'Smart clustering'],
+            bestFor: 'Large keyword sets, automated organization'
+          },
+          long_tail: {
+            hierarchy: [
+              { name: 'Long-Tail Group 1', desc: '4+ word specific keywords', color: 'border-indigo-200 bg-indigo-50' },
+              { name: 'Long-Tail Group 2', desc: '4+ word specific keywords', color: 'border-indigo-200 bg-indigo-50' },
+              { name: 'Long-Tail Group 3', desc: '4+ word specific keywords', color: 'border-indigo-200 bg-indigo-50' },
+            ],
+            benefits: ['Lower competition', 'Higher conversion rates', 'More specific intent', 'Cost-effective clicks'],
+            bestFor: 'Budget-conscious campaigns, specific intent targeting'
+          },
+          seasonal: {
+            hierarchy: [
+              { name: 'Pre-Season', desc: 'Build awareness early', color: 'border-cyan-200 bg-cyan-50' },
+              { name: 'Peak Season', desc: 'Maximum push, high bids', color: 'border-orange-200 bg-orange-50' },
+              { name: 'Post-Season', desc: 'Clearance, follow-up', color: 'border-slate-200 bg-slate-50' },
+            ],
+            benefits: ['Time-optimized messaging', 'Seasonal bid adjustments', 'Planned campaign phases', 'Event-aligned copy'],
+            bestFor: 'Seasonal products, holidays, events'
+          },
+          mix: {
+            hierarchy: [
+              { name: 'SKAG for Top Performers', desc: 'Single keyword precision', color: 'border-indigo-200 bg-indigo-50' },
+              { name: 'STAG for Volume', desc: 'Themed grouping', color: 'border-blue-200 bg-blue-50' },
+            ],
+            benefits: ['Best of both approaches', 'Flexible structure', 'Optimized by performance', 'Scalable'],
+            bestFor: 'Mixed keyword values, flexible optimization'
+          },
+          stag_plus: {
+            hierarchy: [
+              { name: 'ML Cluster 1', desc: 'AI-grouped similar keywords', color: 'border-indigo-200 bg-indigo-50' },
+              { name: 'ML Cluster 2', desc: 'AI-grouped similar keywords', color: 'border-indigo-200 bg-indigo-50' },
+              { name: 'ML Cluster 3', desc: 'AI-grouped similar keywords', color: 'border-indigo-200 bg-indigo-50' },
+            ],
+            benefits: ['AI-powered grouping', 'Semantic similarity', 'Automatic optimization', 'Smart scaling'],
+            bestFor: 'Large campaigns, automated optimization'
+          },
+        };
+        
+        const details = structureDetails[campaignData.selectedStructure] || structureDetails['skag'];
+        
+        return (
+          <Card className="mb-6 border-slate-200">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-indigo-100">
+                    <Icon className="w-5 h-5 text-indigo-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-800">{selectedStruct?.name}</h3>
+                    <p className="text-sm text-slate-500">{selectedStruct?.description}</p>
+                  </div>
+                </div>
+                {isBest && (
+                  <Badge className="bg-indigo-100 text-indigo-700 border-indigo-200">Best</Badge>
+                )}
+              </div>
+              
+              <div className="border border-slate-200 rounded-lg p-4 mb-4">
+                <p className="text-sm font-medium text-slate-700 mb-3">Campaign</p>
+                <div className="space-y-2">
+                  {details.hierarchy.map((item, idx) => (
+                    <div key={idx} className={`border rounded-lg p-3 ${item.color}`}>
+                      <p className="text-sm font-medium text-slate-700">{item.name}</p>
+                      <p className="text-xs text-slate-500 font-mono">{item.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="mb-4">
+                <p className="text-sm font-medium text-slate-700 mb-2">Key Benefits:</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {details.benefits.map((benefit, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                      <span className="text-sm text-slate-600">{benefit}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <p className="text-sm">
+                <span className="font-medium text-pink-600">Best for:</span>{' '}
+                <span className="text-slate-600">{details.bestFor}</span>
+              </p>
+            </CardContent>
+          </Card>
+        );
+      })()}
+
       {campaignData.selectedStructure === 'seasonal' && (
         <Card className="mb-6 border-orange-200 bg-orange-50">
           <CardHeader>
@@ -2760,62 +3092,175 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
         </Card>
       )}
 
-      {/* Inline Navigation */}
-      <div className="flex justify-between items-center pt-4 border-t border-slate-200">
-        <Button variant="outline" onClick={() => setCurrentStep(1)}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
-        <Button onClick={() => setCurrentStep(3)} disabled={!campaignData.selectedStructure}>
-          Next Step
-          <ArrowRight className="w-4 h-4 ml-2" />
-        </Button>
-      </div>
+      {campaignData.selectedStructure === 'geo' && (
+        <Card className="mb-6 border-blue-200 bg-blue-50">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Globe className="w-5 h-5 text-blue-600" />
+              <CardTitle className="text-lg">GEO-Segmented Countries</CardTitle>
+            </div>
+            <CardDescription>Select up to 3 countries - a separate CSV will be generated for each country</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {(campaignData.selectedGeoCountries || []).map((country, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Select
+                    value={country}
+                    onValueChange={(value: string) => {
+                      const updated = [...(campaignData.selectedGeoCountries || [])];
+                      updated[index] = value;
+                      setCampaignData(prev => ({ ...prev, selectedGeoCountries: updated }));
+                    }}
+                  >
+                    <SelectTrigger className="bg-white flex-1">
+                      <SelectValue placeholder="Select a country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LOCATION_PRESETS.countries.map((c) => (
+                        <SelectItem 
+                          key={c} 
+                          value={c}
+                          disabled={(campaignData.selectedGeoCountries || []).includes(c) && c !== country}
+                        >
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-red-500 hover:text-red-700 hover:bg-red-100"
+                    onClick={() => {
+                      const updated = (campaignData.selectedGeoCountries || []).filter((_, i) => i !== index);
+                      setCampaignData(prev => ({ ...prev, selectedGeoCountries: updated }));
+                    }}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+              
+              {(campaignData.selectedGeoCountries || []).length < 3 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full border-dashed border-blue-300 text-blue-600 hover:bg-blue-100"
+                  onClick={() => {
+                    const current = campaignData.selectedGeoCountries || [];
+                    if (current.length < 3) {
+                      setCampaignData(prev => ({ 
+                        ...prev, 
+                        selectedGeoCountries: [...current, ''] 
+                      }));
+                    }
+                  }}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Country {(campaignData.selectedGeoCountries || []).length > 0 ? `(${3 - (campaignData.selectedGeoCountries || []).length} remaining)` : ''}
+                </Button>
+              )}
+              
+              {(campaignData.selectedGeoCountries || []).length > 0 && (
+                <p className="text-sm text-blue-700 mt-3">
+                  {(campaignData.selectedGeoCountries || []).filter(c => c).length} CSV file(s) will be generated, one for each country selected.
+                  {(campaignData.selectedGeoCountries || []).filter(c => c).length > 1 && ' Download will be a ZIP file.'}
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
     </div>
   );
 
   const renderStep3 = () => (
     <div className="max-w-6xl mx-auto p-6">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-slate-800 mb-2">Keywords Planner</h2>
+        <h3 className="text-lg font-semibold text-slate-800 mb-2">Keywords Planner</h3>
         <p className="text-slate-600">Generate 410-710 keywords based on your seed keywords and campaign structure</p>
+      </div>
+
+      {/* Terminal-Style Stats */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <TerminalCard title="Keyword Statistics" showDots={true} variant="compact">
+          <div className="space-y-1.5">
+            <TerminalLine prefix="$" label="seed_keywords:" value={`${seedKeywordsText.split(/[\n,]+/).filter(k => k.trim().length > 0 && k.trim().split(/\s+/).length >= 2).length}`} valueColor="cyan" />
+            <TerminalLine prefix="$" label="generated:" value={`${campaignData.selectedKeywords.length}`} valueColor="green" />
+            <TerminalLine prefix="$" label="negative:" value={`${campaignData.negativeKeywords.length}`} valueColor="yellow" />
+            <TerminalLine prefix="$" label="match_types:" value="[BROAD, PHRASE, EXACT]" valueColor="cyan" />
+          </div>
+        </TerminalCard>
+
+        <TerminalCard title="Generation Status" showDots={true} variant="compact">
+          <div className="space-y-1.5">
+            <TerminalLine prefix=">" label="structure:" value={CAMPAIGN_STRUCTURES.find(s => s.id === campaignData.selectedStructure)?.name || 'SKAG'} valueColor="cyan" />
+            <TerminalLine prefix=">" label="ad_groups:" value={`${campaignData.adGroups.length}`} valueColor="green" />
+            <TerminalLine prefix=">" label="status:" value={loading ? 'GENERATING...' : campaignData.selectedKeywords.length > 0 ? 'READY' : 'PENDING'} valueColor={loading ? 'yellow' : campaignData.selectedKeywords.length > 0 ? 'green' : 'slate'} />
+            <TerminalLine prefix=">" label="target_range:" value="410-710 keywords" valueColor="cyan" />
+          </div>
+        </TerminalCard>
       </div>
 
       <Card className="mb-6">
             <CardHeader>
               <CardTitle>Seed Keywords</CardTitle>
-              <CardDescription>AI-suggested seed keywords from your URL analysis - edit as needed</CardDescription>
+              <CardDescription>AI-suggested seed keywords from your URL analysis - edit as needed (minimum 2 words per keyword)</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <Textarea
-                  placeholder="Enter seed keywords (one per line or comma-separated)"
+                  placeholder="Enter seed keywords with at least 2 words each (one per line)&#10;Example:&#10;digital marketing&#10;seo services&#10;web design agency"
                   value={seedKeywordsText}
                   onChange={(e) => setSeedKeywordsText(e.target.value)}
                   onBlur={() => {
                     const keywords = seedKeywordsText
                       .split(/[\n,]+/)
                       .map(k => k.trim())
-                      .filter(k => k.length > 0);
+                      .filter(k => k.length > 0 && k.split(/\s+/).length >= 2);
                     setCampaignData(prev => ({ ...prev, seedKeywords: keywords }));
                   }}
                   rows={6}
                   className="font-mono text-sm"
                 />
-                <p className="text-xs text-slate-500">
-                  💡 Press <kbd className="px-2 py-1 bg-slate-100 rounded">Enter</kbd> to go to next line. These {seedKeywordsText.split(/[\n,]+/).filter(k => k.trim().length > 0).length} keywords will be used to generate 410-710 variations.
-                </p>
+                {(() => {
+                  const allKeywords = seedKeywordsText.split(/[\n,]+/).map(k => k.trim()).filter(k => k.length > 0);
+                  const validKeywords = allKeywords.filter(k => k.split(/\s+/).length >= 2);
+                  const singleWordKeywords = allKeywords.filter(k => k.split(/\s+/).length === 1);
+                  return (
+                    <>
+                      {singleWordKeywords.length > 0 && (
+                        <p className="text-xs text-amber-600 flex items-center gap-1">
+                          <span className="inline-block w-4 h-4 rounded-full bg-amber-100 text-amber-600 text-center leading-4 font-bold">!</span>
+                          Single-word keywords will be ignored: {singleWordKeywords.slice(0, 3).map(k => `"${k}"`).join(', ')}{singleWordKeywords.length > 3 ? ` (+${singleWordKeywords.length - 3} more)` : ''}
+                        </p>
+                      )}
+                      <p className="text-xs text-slate-500">
+                        💡 Press <kbd className="px-2 py-1 bg-slate-100 rounded">Enter</kbd> to go to next line. {validKeywords.length} valid keywords (2+ words) will be used to generate 410-710 variations.
+                      </p>
+                    </>
+                  );
+                })()}
               </div>
           <Button 
                 onClick={() => {
                   const keywords = seedKeywordsText
                     .split(/[\n,]+/)
                     .map(k => k.trim())
-                    .filter(k => k.length > 0);
+                    .filter(k => k.length > 0 && k.split(/\s+/).length >= 2);
+                  if (keywords.length === 0) {
+                    notifications.error('Please enter at least one seed keyword with 2 or more words', { 
+                      title: 'Invalid Seed Keywords',
+                      description: 'Single-word keywords are not allowed. Example: "digital marketing" instead of "marketing"'
+                    });
+                    return;
+                  }
                   setCampaignData(prev => ({ ...prev, seedKeywords: keywords }));
                   setTimeout(() => handleGenerateKeywords(), 50);
                 }} 
-                disabled={loading || seedKeywordsText.split(/[\n,]+/).filter(k => k.trim().length > 0).length === 0} 
+                disabled={loading || seedKeywordsText.split(/[\n,]+/).filter(k => k.trim().length > 0 && k.trim().split(/\s+/).length >= 2).length === 0} 
                 className="mt-6 w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-lg"
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
@@ -2912,7 +3357,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                     <span className="text-slate-500">Data Source:</span>
                     <Badge variant="outline" className={`text-xs ${
                       keywordDataSource === 'google_ads_api' 
-                        ? 'bg-green-50 text-green-700 border-green-200' 
+                        ? 'bg-indigo-50 text-indigo-700 border-indigo-200' 
                         : (keywordDataSource === 'fallback' || keywordDataSource === 'estimated')
                           ? 'bg-yellow-50 text-yellow-700 border-yellow-200' 
                           : 'bg-slate-50 text-slate-600 border-slate-200'
@@ -2966,7 +3411,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                           
                           const getCompetitionStyle = (comp: string | null | undefined) => {
                             switch (comp) {
-                              case 'LOW': return 'bg-green-50 text-green-700 border-green-200';
+                              case 'LOW': return 'bg-indigo-50 text-indigo-700 border-indigo-200';
                               case 'MEDIUM': return 'bg-yellow-50 text-yellow-700 border-yellow-200';
                               case 'HIGH': return 'bg-red-50 text-red-700 border-red-200';
                               default: return 'bg-slate-50 text-slate-500 border-slate-200';
@@ -2988,7 +3433,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                                 <span className="text-xs text-slate-400 block md:hidden">vol</span>
                               </div>
                               <div className="col-span-3 md:col-span-2 text-center">
-                                <span className="text-sm font-medium text-green-700">{formatCpc(cpc)}</span>
+                                <span className="text-sm font-medium text-indigo-700">{formatCpc(cpc)}</span>
                                 <span className="text-xs text-slate-400 block md:hidden">cpc</span>
                               </div>
                               <div className="col-span-3 md:col-span-2 flex justify-center">
@@ -3023,17 +3468,6 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
         </>
       )}
 
-      {/* Inline Navigation */}
-      <div className="flex justify-between items-center pt-4 mt-6 border-t border-slate-200">
-        <Button variant="outline" onClick={() => setCurrentStep(2)}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
-        <Button onClick={() => setCurrentStep(4)} disabled={campaignData.selectedKeywords.length === 0}>
-          Next Step
-          <ArrowRight className="w-4 h-4 ml-2" />
-        </Button>
-      </div>
     </div>
   );
 
@@ -3057,55 +3491,29 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
     return (
       <div className="max-w-7xl mx-auto p-6">
         <div className="mb-8">
-          <h2 className="text-3xl font-bold text-slate-800 mb-2">Ads & Extensions Wizard</h2>
-          <p className="text-slate-600">Generate ad copies and add extensions to your campaign</p>
+          <h3 className="text-lg font-semibold text-slate-800 mb-2">Ads & Extensions</h3>
         </div>
 
-        {/* Campaign Info Card - URL (greyed out) and Keywords */}
-        <Card className="mb-6 bg-blue-50 border-blue-200">
-          <CardHeader>
-            <CardTitle className="text-blue-900">Campaign Information</CardTitle>
-            <CardDescription className="text-blue-700">Using information from earlier steps</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {/* Landing Page URL - Greyed out */}
-              <div>
-                <Label className="text-sm font-semibold text-blue-800">Landing Page URL</Label>
-                <Input
-                  type="text"
-                  value={campaignData.url || 'Not set'}
-                  disabled
-                  readOnly
-                  className="mt-1 bg-slate-200 text-slate-500 border-slate-300 cursor-not-allowed opacity-70"
-                />
-              </div>
-              
-              {/* Keywords */}
-              <div>
-                <Label className="text-sm font-semibold text-blue-800">Keywords</Label>
-                <div className="mt-1 p-2 bg-white rounded border border-blue-200">
-                  <div className="flex flex-wrap gap-2">
-                    {campaignData.selectedKeywords.length > 0 ? (
-                      campaignData.selectedKeywords.slice(0, 5).map((kw, idx) => {
-                        const keywordText = typeof kw === 'string' ? kw : (kw?.text || kw?.keyword || String(kw || ''));
-                        return (
-                          <Badge key={kw?.id || idx} variant="outline" className="text-xs">
-                            {keywordText}
-                          </Badge>
-                        );
-                      })
-                    ) : (
-                      <span className="text-sm text-slate-500">No keywords selected</span>
-                    )}
-                    {campaignData.selectedKeywords.length > 5 && (
-                      <Badge variant="secondary" className="text-xs">
-                        +{campaignData.selectedKeywords.length - 5} more
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </div>
+        {/* Terminal-Style Stats */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+          <TerminalCard title="Ad Statistics" showDots={true} variant="compact">
+            <div className="space-y-1.5">
+              <TerminalLine prefix="$" label="ads_created:" value={`${campaignData.ads.length}/3`} valueColor={campaignData.ads.length > 0 ? 'green' : 'slate'} />
+              <TerminalLine prefix="$" label="ad_types:" value={campaignData.ads.map(ad => ad.type?.toUpperCase() || ad.adType || 'RSA').join(', ') || 'NONE'} valueColor="cyan" />
+              <TerminalLine prefix="$" label="extensions:" value={`${campaignData.ads.reduce((total, ad) => total + (ad.extensions?.length || 0), 0)}`} valueColor="yellow" />
+              <TerminalLine prefix="$" label="ad_groups:" value={`${campaignData.adGroups.length}`} valueColor="cyan" />
+            </div>
+          </TerminalCard>
+
+          <TerminalCard title="Campaign Context" showDots={true} variant="compact">
+            <div className="space-y-1.5">
+              <TerminalLine prefix=">" label="landing_page:" value={campaignData.url ? 'SET' : 'NOT_SET'} valueColor={campaignData.url ? 'green' : 'yellow'} />
+              <TerminalLine prefix=">" label="keywords:" value={`${campaignData.selectedKeywords.length}`} valueColor="cyan" />
+              <TerminalLine prefix=">" label="structure:" value={CAMPAIGN_STRUCTURES.find(s => s.id === campaignData.selectedStructure)?.name || 'SKAG'} valueColor="cyan" />
+              <TerminalLine prefix=">" label="status:" value={loading ? 'GENERATING...' : campaignData.ads.length >= 3 ? 'COMPLETE' : 'IN_PROGRESS'} valueColor={loading ? 'yellow' : campaignData.ads.length >= 3 ? 'green' : 'cyan'} />
+            </div>
+          </TerminalCard>
+        </div>
 
               {/* Create Ads & Extensions - Compact Inline */}
               <div className="pt-2 space-y-1">
@@ -3159,8 +3567,8 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Ad Group Selector and Ads Display */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -3210,15 +3618,15 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                         {ad.type?.toUpperCase() || ad.adType || 'RSA'}
                       </Badge>
                         <div className="flex gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleEditAd(ad.id)} className="text-purple-600 hover:text-purple-700">
+                        <Button variant="ghost" size="sm" onClick={() => handleEditAd(ad.id)} className="text-indigo-600 hover:text-indigo-700">
                           <Edit3 className="w-4 h-4 mr-1" />
                           EDIT
                           </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDuplicateAd(ad.id)} className="text-purple-600 hover:text-purple-700">
+                        <Button variant="ghost" size="sm" onClick={() => handleDuplicateAd(ad.id)} className="text-indigo-600 hover:text-indigo-700">
                           <Copy className="w-4 h-4 mr-1" />
                           DUPLICATE
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDeleteAd(ad.id)} className="text-purple-600 hover:text-purple-700">
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteAd(ad.id)} className="text-indigo-600 hover:text-indigo-700">
                           <Trash2 className="w-4 h-4 mr-1" />
                           DELETE
                           </Button>
@@ -3275,7 +3683,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                         {ad.headline2 && <p className="font-semibold text-sm">{ad.headline2}</p>}
                           {ad.phoneNumber && (
                             <div className="flex items-center gap-2">
-                            <Phone className="w-5 h-5 text-green-600" />
+                            <Phone className="w-5 h-5 text-indigo-600" />
                             <span className="text-lg font-medium">{ad.phoneNumber}</span>
                             </div>
                           )}
@@ -3309,13 +3717,13 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                                 <div key={ext.id} className="flex items-center justify-between p-3 bg-slate-50 rounded border border-slate-200">
                                   <div className="flex items-center gap-3 flex-1">
                                     {ext.type === 'snippet' && <FileText className="w-4 h-4 text-blue-600 flex-shrink-0" />}
-                                    {ext.type === 'callout' && <MessageSquare className="w-4 h-4 text-purple-600 flex-shrink-0" />}
+                                    {ext.type === 'callout' && <MessageSquare className="w-4 h-4 text-indigo-600 flex-shrink-0" />}
                                     {ext.type === 'sitelink' && <Link2 className="w-4 h-4 text-indigo-600 flex-shrink-0" />}
-                                    {ext.type === 'call' && <Phone className="w-4 h-4 text-green-600 flex-shrink-0" />}
+                                    {ext.type === 'call' && <Phone className="w-4 h-4 text-indigo-600 flex-shrink-0" />}
                                     {ext.type === 'price' && <DollarSign className="w-4 h-4 text-yellow-600 flex-shrink-0" />}
                                     {ext.type === 'app' && <Smartphone className="w-4 h-4 text-cyan-600 flex-shrink-0" />}
                                     {ext.type === 'location' && <MapPinIcon className="w-4 h-4 text-red-600 flex-shrink-0" />}
-                                    {ext.type === 'message' && <MessageSquare className="w-4 h-4 text-purple-600 flex-shrink-0" />}
+                                    {ext.type === 'message' && <MessageSquare className="w-4 h-4 text-indigo-600 flex-shrink-0" />}
                                     {ext.type === 'leadform' && <FileText className="w-4 h-4 text-orange-600 flex-shrink-0" />}
                                     {ext.type === 'promotion' && <Gift className="w-4 h-4 text-pink-600 flex-shrink-0" />}
                                     {ext.type === 'image' && <ImageIcon className="w-4 h-4 text-indigo-600 flex-shrink-0" />}
@@ -3625,17 +4033,6 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
           </div>
         </div>
 
-      {/* Inline Navigation */}
-      <div className="flex justify-between items-center pt-4 mt-6 border-t border-slate-200">
-        <Button variant="outline" onClick={() => setCurrentStep(3)}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
-        <Button onClick={() => setCurrentStep(5)} disabled={campaignData.ads.length === 0}>
-          Next Step
-          <ArrowRight className="w-4 h-4 ml-2" />
-        </Button>
-      </div>
     </div>
   );
   };
@@ -3685,351 +4082,335 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
 
     const getCurrentSelection = () => {
       const { cities, states, zipCodes } = campaignData.locations;
-      if (cities.length > 0) return { type: 'Cities', count: cities.length };
-      if (states.length > 0) return { type: 'States', count: states.length };
-      if (zipCodes.length > 0) return { type: 'ZIP Codes', count: zipCodes.length };
+      if (cities.length > 0) return { type: 'Cities', count: cities.length, icon: Building2 };
+      if (states.length > 0) return { type: 'States', count: states.length, icon: MapPin };
+      if (zipCodes.length > 0) return { type: 'ZIP Codes', count: zipCodes.length, icon: Hash };
       return null;
     };
 
     const currentSelection = getCurrentSelection();
 
     return (
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-slate-800 mb-2">Geo Target</h2>
-          <p className="text-slate-600">Target specific locations or the entire country.</p>
+      <div className="max-w-5xl mx-auto p-6">
+        {/* Header with gradient */}
+        <div className="mb-8 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 shadow-lg shadow-indigo-200/50 mb-4">
+            <MapPin className="w-8 h-8 text-white" />
+          </div>
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
+            Geo Targeting
+          </h2>
+          <p className="text-slate-600 max-w-xl mx-auto">
+            Define where your ads will appear. Target specific locations or reach your entire country.
+          </p>
         </div>
 
-        <div className="space-y-6">
-          {/* Target Country */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Globe className="w-5 h-5 text-indigo-600" />
-                <CardTitle>Target Country</CardTitle>
-              </div>
-              <CardDescription>
-                Select the base country for your campaign.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Select 
-                value={campaignData.targetCountry} 
-                onValueChange={(value: string) => {
-                  setCampaignData(prev => ({ ...prev, targetCountry: value }));
-                  autoSaveDraft();
-                }}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {LOCATION_PRESETS.countries.map(country => (
-                    <SelectItem key={country} value={country}>{country}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
-
-          {/* Location Targeting Tabs */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-indigo-600" />
-                  <CardTitle>Location Targeting</CardTitle>
-                </div>
-                {currentSelection && (
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="text-sm">
-                      {currentSelection.count} {currentSelection.type} selected
-                    </Badge>
-                    <Button variant="ghost" size="sm" onClick={clearLocations}>
-                      <X className="w-4 h-4" />
-                    </Button>
+        {/* Two-column layout on larger screens */}
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Left Column - Country & Summary */}
+          <div className="space-y-6">
+            {/* Target Country Card */}
+            <div className="rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 p-1 shadow-xl">
+              <div className="bg-slate-900 rounded-lg p-5">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                    <div className="w-3 h-3 rounded-full bg-indigo-500"></div>
                   </div>
+                  <span className="text-slate-400 text-sm font-medium">Target Country</span>
+                </div>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center">
+                    <Globe className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <Select 
+                      value={campaignData.targetCountry} 
+                      onValueChange={(value: string) => {
+                        setCampaignData(prev => ({ ...prev, targetCountry: value }));
+                        autoSaveDraft();
+                      }}
+                    >
+                      <SelectTrigger className="bg-slate-800 border-slate-700 text-white hover:bg-slate-700">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-800 border-slate-700">
+                        {LOCATION_PRESETS.countries.map(country => (
+                          <SelectItem key={country} value={country} className="text-white hover:bg-slate-700">{country}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <p className="text-slate-500 text-xs">
+                  Base country for your campaign targeting
+                </p>
+              </div>
+            </div>
+
+            {/* Live Summary Card */}
+            <div className="rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 p-1 shadow-xl">
+              <div className="bg-slate-900 rounded-lg p-5">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                    <div className="w-3 h-3 rounded-full bg-indigo-500"></div>
+                  </div>
+                  <span className="text-slate-400 text-sm font-medium">Targeting Summary</span>
+                  {currentSelection && (
+                    <Badge className="ml-auto bg-indigo-500/20 text-green-400 border-green-500/30">
+                      <Check className="w-3 h-3 mr-1" />
+                      Active
+                    </Badge>
+                  )}
+                </div>
+                
+                <div className="space-y-3 font-mono text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-500">[geo]</span>
+                    <span className="text-green-400">Country:</span>
+                    <span className="text-white">{campaignData.targetCountry}</span>
+                  </div>
+                  
+                  {currentSelection ? (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-500">[geo]</span>
+                        <span className="text-yellow-400">&gt;</span>
+                        <span className="text-white">{currentSelection.type}:</span>
+                        <span className="text-cyan-400">{currentSelection.count.toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-500">[geo]</span>
+                        <span className="text-green-400">✓</span>
+                        <span className="text-slate-300">Targeting configured</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-500">[geo]</span>
+                      <span className="text-cyan-400">→</span>
+                      <span className="text-slate-300">Nationwide coverage</span>
+                    </div>
+                  )}
+                </div>
+                
+                {currentSelection && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={clearLocations}
+                    className="mt-4 text-red-400 hover:text-red-300 hover:bg-red-500/10 w-full"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Clear All Locations
+                  </Button>
                 )}
               </div>
-              <CardDescription>
-                Choose to target specific cities, states, or ZIP codes within {campaignData.targetCountry}. 
-                Leave empty to target the entire country.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="cities" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 mb-6">
-                  <TabsTrigger value="cities" className="flex items-center gap-2">
-                    <Building2 className="w-4 h-4" />
-                    Cities
-                  </TabsTrigger>
-                  <TabsTrigger value="states" className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
-                    States
-                  </TabsTrigger>
-                  <TabsTrigger value="zips" className="flex items-center gap-2">
-                    <Hash className="w-4 h-4" />
-                    ZIP Codes
-                  </TabsTrigger>
-                </TabsList>
+            </div>
+          </div>
 
-                {/* Cities Tab */}
-                <TabsContent value="cities" className="space-y-4">
-                  <div className="space-y-3">
-                    <Label className="text-sm font-medium text-slate-700">Quick Presets</Label>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        variant={campaignData.locations.cities.length === 50 ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handlePresetSelect('cities', 'top50')}
-                        className="text-sm"
-                      >
-                        Top 50 Cities
-                      </Button>
-                      <Button
-                        variant={campaignData.locations.cities.length === 250 ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handlePresetSelect('cities', 'top250')}
-                        className="text-sm"
-                      >
-                        Top 250 Cities
-                      </Button>
-                      <Button
-                        variant={campaignData.locations.cities.length === 500 ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handlePresetSelect('cities', 'top500')}
-                        className="text-sm"
-                      >
-                        Top 500 Cities
-                      </Button>
+          {/* Right Column - Location Tabs */}
+          <div className="lg:col-span-2">
+            <Card className="border-2 border-slate-200 shadow-xl overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-slate-50 via-indigo-50/30 to-purple-50/30 border-b">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg">
+                      <Target className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Location Targeting</CardTitle>
+                      <CardDescription className="text-xs">
+                        Choose cities, states, or ZIP codes within {campaignData.targetCountry}
+                      </CardDescription>
                     </div>
                   </div>
-                  <div className="space-y-3 pt-4 border-t">
-                    <Label className="text-sm font-medium text-slate-700">Manual Entry</Label>
-                    <p className="text-xs text-slate-500">Enter city names separated by commas or new lines</p>
-                    <textarea
-                      className="w-full h-24 p-3 text-sm border rounded-lg resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      placeholder="e.g., New York, Los Angeles, Chicago&#10;or one city per line"
-                      onChange={(e) => {
-                        const input = e.target.value;
-                        if (input.trim()) {
-                          const cities = input
-                            .split(/[,\n]/)
-                            .map(c => c.trim())
-                            .filter(c => c.length > 0);
-                          setCampaignData(prev => ({
-                            ...prev,
-                            locations: { ...prev.locations, cities, states: [], zipCodes: [] }
-                          }));
-                        }
-                      }}
-                    />
-                  </div>
-                  {campaignData.locations.cities.length > 0 && (
-                    <div className="mt-4 p-3 bg-slate-50 rounded-lg">
-                      <p className="text-sm text-slate-600 mb-2">
-                        <strong>{campaignData.locations.cities.length}</strong> cities selected
-                      </p>
-                      <ScrollArea className="h-24">
-                        <div className="flex flex-wrap gap-1">
-                          {campaignData.locations.cities.slice(0, 20).map((city, idx) => (
-                            <Badge key={idx} variant="outline" className="text-xs">{city}</Badge>
-                          ))}
-                          {campaignData.locations.cities.length > 20 && (
-                            <Badge variant="secondary" className="text-xs">
-                              +{campaignData.locations.cities.length - 20} more
-                            </Badge>
-                          )}
-                        </div>
-                      </ScrollArea>
-                    </div>
+                  {currentSelection && (
+                    <Badge className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-0 shadow-lg">
+                      {currentSelection.count.toLocaleString()} {currentSelection.type}
+                    </Badge>
                   )}
-                </TabsContent>
-
-                {/* States Tab */}
-                <TabsContent value="states" className="space-y-4">
-                  <div className="space-y-3">
-                    <Label className="text-sm font-medium text-slate-700">Quick Presets</Label>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        variant={campaignData.locations.states.length === 10 ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handlePresetSelect('states', 'top10')}
-                        className="text-sm"
-                      >
-                        Top 10 States
-                      </Button>
-                      <Button
-                        variant={campaignData.locations.states.length === 25 ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handlePresetSelect('states', 'top25')}
-                        className="text-sm"
-                      >
-                        Top 25 States
-                      </Button>
-                      <Button
-                        variant={campaignData.locations.states.length === 50 ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handlePresetSelect('states', 'top50')}
-                        className="text-sm"
-                      >
-                        All 50 States
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="space-y-3 pt-4 border-t">
-                    <Label className="text-sm font-medium text-slate-700">Manual Entry</Label>
-                    <p className="text-xs text-slate-500">Enter state names or abbreviations separated by commas or new lines</p>
-                    <textarea
-                      className="w-full h-24 p-3 text-sm border rounded-lg resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      placeholder="e.g., California, Texas, Florida&#10;or CA, TX, FL"
-                      onChange={(e) => {
-                        const input = e.target.value;
-                        if (input.trim()) {
-                          const states = input
-                            .split(/[,\n]/)
-                            .map(s => s.trim())
-                            .filter(s => s.length > 0);
-                          setCampaignData(prev => ({
-                            ...prev,
-                            locations: { ...prev.locations, states, cities: [], zipCodes: [] }
-                          }));
-                        }
-                      }}
-                    />
-                  </div>
-                  {campaignData.locations.states.length > 0 && (
-                    <div className="mt-4 p-3 bg-slate-50 rounded-lg">
-                      <p className="text-sm text-slate-600 mb-2">
-                        <strong>{campaignData.locations.states.length}</strong> states selected
-                      </p>
-                      <ScrollArea className="h-24">
-                        <div className="flex flex-wrap gap-1">
-                          {campaignData.locations.states.map((state, idx) => (
-                            <Badge key={idx} variant="outline" className="text-xs">{state}</Badge>
-                          ))}
-                        </div>
-                      </ScrollArea>
-                    </div>
-                  )}
-                </TabsContent>
-
-                {/* ZIP Codes Tab */}
-                <TabsContent value="zips" className="space-y-4">
-                  <div className="space-y-3">
-                    <Label className="text-sm font-medium text-slate-700">Quick Presets</Label>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        variant={campaignData.locations.zipCodes.length === 1000 ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handlePresetSelect('zips', 'top1000')}
-                        className="text-sm"
-                      >
-                        Top 1,000 ZIPs
-                      </Button>
-                      <Button
-                        variant={campaignData.locations.zipCodes.length === 5000 ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handlePresetSelect('zips', 'top5000')}
-                        className="text-sm"
-                      >
-                        Top 5,000 ZIPs
-                      </Button>
-                      <Button
-                        variant={campaignData.locations.zipCodes.length === 15000 ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handlePresetSelect('zips', 'top15000')}
-                        className="text-sm"
-                      >
-                        Top 15,000 ZIPs
-                      </Button>
-                      <Button
-                        variant={campaignData.locations.zipCodes.length >= 25000 ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handlePresetSelect('zips', 'top25000')}
-                        className="text-sm"
-                      >
-                        Top 25,000 ZIPs
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="space-y-3 pt-4 border-t">
-                    <Label className="text-sm font-medium text-slate-700">Manual Entry</Label>
-                    <p className="text-xs text-slate-500">Enter ZIP codes separated by commas, spaces, or new lines</p>
-                    <textarea
-                      className="w-full h-24 p-3 text-sm border rounded-lg resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      placeholder="e.g., 10001, 90210, 60601&#10;or one ZIP per line"
-                      onChange={(e) => {
-                        const input = e.target.value;
-                        if (input.trim()) {
-                          const zipCodes = input
-                            .split(/[,\s\n]+/)
-                            .map(z => z.trim())
-                            .filter(z => /^\d{5}(-\d{4})?$/.test(z));
-                          setCampaignData(prev => ({
-                            ...prev,
-                            locations: { ...prev.locations, zipCodes, cities: [], states: [] }
-                          }));
-                        }
-                      }}
-                    />
-                  </div>
-                  {campaignData.locations.zipCodes.length > 0 && (
-                    <div className="mt-4 p-3 bg-slate-50 rounded-lg">
-                      <p className="text-sm text-slate-600 mb-2">
-                        <strong>{campaignData.locations.zipCodes.length.toLocaleString()}</strong> ZIP codes selected
-                      </p>
-                      <ScrollArea className="h-24">
-                        <div className="flex flex-wrap gap-1">
-                          {campaignData.locations.zipCodes.slice(0, 30).map((zip, idx) => (
-                            <Badge key={idx} variant="outline" className="text-xs">{zip}</Badge>
-                          ))}
-                          {campaignData.locations.zipCodes.length > 30 && (
-                            <Badge variant="secondary" className="text-xs">
-                              +{(campaignData.locations.zipCodes.length - 30).toLocaleString()} more
-                            </Badge>
-                          )}
-                        </div>
-                      </ScrollArea>
-                    </div>
-                  )}
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-
-          {/* Summary */}
-          <Card className="bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                  <Target className="w-5 h-5 text-indigo-600" />
                 </div>
-                <div>
-                  <p className="font-medium text-slate-800">Targeting Summary</p>
-                  <p className="text-sm text-slate-600">
-                    {currentSelection 
-                      ? `${currentSelection.count.toLocaleString()} ${currentSelection.type} in ${campaignData.targetCountry}`
-                      : `All of ${campaignData.targetCountry} (nationwide)`
-                    }
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent className="p-6">
+                <Tabs defaultValue="cities" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3 mb-6 bg-slate-100 p-1 rounded-xl">
+                    <TabsTrigger value="cities" className="flex items-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md">
+                      <Building2 className="w-4 h-4" />
+                      <span className="hidden sm:inline">Cities</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="states" className="flex items-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md">
+                      <MapPinIcon className="w-4 h-4" />
+                      <span className="hidden sm:inline">States</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="zips" className="flex items-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md">
+                      <Hash className="w-4 h-4" />
+                      <span className="hidden sm:inline">ZIP Codes</span>
+                    </TabsTrigger>
+                  </TabsList>
 
-          {/* Inline Navigation */}
-          <div className="flex justify-between items-center pt-4 mt-6 border-t border-slate-200">
-            <Button variant="outline" onClick={() => setCurrentStep(4)}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-            <Button onClick={() => { setCurrentStep(6); autoSaveDraft(); }}>
-              Next Step
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
+                  {/* Cities Tab */}
+                  <TabsContent value="cities" className="space-y-5">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-amber-500" />
+                        <Label className="text-sm font-semibold text-slate-700">Quick Presets</Label>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { label: 'Top 50', value: 'top50', count: 50 },
+                          { label: 'Top 250', value: 'top250', count: 250 },
+                          { label: 'Top 500', value: 'top500', count: 500 },
+                        ].map(preset => (
+                          <Button
+                            key={preset.value}
+                            variant={campaignData.locations.cities.length === preset.count ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handlePresetSelect('cities', preset.value)}
+                            className={campaignData.locations.cities.length === preset.count 
+                              ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-600 hover:to-purple-700 border-0 shadow-lg" 
+                              : "hover:border-indigo-300 hover:bg-indigo-50"}
+                          >
+                            <Building2 className="w-3 h-3 mr-1.5" />
+                            {preset.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {campaignData.locations.cities.length > 0 && (
+                      <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-200">
+                        <div className="flex items-center gap-2 mb-3">
+                          <CheckCircle2 className="w-4 h-4 text-green-600" />
+                          <span className="text-sm font-semibold text-green-800">
+                            {campaignData.locations.cities.length} cities selected
+                          </span>
+                        </div>
+                        <ScrollArea className="h-20">
+                          <div className="flex flex-wrap gap-1.5">
+                            {campaignData.locations.cities.slice(0, 15).map((city, idx) => (
+                              <Badge key={idx} className="bg-white text-slate-700 border border-slate-200 text-xs">{city}</Badge>
+                            ))}
+                            {campaignData.locations.cities.length > 15 && (
+                              <Badge className="bg-slate-100 text-slate-600 text-xs">
+                                +{campaignData.locations.cities.length - 15} more
+                              </Badge>
+                            )}
+                          </div>
+                        </ScrollArea>
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  {/* States Tab */}
+                  <TabsContent value="states" className="space-y-5">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-amber-500" />
+                        <Label className="text-sm font-semibold text-slate-700">Quick Presets</Label>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { label: 'Top 10', value: 'top10', count: 10 },
+                          { label: 'Top 25', value: 'top25', count: 25 },
+                          { label: 'All 50', value: 'top50', count: 50 },
+                        ].map(preset => (
+                          <Button
+                            key={preset.value}
+                            variant={campaignData.locations.states.length === preset.count ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handlePresetSelect('states', preset.value)}
+                            className={campaignData.locations.states.length === preset.count 
+                              ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-600 hover:to-purple-700 border-0 shadow-lg" 
+                              : "hover:border-indigo-300 hover:bg-indigo-50"}
+                          >
+                            <MapPinIcon className="w-3 h-3 mr-1.5" />
+                            {preset.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {campaignData.locations.states.length > 0 && (
+                      <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-200">
+                        <div className="flex items-center gap-2 mb-3">
+                          <CheckCircle2 className="w-4 h-4 text-green-600" />
+                          <span className="text-sm font-semibold text-green-800">
+                            {campaignData.locations.states.length} states selected
+                          </span>
+                        </div>
+                        <ScrollArea className="h-20">
+                          <div className="flex flex-wrap gap-1.5">
+                            {campaignData.locations.states.map((state, idx) => (
+                              <Badge key={idx} className="bg-white text-slate-700 border border-slate-200 text-xs">{state}</Badge>
+                            ))}
+                          </div>
+                        </ScrollArea>
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  {/* ZIP Codes Tab */}
+                  <TabsContent value="zips" className="space-y-5">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-amber-500" />
+                        <Label className="text-sm font-semibold text-slate-700">Quick Presets</Label>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {[
+                          { label: '1K ZIPs', value: 'top1000', count: 1000 },
+                          { label: '5K ZIPs', value: 'top5000', count: 5000 },
+                          { label: '15K ZIPs', value: 'top15000', count: 15000 },
+                        ].map(preset => (
+                          <Button
+                            key={preset.value}
+                            variant={campaignData.locations.zipCodes.length === preset.count ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handlePresetSelect('zips', preset.value)}
+                            className={campaignData.locations.zipCodes.length === preset.count 
+                              ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-600 hover:to-purple-700 border-0 shadow-lg" 
+                              : "hover:border-indigo-300 hover:bg-indigo-50"}
+                          >
+                            <Hash className="w-3 h-3 mr-1.5" />
+                            {preset.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {campaignData.locations.zipCodes.length > 0 && (
+                      <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-200">
+                        <div className="flex items-center gap-2 mb-3">
+                          <CheckCircle2 className="w-4 h-4 text-green-600" />
+                          <span className="text-sm font-semibold text-green-800">
+                            {campaignData.locations.zipCodes.length.toLocaleString()} ZIP codes selected
+                          </span>
+                        </div>
+                        <ScrollArea className="h-20">
+                          <div className="flex flex-wrap gap-1.5">
+                            {campaignData.locations.zipCodes.slice(0, 20).map((zip, idx) => (
+                              <Badge key={idx} className="bg-white text-slate-700 border border-slate-200 text-xs font-mono">{zip}</Badge>
+                            ))}
+                            {campaignData.locations.zipCodes.length > 20 && (
+                              <Badge className="bg-slate-100 text-slate-600 text-xs">
+                                +{(campaignData.locations.zipCodes.length - 20).toLocaleString()} more
+                              </Badge>
+                            )}
+                          </div>
+                        </ScrollArea>
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
           </div>
         </div>
+
       </div>
     );
   };
@@ -4090,10 +4471,10 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
             {/* 2. Ad Groups */}
             <Card className="text-center border-2 border-blue-100 bg-gradient-to-br from-white to-blue-50/50 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105">
               <CardContent className="p-3">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center mx-auto mb-2 shadow-lg">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center mx-auto mb-2 shadow-lg">
                   <Layers className="w-4 h-4 text-white" />
                 </div>
-                <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-0.5">{campaignData.adGroups.length}</div>
+                <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-0.5">{campaignData.adGroups.length}</div>
                 <div className="text-xs font-medium text-slate-700">Ad Groups</div>
               </CardContent>
             </Card>
@@ -4128,12 +4509,12 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
               </CardContent>
             </Card>
             {/* 6. Assets */}
-            <Card className="text-center border-2 border-teal-100 bg-gradient-to-br from-white to-teal-50/50 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <Card className="text-center border-2 border-indigo-100 bg-gradient-to-br from-white to-indigo-50/50 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105">
               <CardContent className="p-3">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center mx-auto mb-2 shadow-lg">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-500 flex items-center justify-center mx-auto mb-2 shadow-lg">
                   <Link2 className="w-4 h-4 text-white" />
                 </div>
-                <div className="text-2xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent mb-0.5">
+                <div className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-0.5">
                   {campaignData.ads.reduce((total, ad) => total + (ad.extensions?.length || 0), 0)}
                 </div>
                 <div className="text-xs font-medium text-slate-700">Assets</div>
@@ -4191,7 +4572,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                   <div className="pt-6 border-t border-slate-200">
                     <div className="bg-gradient-to-r from-blue-50 via-cyan-50 to-blue-50 border-2 border-blue-200/60 rounded-xl p-5 shadow-sm">
                       <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center flex-shrink-0 shadow-md">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center flex-shrink-0 shadow-md">
                           <Building2 className="w-6 h-6 text-white" />
                       </div>
                       <div className="flex-1">
@@ -4321,7 +4702,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
             <div className="flex flex-col sm:flex-row gap-3">
           <Button
             onClick={handleDownloadCSV}
-            className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg shadow-green-200/50 h-14 text-lg font-semibold"
+            className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-purple-700 text-white shadow-lg shadow-green-200/50 h-14 text-lg font-semibold"
           >
             <Download className="w-5 h-5 mr-2" />
             Download CSV for Google Ads Editor
@@ -4401,7 +4782,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
         <div className="text-sm text-slate-500 mr-4">CSV generation step - no inputs to fill</div>
       </div>
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-slate-800 mb-2">CSV Generation</h2>
+        <h3 className="text-lg font-semibold text-slate-800 mb-2">CSV Generation</h3>
         <p className="text-slate-600">Generate your campaign CSV for Google Ads Editor</p>
       </div>
 
@@ -4432,11 +4813,11 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
       </Card>
 
       {campaignData.csvData && (
-        <Card className="border-green-200 bg-green-50">
+        <Card className="border-indigo-200 bg-indigo-50">
           <CardHeader>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-6 h-6 text-green-600" />
-            <CardTitle className="text-green-600">CSV Ready</CardTitle>
+            <CardTitle className="text-indigo-600">CSV Ready</CardTitle>
             </div>
             <CardDescription>Your CSV is ready for export</CardDescription>
           </CardHeader>
@@ -4459,17 +4840,6 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
         </Card>
       )}
 
-      {/* Inline Navigation */}
-      <div className="flex justify-between items-center pt-4 mt-6 border-t border-slate-200">
-        <Button variant="outline" onClick={() => setCurrentStep(5)}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
-        <Button onClick={handleGenerateCSV} disabled={loading || !!campaignData.csvData}>
-          {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <FileSpreadsheet className="w-4 h-4 mr-2" />}
-          {campaignData.csvData ? 'CSV Generated' : 'Generate CSV'}
-        </Button>
-      </div>
     </div>
   );
 
@@ -4574,7 +4944,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-cyan-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/30 to-purple-50/30">
       {/* Navigation Above Wizard */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-6 py-3">
@@ -4612,37 +4982,37 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
         </div>
       </div>
 
-      {/* Progress Bar */}
-      <div className="bg-white border-b border-slate-200 sticky top-[57px] z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4 overflow-x-auto">
+      {/* Progress Bar - Compact */}
+      <div className="bg-white border-b border-slate-200 sticky top-[49px] z-10">
+        <div className="max-w-7xl mx-auto px-4 py-2 overflow-x-auto">
           <div className="flex items-center justify-between min-w-max">
             {steps.map((step, idx) => (
               <React.Fragment key={step.id}>
                 <div className="flex items-center flex-shrink-0">
                   <div
-                    className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-sm sm:text-base ${
+                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
                       currentStep > step.id
-                        ? 'bg-green-500 text-white'
+                        ? 'bg-indigo-500 text-white'
                         : currentStep === step.id
                         ? 'bg-indigo-600 text-white'
                         : 'bg-slate-200 text-slate-600'
                     }`}
                   >
                     {currentStep > step.id ? (
-                      <Check className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <Check className="w-3 h-3" />
                     ) : (
                       <span>{step.id}</span>
                     )}
                   </div>
-                  <span className={`ml-2 text-xs sm:text-sm font-medium whitespace-nowrap ${
-                    currentStep === step.id ? 'text-indigo-600' : 'text-slate-600'
+                  <span className={`ml-1.5 text-xs font-medium whitespace-nowrap ${
+                    currentStep === step.id ? 'text-indigo-600' : 'text-slate-500'
                   }`}>
                     {step.label}
                   </span>
                 </div>
                 {idx < steps.length - 1 && (
-                  <div className={`flex-1 h-1 mx-2 sm:mx-4 min-w-[20px] ${
-                    currentStep > step.id ? 'bg-green-500' : 'bg-slate-200'
+                  <div className={`flex-1 h-0.5 mx-2 min-w-[16px] ${
+                    currentStep > step.id ? 'bg-indigo-500' : 'bg-slate-200'
                   }`} />
                 )}
               </React.Fragment>
@@ -4664,7 +5034,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
               Back
             </Button>
           <span className="text-sm text-slate-600">
-            Step {currentStep} of {steps.length}
+            Step {Math.min(currentStep, 6)} of {steps.length}
           </span>
             <Button
               onClick={handleNextStep}
@@ -4684,7 +5054,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
         {currentStep === 3 && renderStep3()}
         {currentStep === 4 && renderStep4()}
         {currentStep === 5 && renderStep5()}
-        {currentStep === 6 && renderStep8()}
+        {currentStep >= 6 && renderStep8()}
       </div>
 
         
@@ -4693,7 +5063,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <Phone className="w-5 h-5 text-green-600" />
+                <Phone className="w-5 h-5 text-indigo-600" />
                 Call Only Ad Details
               </DialogTitle>
               <DialogDescription>
@@ -4741,18 +5111,19 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                 Cancel
               </Button>
               <Button 
-                variant="outline"
+                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium border-0"
                 onClick={() => {
-                  setCallAdPhone('(555) 123-4567');
+                  setCallAdPhone('');
                   handleCreateCallAd();
                 }}
               >
+                <Zap className="w-4 h-4 mr-2" />
                 Skip (Use Defaults)
               </Button>
               <Button 
                 onClick={handleCreateCallAd}
                 disabled={!callAdPhone.trim()}
-                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-purple-700"
               >
                 <Phone className="w-4 h-4 mr-2" />
                 Create Ad
@@ -4818,13 +5189,23 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
               <Button variant="outline" onClick={() => setShowExportDialog(false)}>
                 Cancel
               </Button>
-              <Button onClick={confirmDownloadCSV} className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700">
+              <Button onClick={confirmDownloadCSV} className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-purple-700">
                 <Download className="w-4 h-4 mr-2" />
                 Download CSV
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Campaign Structure Flow Diagram */}
+        {selectedStructureForDiagram && (
+          <CampaignFlowDiagram
+            open={showFlowDiagram}
+            onOpenChange={setShowFlowDiagram}
+            structureName={selectedStructureForDiagram.name}
+            structureId={selectedStructureForDiagram.id}
+          />
+        )}
     </div>
   );
 };
@@ -4983,6 +5364,7 @@ async function generateSeedKeywords(
   }
 
   // Fallback: Generate keywords from landing page content if AI fails
+  // IMPORTANT: All seed keywords must have at least 2 words
   const keywords: string[] = [];
   const domain = landingData.domain?.replace(/^www\./, '').split('.')[0] || '';
   
@@ -4992,35 +5374,43 @@ async function generateSeedKeywords(
     ...landingData.services.slice(0, 3),
   ].filter(Boolean);
 
-  // Extract meaningful keywords from terms
+  // Extract meaningful keywords from terms - only if they have 2+ words
   mainTerms.forEach(term => {
     if (term && keywords.length < 5) {
       const cleanTerm = term.toLowerCase().trim();
-      if (cleanTerm.length >= 3 && cleanTerm.length <= 50) {
+      // Only add if it has at least 2 words
+      if (cleanTerm.length >= 3 && cleanTerm.length <= 50 && cleanTerm.split(/\s+/).length >= 2) {
         keywords.push(cleanTerm);
       }
     }
   });
 
-  // Add intent-based keywords
-  const baseTerm = mainTerms[0]?.toLowerCase() || domain;
+  // Add intent-based keywords (always 2+ words)
+  const baseTerm = mainTerms[0]?.toLowerCase()?.split(/\s+/)[0] || domain;
   if (baseTerm && keywords.length < 5) {
     if (intent.intentId === IntentId.CALL) {
       keywords.push(`${baseTerm} phone number`);
+      keywords.push(`${baseTerm} contact`);
     } else if (intent.intentId === IntentId.LEAD) {
       keywords.push(`${baseTerm} quote`);
+      keywords.push(`${baseTerm} pricing`);
     } else {
       keywords.push(`${baseTerm} near me`);
+      keywords.push(`${baseTerm} services`);
     }
   }
 
-  // Add domain-based fallback if still not enough
+  // Add domain-based fallback if still not enough (always 2+ words)
   if (keywords.length < 4 && domain) {
-    keywords.push(domain);
     keywords.push(`${domain} services`);
+    keywords.push(`${domain} company`);
+    keywords.push(`${domain} near me`);
   }
 
-  return keywords.slice(0, 5);
+  // Filter to ensure all keywords have at least 2 words
+  return keywords
+    .filter(k => k.trim().split(/\s+/).length >= 2)
+    .slice(0, 5);
 }
 
 function rankCampaignStructures(intent: IntentResult, vertical: string): { id: string; score: number }[] {

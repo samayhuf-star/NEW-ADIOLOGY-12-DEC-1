@@ -218,7 +218,7 @@ export function CampaignStructuresFeature() {
                     <div className="text-xs text-gray-500">Setup Time</div>
                   </div>
                   <div className="bg-white p-3 rounded-lg text-center">
-                    <div className="text-xl text-green-600">✓</div>
+                    <div className="text-xl text-indigo-600">✓</div>
                     <div className="text-xs text-gray-500">Ready</div>
                   </div>
                 </div>

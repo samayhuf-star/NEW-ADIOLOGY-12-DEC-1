@@ -36,9 +36,10 @@ Preferred communication style: Simple, everyday language.
   - Master CSV template stored at: src/utils/masterCSVTemplate.csv
 
 ## Backend
-- **Primary API**: FastAPI (Python) for ad generation and CSV export, using Pydantic for validation.
+- **Primary API**: Hono (Node.js/TypeScript) for all API endpoints on port 3001, with optional FastAPI (Python) for legacy ad generation.
+- **URL Analyzer**: Cheerio-based lightweight HTML parser (server/urlAnalyzerLite.ts) for website analysis. Works in production without Playwright browser dependencies. Extracts headings, CTAs, forms, SEO signals, contact info, services, and more. Integrated with OpenAI for AI-powered marketing insights.
 - **Background Processing**: Celery with Redis for asynchronous keyword generation and AI-powered keyword suggestions based on URL and campaign intent.
-- **Ads Transparency Scraper**: Playwright-based web scraper (server/adsTransparencyScraper.ts) fetches competitor ads from Google Ads Transparency Center. Hourly cron job (server/cronScheduler.ts) processes pending requests. Results stored in PostgreSQL (ad_search_requests, ad_search_results tables).
+- **Ads Transparency Scraper**: Playwright-based web scraper (server/adsTransparencyScraper.ts) fetches competitor ads from Google Ads Transparency Center. Hourly cron job (server/cronScheduler.ts) processes pending requests. Results stored in PostgreSQL (ad_search_requests, ad_search_results tables). Note: Requires development environment (Playwright not available in production).
 - **Edge Functions**: Supabase Edge Functions (Deno/TypeScript) for health checks, payment processing, and campaign history storage.
 - **Fallback Systems**: Python-based ad generator, local storage, and a three-tier save system (Edge Function → Database → localStorage).
 - **Business Logic**: Automatic business type detection, intent classification for ad copy, service/product-specific ad templates, and Dynamic Keyword Insertion (DKI).
@@ -79,7 +80,7 @@ Preferred communication style: Simple, everyday language.
 ## Third-Party Services
 - **Supabase**: Authentication, PostgreSQL database, Edge Functions, real-time capabilities.
 - **Stripe**: Payment processing for subscriptions, managed via stripe-replit-sync with automatic webhook configuration.
-  - **Products**: Starter ($29/mo), Pro ($79/mo), Enterprise ($199/mo) with monthly and yearly billing
+  - **Products**: Basic ($69.99/mo or $671.90/yr), Pro ($129.99/mo or $1,247.90/yr), Lifetime ($99.99 one-time)
   - **Server API**: Hono-based backend on port 3001 with endpoints for checkout, portal, products, and webhooks
   - **Integration**: stripe-replit-sync handles schema migrations, data sync, and webhook management
 - **Redis**: Message broker and result backend for Celery tasks.

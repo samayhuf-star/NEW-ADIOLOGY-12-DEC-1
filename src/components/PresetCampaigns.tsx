@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/
 import { notifications } from '../utils/notifications';
 import { generateCampaignStructure, StructureSettings, Ad } from '../utils/campaignStructureGenerator';
 import { exportCampaignToGoogleAdsEditorCSV, validateCSVRows, campaignStructureToCSVRows } from '../utils/googleAdsEditorCSVExporter';
+import { getStructureBadgeClasses, getStatusBadgeClasses } from '../utils/badgeTheme';
 
 interface PresetCampaignsProps {
   onLoadPreset?: (presetData: any) => void;
@@ -66,18 +67,6 @@ function getIntentIcon(intent: string) {
   }
 }
 
-function getIntentColor(intent: string): string {
-  switch (intent.toLowerCase()) {
-    case 'emergency':
-      return 'bg-red-100 text-red-700 border-red-200';
-    case 'project':
-      return 'bg-amber-100 text-amber-700 border-amber-200';
-    case 'recurring':
-      return 'bg-green-100 text-green-700 border-green-200';
-    default:
-      return 'bg-slate-100 text-slate-700 border-slate-200';
-  }
-}
 
 export const PresetCampaigns: React.FC<PresetCampaignsProps> = ({ onLoadPreset }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -182,17 +171,13 @@ export const PresetCampaigns: React.FC<PresetCampaignsProps> = ({ onLoadPreset }
           
           <div className="flex items-center gap-3 mb-3">
             <Badge
-              className={`text-xs font-semibold ${
-                selectedPreset.structure === 'skag'
-                  ? 'bg-purple-100 text-purple-700 border-purple-200'
-                  : 'bg-blue-100 text-blue-700 border-blue-200'
-              }`}
+              className={`text-xs font-semibold ${getStructureBadgeClasses(selectedPreset.structure)}`}
               variant="outline"
             >
               {selectedPreset.structureLabel}
             </Badge>
             <Badge
-              className={`text-xs ${getIntentColor(selectedPreset.targetIntent)}`}
+              className={`text-xs ${getStatusBadgeClasses(selectedPreset.targetIntent)}`}
               variant="outline"
             >
               <span className="flex items-center gap-1">
@@ -200,7 +185,7 @@ export const PresetCampaigns: React.FC<PresetCampaignsProps> = ({ onLoadPreset }
                 {selectedPreset.targetIntent}
               </span>
             </Badge>
-            <span className="text-sm text-green-600 font-medium">
+            <span className="text-sm text-indigo-600 font-medium">
               {selectedPreset.estimatedCPC} CPC
             </span>
           </div>
@@ -233,7 +218,7 @@ export const PresetCampaigns: React.FC<PresetCampaignsProps> = ({ onLoadPreset }
               {selectedPreset.adTemplate.headlines.map((headline, idx) => (
                 <div
                   key={idx}
-                  className="text-sm p-3 bg-indigo-50 rounded-lg text-indigo-800 border border-indigo-100"
+                  className="text-sm p-3 bg-indigo-50 rounded-lg text-teal-800 border border-teal-100"
                 >
                   {idx + 1}. {headline}
                 </div>
@@ -250,7 +235,7 @@ export const PresetCampaigns: React.FC<PresetCampaignsProps> = ({ onLoadPreset }
               {selectedPreset.adTemplate.descriptions.map((desc, idx) => (
                 <div
                   key={idx}
-                  className="text-sm p-4 bg-emerald-50 rounded-lg text-emerald-800 border border-emerald-100"
+                  className="text-sm p-4 bg-indigo-50 rounded-lg text-emerald-800 border border-emerald-100"
                 >
                   {idx + 1}. {desc}
                 </div>
@@ -317,8 +302,8 @@ export const PresetCampaigns: React.FC<PresetCampaignsProps> = ({ onLoadPreset }
             <Button
               className={`px-6 ${
                 selectedPreset.structure === 'skag'
-                  ? 'bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600'
-                  : 'bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600'
+                  ? 'bg-[#0891B2] hover:bg-[#0E7490]'
+                  : 'bg-[#7C3AED] hover:bg-[#6D28D9]'
               } text-white`}
               onClick={() => handleExportCSV(selectedPreset)}
               disabled={isExporting === selectedPreset.id}
@@ -343,7 +328,7 @@ export const PresetCampaigns: React.FC<PresetCampaignsProps> = ({ onLoadPreset }
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shrink-0">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shrink-0">
             <Package className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -365,7 +350,7 @@ export const PresetCampaigns: React.FC<PresetCampaignsProps> = ({ onLoadPreset }
               placeholder="Search by vertical name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-10 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full pl-11 pr-10 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
             {searchQuery && (
               <button
@@ -394,7 +379,7 @@ export const PresetCampaigns: React.FC<PresetCampaignsProps> = ({ onLoadPreset }
               onClick={() => setStructureFilter('skag')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 structureFilter === 'skag'
-                  ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-sm'
+                  ? 'bg-[#0891B2] text-white shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -404,7 +389,7 @@ export const PresetCampaigns: React.FC<PresetCampaignsProps> = ({ onLoadPreset }
               onClick={() => setStructureFilter('stag')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 structureFilter === 'stag'
-                  ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-sm'
+                  ? 'bg-[#7C3AED] text-white shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -428,8 +413,8 @@ export const PresetCampaigns: React.FC<PresetCampaignsProps> = ({ onLoadPreset }
             key={preset.id}
             className={`group relative overflow-hidden transition-all hover:shadow-lg cursor-pointer border-2 ${
               preset.structure === 'skag'
-                ? 'hover:border-purple-300'
-                : 'hover:border-blue-300'
+                ? 'hover:border-[#0891B2]'
+                : 'hover:border-[#7C3AED]'
             }`}
             onClick={() => handlePreview(preset)}
           >
@@ -437,8 +422,8 @@ export const PresetCampaigns: React.FC<PresetCampaignsProps> = ({ onLoadPreset }
             <div
               className={`absolute top-0 left-0 right-0 h-1 ${
                 preset.structure === 'skag'
-                  ? 'bg-gradient-to-r from-purple-500 to-indigo-500'
-                  : 'bg-gradient-to-r from-blue-500 to-cyan-500'
+                  ? 'bg-[#0891B2]'
+                  : 'bg-[#7C3AED]'
               }`}
             />
 
@@ -446,17 +431,13 @@ export const PresetCampaigns: React.FC<PresetCampaignsProps> = ({ onLoadPreset }
               {/* Badges Row */}
               <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <Badge
-                  className={`text-xs font-semibold ${
-                    preset.structure === 'skag'
-                      ? 'bg-purple-100 text-purple-700 border-purple-200'
-                      : 'bg-blue-100 text-blue-700 border-blue-200'
-                  }`}
+                  className={`text-xs font-semibold ${getStructureBadgeClasses(preset.structure)}`}
                   variant="outline"
                 >
                   {preset.structureLabel}
                 </Badge>
                 <Badge
-                  className={`text-xs ${getIntentColor(preset.targetIntent)}`}
+                  className={`text-xs ${getStatusBadgeClasses(preset.targetIntent)}`}
                   variant="outline"
                 >
                   <span className="flex items-center gap-1">
@@ -482,7 +463,7 @@ export const PresetCampaigns: React.FC<PresetCampaignsProps> = ({ onLoadPreset }
                   {preset.keywords.length} keywords
                 </span>
                 <span className="text-slate-300">|</span>
-                <span className="font-medium text-green-600">
+                <span className="font-medium text-indigo-600">
                   {preset.estimatedCPC} CPC
                 </span>
               </div>
@@ -502,8 +483,8 @@ export const PresetCampaigns: React.FC<PresetCampaignsProps> = ({ onLoadPreset }
                   size="sm"
                   className={`flex-1 ${
                     preset.structure === 'skag'
-                      ? 'bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600'
-                      : 'bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600'
+                      ? 'bg-[#0891B2] hover:bg-[#0E7490]'
+                      : 'bg-[#7C3AED] hover:bg-[#6D28D9]'
                   } text-white`}
                   onClick={(e: React.MouseEvent) => handleExportCSV(preset, e)}
                   disabled={isExporting === preset.id}

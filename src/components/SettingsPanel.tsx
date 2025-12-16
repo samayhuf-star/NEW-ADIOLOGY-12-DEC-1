@@ -4,8 +4,10 @@ import { supabase } from '../utils/supabase/client';
 import { 
   User, Mail, Lock, Globe,
   Save, Eye, EyeOff,
-  CheckCircle2, AlertCircle, Palette, Loader
+  CheckCircle2, AlertCircle, Palette, Loader,
+  PanelLeftClose, PanelLeftOpen
 } from 'lucide-react';
+import { getUserPreferences, saveUserPreferences } from '../utils/userPreferences';
 import { useTheme } from '../contexts/ThemeContext';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -17,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { BillingPanel } from './BillingPanel';
 import { notifications } from '../utils/notifications';
+import { TerminalCard, TerminalLine } from './ui/terminal-card';
 
 interface GoogleAdsAccount {
   id: string;
@@ -48,6 +51,9 @@ export const SettingsPanel = ({ defaultTab = 'settings' }: SettingsPanelProps) =
   const [googleAdsLoading, setGoogleAdsLoading] = useState(true);
   const [googleAdsAccounts, setGoogleAdsAccounts] = useState<GoogleAdsAccount[]>([]);
   const [defaultAccount, setDefaultAccount] = useState<string>('');
+  
+  // Sidebar auto-close preference
+  const [sidebarAutoClose, setSidebarAutoClose] = useState(() => getUserPreferences().sidebarAutoClose);
 
   useEffect(() => {
     // Load user data and Google Ads info
@@ -292,6 +298,27 @@ export const SettingsPanel = ({ defaultTab = 'settings' }: SettingsPanelProps) =
         <p className="text-slate-600 text-lg">Manage your account settings, billing, and preferences</p>
       </div>
 
+      {/* Terminal-Style Stats */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+        <TerminalCard title="Account Status" showDots={true} variant="compact">
+          <div className="space-y-1.5">
+            <TerminalLine prefix="$" label="user:" value={name || 'NOT_SET'} valueColor={name ? 'green' : 'yellow'} />
+            <TerminalLine prefix="$" label="email:" value={email ? email.substring(0, 20) + (email.length > 20 ? '...' : '') : 'NOT_SET'} valueColor={email ? 'cyan' : 'yellow'} />
+            <TerminalLine prefix="$" label="auth_provider:" value="SUPABASE" valueColor="purple" />
+            <TerminalLine prefix="$" label="status:" value={user ? 'AUTHENTICATED' : 'NOT_LOGGED_IN'} valueColor={user ? 'green' : 'yellow'} />
+          </div>
+        </TerminalCard>
+
+        <TerminalCard title="Integrations" showDots={true} variant="compact">
+          <div className="space-y-1.5">
+            <TerminalLine prefix=">" label="google_ads:" value={googleAdsConnected ? 'CONNECTED' : googleAdsLoading ? 'CHECKING...' : 'DISCONNECTED'} valueColor={googleAdsConnected ? 'green' : googleAdsLoading ? 'slate' : 'yellow'} />
+            <TerminalLine prefix=">" label="accounts:" value={`${googleAdsAccounts.length}`} valueColor="cyan" />
+            <TerminalLine prefix=">" label="default_account:" value={defaultAccount ? defaultAccount.substring(0, 12) + '...' : 'NONE'} valueColor={defaultAccount ? 'green' : 'slate'} />
+            <TerminalLine prefix=">" label="tab:" value={activeTab.toUpperCase()} valueColor="purple" />
+          </div>
+        </TerminalCard>
+      </div>
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-2 mb-10 p-2 bg-slate-100 rounded-lg">
           <TabsTrigger value="settings" className="text-base py-3 data-[state=active]:bg-white data-[state=active]:shadow-sm">Settings</TabsTrigger>
@@ -303,7 +330,7 @@ export const SettingsPanel = ({ defaultTab = 'settings' }: SettingsPanelProps) =
       {saveMessage && (
         <Alert 
           variant={saveMessage.type === 'success' ? 'default' : 'destructive'}
-          className={saveMessage.type === 'success' ? 'border-green-500 bg-green-50' : ''}
+          className={saveMessage.type === 'success' ? 'border-green-500 bg-indigo-50' : ''}
         >
           {saveMessage.type === 'success' ? (
             <CheckCircle2 className="w-4 h-4 text-green-600" />
@@ -452,7 +479,7 @@ export const SettingsPanel = ({ defaultTab = 'settings' }: SettingsPanelProps) =
       </Card>
 
       {/* Google Ads Connection */}
-      <Card className={`p-8 ${googleAdsConnected ? 'border-green-200 bg-green-50' : 'border-blue-200 bg-blue-50'}`}>
+      <Card className={`p-8 ${googleAdsConnected ? 'border-indigo-200 bg-indigo-50' : 'border-blue-200 bg-blue-50'}`}>
         <CardHeader className="pb-6 mb-6 border-b border-slate-200">
           <CardTitle className="flex items-center gap-3 text-2xl">
             <Globe className="w-6 h-6 text-blue-600" />
@@ -469,7 +496,7 @@ export const SettingsPanel = ({ defaultTab = 'settings' }: SettingsPanelProps) =
             </div>
           ) : googleAdsConnected ? (
             <>
-              <Alert className="border-green-200 bg-green-50">
+              <Alert className="border-indigo-200 bg-indigo-50">
                 <CheckCircle2 className="h-4 w-4 text-green-600" />
                 <AlertDescription className="text-green-800">
                   Your Google Ads account is connected
@@ -511,10 +538,13 @@ export const SettingsPanel = ({ defaultTab = 'settings' }: SettingsPanelProps) =
                 </AlertDescription>
               </Alert>
               
-              <Button onClick={connectGoogleAds} className="bg-blue-600 hover:bg-blue-700 text-white w-full">
-                <Globe className="w-4 h-4 mr-2" />
-                Connect Google Ads Account
-              </Button>
+              <div className="relative">
+                <Button disabled className="bg-gray-400 cursor-not-allowed text-white w-full opacity-70">
+                  <Globe className="w-4 h-4 mr-2" />
+                  Connect Google Ads Account
+                </Button>
+                <Badge className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs px-2 py-0.5">Coming Soon</Badge>
+              </div>
             </>
           )}
         </CardContent>
@@ -522,6 +552,55 @@ export const SettingsPanel = ({ defaultTab = 'settings' }: SettingsPanelProps) =
 
       {/* Theme Settings */}
       <ThemeSelector />
+
+      {/* Sidebar Behavior */}
+      <Card className="p-8">
+        <CardHeader className="pb-6 mb-6 border-b border-slate-200">
+          <CardTitle className="flex items-center gap-3 text-2xl">
+            {sidebarAutoClose ? (
+              <PanelLeftClose className="w-6 h-6 text-blue-600" />
+            ) : (
+              <PanelLeftOpen className="w-6 h-6 text-blue-600" />
+            )}
+            Sidebar Behavior
+          </CardTitle>
+          <CardDescription className="text-base mt-2">Configure how the sidebar behaves when you select a menu item</CardDescription>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
+            <div className="space-y-1">
+              <p className="font-semibold text-slate-900">Auto-Close Sidebar</p>
+              <p className="text-sm text-slate-600">Automatically close the sidebar after selecting a menu item</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const newValue = !sidebarAutoClose;
+                setSidebarAutoClose(newValue);
+                saveUserPreferences({ sidebarAutoClose: newValue });
+              }}
+              className={`h-10 px-4 gap-2 ${
+                sidebarAutoClose 
+                  ? 'bg-indigo-50 border-indigo-300 text-indigo-700 hover:bg-indigo-100' 
+                  : 'bg-slate-50 border-slate-300 text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              {sidebarAutoClose ? (
+                <>
+                  <PanelLeftClose className="w-4 h-4" />
+                  <span>ON</span>
+                </>
+              ) : (
+                <>
+                  <PanelLeftOpen className="w-4 h-4" />
+                  <span>OFF</span>
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
         </TabsContent>
         
@@ -549,11 +628,11 @@ const ThemeSelector = () => {
       'cyan-600': 'bg-cyan-600',
       'cyan-50': 'bg-cyan-50',
       'teal-600': 'bg-teal-600',
-      'teal-50': 'bg-teal-50',
+      'teal-50': 'bg-indigo-50',
       'emerald-600': 'bg-emerald-600',
-      'emerald-50': 'bg-emerald-50',
+      'emerald-50': 'bg-indigo-50',
       'green-600': 'bg-green-600',
-      'green-50': 'bg-green-50',
+      'green-50': 'bg-indigo-50',
       'lime-600': 'bg-lime-600',
       'lime-50': 'bg-lime-50',
       'orange-600': 'bg-orange-600',

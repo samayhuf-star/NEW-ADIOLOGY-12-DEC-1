@@ -3,27 +3,46 @@ import { Check } from 'lucide-react';
 
 const pricingPlans = [
   {
-    name: 'Starter',
-    price: '$99.99',
-    period: 'lifetime',
+    name: 'Basic',
+    price: '$69.99',
+    period: 'per month',
     icon: '🚀',
     color: 'from-blue-400 to-blue-600',
     bgColor: 'bg-blue-50',
     borderColor: 'border-blue-200',
     features: [
-      '15/month campaigns',
+      '25 campaigns per month',
       'AI keyword generation',
       'All campaign structures',
       'CSV export',
-      '24/7 priority support'
+      'Email support'
+    ],
+    buttonStyle: 'bg-white text-gray-900 border-2 border-gray-200 hover:border-gray-300',
+    popular: false
+  },
+  {
+    name: 'Basic (Yearly)',
+    price: '$671.90',
+    period: 'per year',
+    savings: 'Save 20%',
+    icon: '🚀',
+    color: 'from-blue-400 to-blue-600',
+    bgColor: 'bg-blue-50',
+    borderColor: 'border-blue-200',
+    features: [
+      '25 campaigns per month',
+      'AI keyword generation',
+      'All campaign structures',
+      'CSV export',
+      'Email support'
     ],
     buttonStyle: 'bg-white text-gray-900 border-2 border-gray-200 hover:border-gray-300',
     popular: false
   },
   {
     name: 'Pro',
-    price: '$199',
-    period: 'lifetime',
+    price: '$129.99',
+    period: 'per month',
     icon: '⚡',
     color: 'from-purple-500 to-purple-700',
     bgColor: 'bg-purple-50',
@@ -39,15 +58,16 @@ const pricingPlans = [
     popular: true
   },
   {
-    name: 'Growth',
-    price: '$49.99',
-    period: 'per month',
-    icon: '📈',
-    color: 'from-green-400 to-green-600',
-    bgColor: 'bg-green-50',
-    borderColor: 'border-green-200',
+    name: 'Pro (Yearly)',
+    price: '$1,247.90',
+    period: 'per year',
+    savings: 'Save 20%',
+    icon: '⚡',
+    color: 'from-purple-500 to-purple-700',
+    bgColor: 'bg-purple-50',
+    borderColor: 'border-purple-300',
     features: [
-      '25/month campaigns',
+      'Unlimited campaigns',
       'AI keyword generation',
       'All campaign structures',
       'CSV export',
@@ -57,15 +77,15 @@ const pricingPlans = [
     popular: false
   },
   {
-    name: 'Enterprise',
+    name: 'Lifetime',
     price: '$99.99',
-    period: 'per month',
+    period: 'one-time',
     icon: '👑',
     color: 'from-pink-500 to-purple-600',
     bgColor: 'bg-pink-50',
     borderColor: 'border-pink-200',
     features: [
-      'Unlimited campaigns',
+      'Unlimited campaigns forever',
       'AI keyword generation',
       'All campaign structures',
       'CSV export',
@@ -100,8 +120,8 @@ export function Pricing({ onSelectPlan }: PricingProps) {
         </motion.div>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {pricingPlans.filter(plan => plan.period !== 'lifetime').map((plan, index) => (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
+          {pricingPlans.map((plan, index) => (
             <motion.div
               key={plan.name}
               initial={{ opacity: 0, y: 30 }}
@@ -138,9 +158,17 @@ export function Pricing({ onSelectPlan }: PricingProps) {
                 <div className="text-center mb-2">
                   <span className="text-gray-900 text-3xl">{plan.price}</span>
                 </div>
-                <div className="text-gray-500 text-sm text-center mb-6">
+                <div className="text-gray-500 text-sm text-center mb-2">
                   {plan.period}
                 </div>
+                {(plan as any).savings && (
+                  <div className="text-center mb-4">
+                    <span className="inline-block px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                      {(plan as any).savings}
+                    </span>
+                  </div>
+                )}
+                {!(plan as any).savings && <div className="mb-4" />}
 
                 {/* Features */}
                 <div className="space-y-3 mb-6 flex-grow">
@@ -160,10 +188,11 @@ export function Pricing({ onSelectPlan }: PricingProps) {
                     if (onSelectPlan) {
                       // Map plan names to price IDs - these should match your Stripe price IDs
                       const priceIdMap: Record<string, { priceId: string; amount: number; isSubscription: boolean }> = {
-                        'Starter': { priceId: 'price_starter_lifetime', amount: 9999, isSubscription: false },
-                        'Pro': { priceId: 'price_pro_lifetime', amount: 19900, isSubscription: false },
-                        'Growth': { priceId: 'price_growth_monthly', amount: 4999, isSubscription: true },
-                        'Enterprise': { priceId: 'price_enterprise_monthly', amount: 9999, isSubscription: true }
+                        'Basic': { priceId: 'price_basic_monthly', amount: 6999, isSubscription: true },
+                        'Basic (Yearly)': { priceId: 'price_basic_yearly', amount: 67190, isSubscription: true },
+                        'Pro': { priceId: 'price_pro_monthly', amount: 12999, isSubscription: true },
+                        'Pro (Yearly)': { priceId: 'price_pro_yearly', amount: 124790, isSubscription: true },
+                        'Lifetime': { priceId: 'price_lifetime', amount: 9999, isSubscription: false }
                       };
                       const planData = priceIdMap[plan.name] || { priceId: '', amount: 0, isSubscription: false };
                       onSelectPlan(plan.name, planData.priceId, planData.amount, planData.isSubscription);

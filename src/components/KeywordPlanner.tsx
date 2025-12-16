@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
+import { TerminalCard, TerminalLine } from './ui/terminal-card';
 import { generateKeywords as generateKeywordsFromGoogleAds } from '../utils/api/googleAds';
 import { getKeywordIdeas, getKeywordMetrics, KeywordMetrics } from '../utils/keywordPlannerApi';
 import { historyService } from '../utils/historyService';
@@ -932,6 +933,27 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                     </p>
                 </div>
 
+                {/* Terminal-Style Stats */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+                    <TerminalCard title="Keyword Statistics" showDots={true} variant="compact">
+                        <div className="space-y-1.5">
+                            <TerminalLine prefix="$" label="keywords_generated:" value={`${generatedKeywords.length}`} valueColor="green" />
+                            <TerminalLine prefix="$" label="seed_keywords:" value={`${seedKeywords.split(',').filter(s => s.trim()).length}`} valueColor="cyan" />
+                            <TerminalLine prefix="$" label="negative_keywords:" value={`${negativeKeywords.split('\n').filter(s => s.trim()).length}`} valueColor="yellow" />
+                            <TerminalLine prefix="$" label="saved_lists:" value={`${savedLists.length}`} valueColor="purple" />
+                        </div>
+                    </TerminalCard>
+
+                    <TerminalCard title="System Status" showDots={true} variant="compact">
+                        <div className="space-y-1.5">
+                            <TerminalLine prefix=">" label="api_status:" value={apiStatus === 'ok' ? 'CONNECTED' : apiStatus === 'error' ? 'FALLBACK' : 'CHECKING...'} valueColor={apiStatus === 'ok' ? 'green' : apiStatus === 'error' ? 'yellow' : 'slate'} />
+                            <TerminalLine prefix=">" label="data_source:" value={dataSource === 'google_ads_api' ? 'GOOGLE_ADS_API' : dataSource === 'fallback' ? 'LOCAL_FALLBACK' : 'LOCAL'} valueColor={dataSource === 'google_ads_api' ? 'green' : 'yellow'} />
+                            <TerminalLine prefix=">" label="match_types:" value={`[${matchTypes.broad ? 'B' : '-'}${matchTypes.phrase ? 'P' : '-'}${matchTypes.exact ? 'E' : '-'}]`} valueColor="cyan" />
+                            <TerminalLine prefix=">" label="metrics:" value={showMetrics ? 'ENABLED' : 'DISABLED'} valueColor={showMetrics ? 'green' : 'slate'} />
+                        </div>
+                    </TerminalCard>
+                </div>
+
                 {/* Tabs */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
                     <TabsList className="bg-gray-100 border border-gray-200 p-1 rounded-xl">
@@ -1040,7 +1062,7 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                     onClick={() => setMatchTypes(prev => ({...prev, exact: !prev.exact}))}
                                                     className={`cursor-pointer p-3 rounded-xl border transition-all duration-300 ${
                                                         matchTypes.exact 
-                                                            ? 'bg-emerald-50 border-emerald-400 shadow-lg shadow-emerald-500/10' 
+                                                            ? 'bg-indigo-50 border-emerald-400 shadow-lg shadow-emerald-500/10' 
                                                             : 'bg-gray-50 border-gray-200 hover:border-gray-300'
                                                     }`}
                                                 >
@@ -1049,10 +1071,10 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                             id="exact-planner" 
                                                             checked={matchTypes.exact}
                                                             onCheckedChange={(c: boolean) => setMatchTypes(prev => ({...prev, exact: c as boolean}))}
-                                                            className="border-emerald-400 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+                                                            className="border-emerald-400 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-emerald-500"
                                                         />
                                                     </div>
-                                                    <span className={`text-xs font-medium ${matchTypes.exact ? 'text-emerald-700' : 'text-gray-500'}`}>
+                                                    <span className={`text-xs font-medium ${matchTypes.exact ? 'text-indigo-700' : 'text-gray-500'}`}>
                                                         [Exact]
                                                     </span>
                                                 </div>
@@ -1140,7 +1162,7 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                     </Button>
                                                     <Badge className={`text-xs px-2.5 py-1 rounded-full font-medium border-0 ${
                                                         dataSource === 'google_ads_api' 
-                                                            ? 'bg-emerald-100 text-emerald-700' 
+                                                            ? 'bg-indigo-100 text-indigo-700' 
                                                             : dataSource === 'fallback' 
                                                                 ? 'bg-amber-100 text-amber-700' 
                                                                 : 'bg-gray-100 text-gray-600'
@@ -1212,16 +1234,14 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                     </Button>
                                                     <Button
                                                         onClick={() => {
+                                                            const keywordsForSeed = generatedKeywords.slice(0, 20);
                                                             const event = new CustomEvent('navigate', { 
                                                                 detail: { 
                                                                     tab: 'builder-3',
                                                                     data: {
-                                                                        selectedKeywords: generatedKeywords,
-                                                                        seedKeywords: seedKeywords,
+                                                                        seedKeywords: keywordsForSeed,
                                                                         negativeKeywords: negativeKeywords,
-                                                                        matchTypes: matchTypes,
-                                                                        structure: 'SKAG',
-                                                                        skipToAdsGeneration: true
+                                                                        startAtStep: 1
                                                                     }
                                                                 } 
                                                             });
@@ -1284,7 +1304,7 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                                                                 ? 'bg-rose-100 text-rose-700' 
                                                                                 : metrics.competition === 'MEDIUM' 
                                                                                     ? 'bg-amber-100 text-amber-700' 
-                                                                                    : 'bg-emerald-100 text-emerald-700'
+                                                                                    : 'bg-indigo-100 text-indigo-700'
                                                                         }`}>
                                                                             {metrics.competition || 'Low'}
                                                                         </span>

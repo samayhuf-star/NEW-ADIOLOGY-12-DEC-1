@@ -229,18 +229,18 @@ export const BillingPage: React.FC<BillingPageProps> = ({ onBack }) => {
               }`}
             >
               Yearly
-              <span className="ml-2 text-xs text-green-600 font-semibold">Save 17%</span>
+              <span className="ml-2 text-xs text-indigo-600 font-semibold">Save 17%</span>
             </button>
           </div>
         </div>
 
         {currentPlan !== 'free' && (
-          <div className="mb-8 p-4 bg-green-50 border border-green-200 rounded-lg text-center">
+          <div className="mb-8 p-4 bg-indigo-50 border border-indigo-200 rounded-lg text-center">
             <p className="text-green-800">
               You're currently on the <span className="font-semibold capitalize">{currentPlan}</span> plan.
               <button
                 onClick={handleManageBilling}
-                className="ml-2 text-green-600 underline hover:text-green-700"
+                className="ml-2 text-indigo-600 underline hover:text-indigo-700"
               >
                 Manage billing
               </button>

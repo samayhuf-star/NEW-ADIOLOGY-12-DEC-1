@@ -520,7 +520,7 @@ export const KeywordPlannerSelectable = ({
                                     onChange={(e) => {
                                         setMatchTypes(prev => ({...prev, broad: e.target.checked}));
                                     }}
-                                    className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 focus:ring-2 cursor-pointer"
+                                    className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-teal-500 focus:ring-2 cursor-pointer"
                                 />
                                 <label htmlFor="broad-planner" className="text-sm text-slate-600 cursor-pointer select-none">
                                     Broad Match
@@ -534,7 +534,7 @@ export const KeywordPlannerSelectable = ({
                                     onChange={(e) => {
                                         setMatchTypes(prev => ({...prev, phrase: e.target.checked}));
                                     }}
-                                    className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 focus:ring-2 cursor-pointer"
+                                    className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-teal-500 focus:ring-2 cursor-pointer"
                                 />
                                 <label htmlFor="phrase-planner" className="text-sm text-slate-600 cursor-pointer select-none">
                                     Phrase Match "keyword"
@@ -548,7 +548,7 @@ export const KeywordPlannerSelectable = ({
                                     onChange={(e) => {
                                         setMatchTypes(prev => ({...prev, exact: e.target.checked}));
                                     }}
-                                    className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 focus:ring-2 cursor-pointer"
+                                    className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-teal-500 focus:ring-2 cursor-pointer"
                                 />
                                 <label htmlFor="exact-planner" className="text-sm text-slate-600 cursor-pointer select-none">
                                     Exact Match [keyword]
@@ -600,7 +600,7 @@ export const KeywordPlannerSelectable = ({
                                     }
                                 }}
                                 placeholder="Enter negative keywords (one per line)&#10;e.g.&#10;cheap&#10;discount&#10;reviews&#10;job&#10;free"
-                                className="w-full h-full border-0 font-mono text-xs resize-none p-3 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 bg-transparent"
+                                className="w-full h-full border-0 font-mono text-xs resize-none p-3 focus:ring-2 focus:ring-teal-500 focus:ring-offset-0 bg-transparent"
                                 style={{ minHeight: '280px', maxHeight: '280px', overflowY: 'auto' }}
                             />
                                                 </div>
@@ -755,7 +755,7 @@ export const KeywordPlannerSelectable = ({
                                     </div>
                                     <div className="bg-white/80 rounded-lg p-3 border border-indigo-100">
                                         <div className="text-xs text-slate-500 mb-1">Phrase/Exact</div>
-                                        <div className="text-xl font-bold text-green-600">
+                                        <div className="text-xl font-bold text-indigo-600">
                                             {generatedKeywords.filter(k => {
                                                 const kw = typeof k === 'string' ? k : (k?.text || k?.keyword || String(k || ''));
                                                 return kw.startsWith('"') || kw.startsWith('[');
@@ -774,7 +774,7 @@ export const KeywordPlannerSelectable = ({
                                             </span>
                                         )}
                                         {matchTypes.phrase && (
-                                            <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">
+                                            <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-medium">
                                                 Phrase Match
                                             </span>
                                         )}
@@ -877,11 +877,11 @@ export const KeywordPlannerSelectable = ({
                                                         toggleKeyword(keyword);
                                                     }
                                                 }}
-                                                className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 focus:ring-2 cursor-pointer"
+                                                className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-teal-500 focus:ring-2 cursor-pointer"
                                             />
                                             <label 
                                                 htmlFor={`keyword-checkbox-${idx}`}
-                                                className={`flex-1 cursor-pointer select-none ${isSelected ? 'text-indigo-700 font-medium' : 'text-slate-700'}`}
+                                                className={`flex-1 cursor-pointer select-none ${isSelected ? 'text-green-700 font-medium' : 'text-slate-700'}`}
                                             >
                                                 {typeof keyword === 'string' ? keyword : (keyword?.text || keyword?.keyword || String(keyword || ''))}
                                             </label>

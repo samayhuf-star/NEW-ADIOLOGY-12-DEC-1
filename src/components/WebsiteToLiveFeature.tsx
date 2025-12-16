@@ -133,7 +133,7 @@ export function WebsiteToLiveFeature() {
                         </div>
                         
                         {/* Time Badge */}
-                        <div className="inline-block px-3 py-1 bg-green-50 text-green-600 rounded-full text-xs border border-green-200 mt-2">
+                        <div className="inline-block px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-xs border border-indigo-200 mt-2">
                           ⚡ {step.time}
                         </div>
                       </div>
