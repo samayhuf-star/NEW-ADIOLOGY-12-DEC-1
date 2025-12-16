@@ -2614,7 +2614,7 @@ app.get('/api/dashboard/:userId', async (c) => {
     
     // Get campaign history count
     const campaignsResult = await pool.query(
-      `SELECT COUNT(*) as count FROM campaign_history WHERE user_id = $1`,
+      `SELECT COUNT(*) as count FROM adiology_campaigns WHERE user_id = $1`,
       [userId]
     );
     
@@ -2627,7 +2627,7 @@ app.get('/api/dashboard/:userId', async (c) => {
     // Get recent campaigns (last 10)
     const recentCampaignsResult = await pool.query(
       `SELECT id, campaign_name, structure_type, step, created_at, updated_at
-       FROM campaign_history 
+       FROM adiology_campaigns 
        WHERE user_id = $1 
        ORDER BY updated_at DESC 
        LIMIT 10`,

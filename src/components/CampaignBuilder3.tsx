@@ -55,8 +55,6 @@ import { GEO_PRESETS, US_STATES_ALL, US_CITIES_TOP_500, US_ZIP_CODES_EXTENDED, g
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 import { generateDKIAdWithAI } from '../utils/dkiAdGeneratorAI';
 import { CampaignFlowDiagram } from './CampaignFlowDiagram';
-import { TerminalCard, TerminalLine } from './ui/terminal-card';
-import JSZip from 'jszip';
 
 // Campaign Structure Types (14 structures)
 const CAMPAIGN_STRUCTURES = [
@@ -2853,6 +2851,18 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                   </div>
                 )}
               </Card>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute -top-8 left-0 opacity-0 group-hover:opacity-100 transition-opacity text-xs h-6"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedStructureForDiagram({ id: structure.id, name: structure.name });
+                  setShowFlowDiagram(true);
+                }}
+              >
+                View Structure
+              </Button>
             </div>
           );
         })}
@@ -3505,56 +3515,57 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
           </TerminalCard>
         </div>
 
-        {/* Create Ads & Extensions - Compact Inline */}
-        <div className="mb-6 p-4 bg-white rounded-xl border border-slate-200">
-          <div className="space-y-2">
-            <div className="flex items-center flex-wrap gap-1.5">
-              <span className="text-sm font-semibold text-slate-700 whitespace-nowrap">Create Ads (Max 3):</span>
-              <Button 
-                size="sm"
-                className="bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 disabled:cursor-not-allowed text-xs px-2 py-1 h-7"
-                onClick={() => handleAddNewAd('rsa')}
-                disabled={loading || campaignData.ads.length >= 3 || campaignData.ads.some(ad => ad.type === 'rsa' || ad.adType === 'RSA')}
-              >
-                <Plus className="mr-1 w-3 h-3" /> RSA
-              </Button>
-              <Button 
-                size="sm"
-                className="bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 disabled:cursor-not-allowed text-xs px-2 py-1 h-7"
-                onClick={() => handleAddNewAd('dki')}
-                disabled={loading || campaignData.ads.length >= 3 || campaignData.ads.some(ad => ad.type === 'dki' || ad.adType === 'DKI')}
-              >
-                <Plus className="mr-1 w-3 h-3" /> DKI
-              </Button>
-              <Button 
-                size="sm"
-                className="bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 disabled:cursor-not-allowed text-xs px-2 py-1 h-7"
-                onClick={() => handleAddNewAd('call')}
-                disabled={loading || campaignData.ads.length >= 3 || campaignData.ads.some(ad => ad.type === 'call' || ad.adType === 'CallOnly')}
-              >
-                <Plus className="mr-1 w-3 h-3" /> CALL
-              </Button>
-            </div>
-            
-            <div className="flex items-center flex-wrap gap-1">
-              <span className="text-sm font-semibold text-indigo-700 whitespace-nowrap">Extensions:</span>
-              {extensionTypes.map(ext => {
-                const Icon = ext.icon;
-                const shortLabel = ext.label.replace(' EXTENSION', '');
-                return (
-                  <Button
-                    key={ext.id}
-                    variant="outline"
+              {/* Create Ads & Extensions - Compact Inline */}
+              <div className="pt-2 space-y-1">
+                <div className="flex items-center flex-wrap gap-1.5">
+                  <span className="text-xs font-semibold text-blue-800 whitespace-nowrap">Create Ads (Max 3):</span>
+                  <Button 
                     size="sm"
-                    className="border-indigo-200 hover:bg-indigo-50 text-xs px-1.5 py-1 h-7"
-                    onClick={() => handleAddExtensionToAllAds(ext.id)}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 disabled:cursor-not-allowed text-xs px-2 py-0.5 h-6"
+                    onClick={() => handleAddNewAd('rsa')}
+                    disabled={loading || campaignData.ads.length >= 3 || campaignData.ads.some(ad => ad.type === 'rsa' || ad.adType === 'RSA')}
                   >
-                    <Plus className="mr-0.5 w-2.5 h-2.5" />
-                    <Icon className="mr-0.5 w-2.5 h-2.5" />
-                    {shortLabel}
+                    <Plus className="mr-1 w-3 h-3" /> RSA
                   </Button>
-                );
-              })}
+                  <Button 
+                    size="sm"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 disabled:cursor-not-allowed text-xs px-2 py-0.5 h-6"
+                    onClick={() => handleAddNewAd('dki')}
+                    disabled={loading || campaignData.ads.length >= 3 || campaignData.ads.some(ad => ad.type === 'dki' || ad.adType === 'DKI')}
+                  >
+                    <Plus className="mr-1 w-3 h-3" /> DKI
+                  </Button>
+                  <Button 
+                    size="sm"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 disabled:cursor-not-allowed text-xs px-2 py-0.5 h-6"
+                    onClick={() => handleAddNewAd('call')}
+                    disabled={loading || campaignData.ads.length >= 3 || campaignData.ads.some(ad => ad.type === 'call' || ad.adType === 'CallOnly')}
+                  >
+                    <Plus className="mr-1 w-3 h-3" /> CALL
+                  </Button>
+                </div>
+                
+                <div className="flex items-center flex-wrap gap-1">
+                  <span className="text-xs font-semibold text-purple-800 whitespace-nowrap">Extensions:</span>
+                  {extensionTypes.map(ext => {
+                    const Icon = ext.icon;
+                    const shortLabel = ext.label.replace(' EXTENSION', '');
+                    return (
+                      <Button
+                        key={ext.id}
+                        variant="outline"
+                        size="sm"
+                        className="border-purple-200 hover:bg-purple-50 text-xs px-1.5 py-0.5 h-6"
+                        onClick={() => handleAddExtensionToAllAds(ext.id)}
+                      >
+                        <Plus className="mr-0.5 w-2.5 h-2.5" />
+                        <Icon className="mr-0.5 w-2.5 h-2.5" />
+                        {shortLabel}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -4653,18 +4664,18 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                 </div>
 
                 {/* Keywords Logic */}
-                <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
+                <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
                   <h4 className="font-semibold text-purple-800 mb-2">{campaignData.selectedKeywords.length} Keywords</h4>
-                  <p className="text-sm text-indigo-700">
+                  <p className="text-sm text-purple-700">
                     Generated from {campaignData.seedKeywords.length} seed keywords using pattern expansion (modifiers, locations, intents). 
                     Match types: Broad, Phrase, Exact. Excludes {campaignData.negativeKeywords.length} negative keywords.
                   </p>
                 </div>
 
                 {/* Assets Logic */}
-                <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
-                  <h4 className="font-semibold text-indigo-800 mb-2">{campaignData.ads.reduce((total, ad) => total + (ad.extensions?.length || 0), 0)} Assets</h4>
-                  <p className="text-sm text-indigo-700">
+                <div className="bg-teal-50 rounded-lg p-4 border border-teal-200">
+                  <h4 className="font-semibold text-teal-800 mb-2">{campaignData.ads.reduce((total, ad) => total + (ad.extensions?.length || 0), 0)} Assets</h4>
+                  <p className="text-sm text-teal-700">
                     Ad extensions including sitelinks, callouts, structured snippets, and call extensions. 
                     These enhance ad visibility and click-through rates.
                   </p>
@@ -4672,12 +4683,12 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
               </div>
 
               {/* CSV Export Info */}
-              <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
+              <div className="bg-green-50 rounded-lg p-4 border border-green-200">
                 <h4 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
                   <Download className="w-4 h-4" />
                   CSV Export Format
                 </h4>
-                <p className="text-sm text-indigo-700">
+                <p className="text-sm text-green-700">
                   Master 183-column Google Ads Editor format. Includes campaign settings, ad groups, keywords, RSA ads, 
                   location targeting ({locationInfo.count} {locationInfo.type.toLowerCase()}), and all extensions. 
                   Ready for direct import into Google Ads Editor.
