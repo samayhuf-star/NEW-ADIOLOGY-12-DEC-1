@@ -1072,27 +1072,46 @@ function SocialProofSection() {
 function PricingSection({ onSelectPlan }: { onSelectPlan?: (planName: string, priceId: string, amount: number, isSubscription: boolean) => void }) {
   const pricingPlans = [
     {
-      name: 'Starter',
-      price: '$99.99',
-      period: 'lifetime',
+      name: 'Basic',
+      price: '$69.99',
+      period: 'per month',
       icon: '🚀',
       gradient: 'from-blue-400 to-blue-600',
       features: [
-        '15 campaigns per month',
+        '25 campaigns per month',
         'AI keyword generation',
         'All campaign structures',
         'CSV export to Google Ads',
         'Email support'
       ],
       popular: false,
-      priceId: 'price_starter_lifetime',
-      amount: 9999,
-      isSubscription: false
+      priceId: 'price_basic_monthly',
+      amount: 6999,
+      isSubscription: true
+    },
+    {
+      name: 'Basic (Yearly)',
+      price: '$671.90',
+      period: 'per year',
+      savings: 'Save 20%',
+      icon: '🚀',
+      gradient: 'from-blue-400 to-blue-600',
+      features: [
+        '25 campaigns per month',
+        'AI keyword generation',
+        'All campaign structures',
+        'CSV export to Google Ads',
+        'Email support'
+      ],
+      popular: false,
+      priceId: 'price_basic_yearly',
+      amount: 67190,
+      isSubscription: true
     },
     {
       name: 'Pro',
-      price: '$199',
-      period: 'lifetime',
+      price: '$129.99',
+      period: 'per month',
       icon: '⚡',
       gradient: 'from-purple-500 to-purple-700',
       features: [
@@ -1103,45 +1122,46 @@ function PricingSection({ onSelectPlan }: { onSelectPlan?: (planName: string, pr
         '24/7 priority support'
       ],
       popular: true,
-      priceId: 'price_pro_lifetime',
-      amount: 19900,
-      isSubscription: false
-    },
-    {
-      name: 'Growth',
-      price: '$49.99',
-      period: 'per month',
-      icon: '📈',
-      gradient: 'from-green-400 to-green-600',
-      features: [
-        '25 campaigns per month',
-        'AI keyword generation',
-        'All campaign structures',
-        'CSV export to Google Ads',
-        'Priority email support'
-      ],
-      popular: false,
-      priceId: 'price_growth_monthly',
-      amount: 4999,
+      priceId: 'price_pro_monthly',
+      amount: 12999,
       isSubscription: true
     },
     {
-      name: 'Enterprise',
-      price: '$99.99',
-      period: 'per month',
-      icon: '👑',
-      gradient: 'from-pink-500 to-purple-600',
+      name: 'Pro (Yearly)',
+      price: '$1,247.90',
+      period: 'per year',
+      savings: 'Save 20%',
+      icon: '⚡',
+      gradient: 'from-purple-500 to-purple-700',
       features: [
         'Unlimited campaigns',
         'AI keyword generation',
         'All campaign structures',
         'CSV export to Google Ads',
-        'Dedicated account manager'
+        '24/7 priority support'
       ],
       popular: false,
-      priceId: 'price_enterprise_monthly',
-      amount: 9999,
+      priceId: 'price_pro_yearly',
+      amount: 124790,
       isSubscription: true
+    },
+    {
+      name: 'Lifetime',
+      price: '$99.99',
+      period: 'one-time',
+      icon: '👑',
+      gradient: 'from-pink-500 to-purple-600',
+      features: [
+        'Unlimited campaigns forever',
+        'AI keyword generation',
+        'All campaign structures',
+        'CSV export to Google Ads',
+        '24/7 priority support'
+      ],
+      popular: false,
+      priceId: 'price_lifetime',
+      amount: 9999,
+      isSubscription: false
     }
   ];
 

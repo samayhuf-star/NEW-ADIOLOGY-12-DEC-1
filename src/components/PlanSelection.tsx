@@ -26,6 +26,28 @@ const pricingPlans = [
     isSubscription: true
   },
   {
+    name: 'Basic (Yearly)',
+    price: '$671.90',
+    period: 'per year',
+    savings: 'Save 20%',
+    icon: Rocket,
+    color: 'from-blue-400 to-blue-600',
+    bgColor: 'bg-blue-50',
+    borderColor: 'border-blue-200',
+    features: [
+      '25 campaigns per month',
+      'AI keyword generation',
+      'All campaign structures',
+      'CSV export',
+      'Email support'
+    ],
+    buttonStyle: 'bg-white text-gray-900 border-2 border-gray-200 hover:border-gray-300',
+    popular: false,
+    priceId: 'price_basic_yearly',
+    amount: 67190,
+    isSubscription: true
+  },
+  {
     name: 'Pro',
     price: '$129.99',
     period: 'per month',
@@ -44,6 +66,28 @@ const pricingPlans = [
     popular: true,
     priceId: 'price_pro_monthly',
     amount: 12999,
+    isSubscription: true
+  },
+  {
+    name: 'Pro (Yearly)',
+    price: '$1,247.90',
+    period: 'per year',
+    savings: 'Save 20%',
+    icon: Zap,
+    color: 'from-purple-500 to-purple-700',
+    bgColor: 'bg-purple-50',
+    borderColor: 'border-purple-300',
+    features: [
+      'Unlimited campaigns',
+      'AI keyword generation',
+      'All campaign structures',
+      'CSV export',
+      '24/7 priority support'
+    ],
+    buttonStyle: 'bg-white text-gray-900 border-2 border-gray-200 hover:border-gray-300',
+    popular: false,
+    priceId: 'price_pro_yearly',
+    amount: 124790,
     isSubscription: true
   },
   {

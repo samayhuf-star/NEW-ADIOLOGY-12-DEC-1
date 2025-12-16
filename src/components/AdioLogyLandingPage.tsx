@@ -164,9 +164,9 @@ function Features() {
 // Pricing Section
 function Pricing() {
   const plans = [
-    { name: 'Starter', price: '$99.99', period: 'lifetime', features: ['15/month campaigns', 'AI keyword generation', 'All structures'] },
-    { name: 'Pro', price: '$199', period: 'lifetime', features: ['Unlimited campaigns', 'AI keyword generation', 'All structures'], popular: true },
-    { name: 'Growth', price: '$49.99', period: 'per month', features: ['25/month campaigns', 'AI keyword generation', 'All structures'] },
+    { name: 'Basic', price: '$69.99', period: 'per month', features: ['25 campaigns/month', 'AI keyword generation', 'All structures'] },
+    { name: 'Pro', price: '$129.99', period: 'per month', features: ['Unlimited campaigns', 'AI keyword generation', 'All structures'], popular: true },
+    { name: 'Lifetime', price: '$99.99', period: 'one-time', features: ['Unlimited forever', 'AI keyword generation', 'All structures'] },
   ];
 
   return (
