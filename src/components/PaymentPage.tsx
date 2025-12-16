@@ -528,12 +528,21 @@ export const PaymentPage: React.FC<PaymentPageProps> = ({
   onSuccess,
 }) => {
   const [stripePromise, setStripePromise] = useState<Promise<any> | null>(null);
-  const plan = PLAN_DETAILS[planName] || {
+  
+  // Use passed priceId and amount directly (from dynamic API fetch)
+  // Fall back to PLAN_DETAILS only for features display
+  const planDetails = PLAN_DETAILS[planName];
+  const plan: PlanDetails = {
     name: planName,
-    price: `$${amount.toFixed(2)}`,
-    priceId,
+    price: `$${(amount / 100).toFixed(2)}`,
+    priceId: priceId, // Use the real priceId passed from PlanSelection
     isSubscription,
-    features: []
+    amount,
+    features: planDetails?.features || [
+      'Full campaign access',
+      'Email support',
+      'All core features'
+    ]
   };
 
   useEffect(() => {

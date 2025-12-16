@@ -1,147 +1,104 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Check, ArrowLeft, Sparkle, Crown, Zap, Rocket } from 'lucide-react';
+import { Check, ArrowLeft, Sparkle, Crown, Zap, Rocket, Loader2 } from 'lucide-react';
 import { Button } from './ui/button';
+import { api } from '../utils/api';
 
-const pricingPlans = [
-  {
-    name: 'Basic',
-    price: '$69.99',
+interface StripePrice {
+  id: string;
+  unit_amount: number;
+  currency: string;
+  recurring: { interval: string } | null;
+}
+
+interface StripeProduct {
+  id: string;
+  name: string;
+  description: string;
+  prices: StripePrice[];
+}
+
+interface PlanData {
+  name: string;
+  displayName: string;
+  price: string;
+  period: string;
+  priceId: string;
+  amount: number;
+  isSubscription: boolean;
+  features: string[];
+  icon: any;
+  color: string;
+  borderColor: string;
+  buttonStyle: string;
+  popular: boolean;
+  savings?: string;
+}
+
+const planConfig: Record<string, Omit<PlanData, 'price' | 'priceId' | 'amount'>> = {
+  'Basic Monthly': {
+    name: 'Basic Monthly',
+    displayName: 'Basic',
     period: 'per month',
-    icon: Rocket,
-    color: 'from-blue-400 to-blue-600',
-    bgColor: 'bg-blue-50',
-    borderColor: 'border-blue-200',
+    isSubscription: true,
     features: [
       '10 Active Campaigns',
       '5 Draft Campaigns',
       '50 Campaign Exports/Month',
       '500 Keyword Credits/Month',
       '10 Landing Page Templates',
-      '5 Active/Saved Landing Pages',
-      '3 Connected Domains',
-      '10 Campaign Presets',
       '2 User Seats',
-      'Email Support',
-      'Raise Tickets'
+      'Email Support'
     ],
-    buttonStyle: 'bg-white text-gray-900 border-2 border-gray-200 hover:border-gray-300',
-    popular: false,
-    priceId: 'price_basic_monthly',
-    amount: 6999,
-    isSubscription: true
-  },
-  {
-    name: 'Basic (Yearly)',
-    price: '$671.90',
-    period: 'per year',
-    savings: 'Save 20%',
     icon: Rocket,
     color: 'from-blue-400 to-blue-600',
-    bgColor: 'bg-blue-50',
     borderColor: 'border-blue-200',
-    features: [
-      '10 Active Campaigns',
-      '5 Draft Campaigns',
-      '50 Campaign Exports/Month',
-      '500 Keyword Credits/Month',
-      '10 Landing Page Templates',
-      '5 Active/Saved Landing Pages',
-      '3 Connected Domains',
-      '10 Campaign Presets',
-      '2 User Seats',
-      'Email Support',
-      'Raise Tickets'
-    ],
     buttonStyle: 'bg-white text-gray-900 border-2 border-gray-200 hover:border-gray-300',
-    popular: false,
-    priceId: 'price_basic_yearly',
-    amount: 67190,
-    isSubscription: true
+    popular: false
   },
-  {
-    name: 'Pro',
-    price: '$129.99',
+  'Pro Monthly': {
+    name: 'Pro Monthly',
+    displayName: 'Pro',
     period: 'per month',
-    icon: Zap,
-    color: 'from-purple-500 to-purple-700',
-    bgColor: 'bg-purple-50',
-    borderColor: 'border-purple-300',
+    isSubscription: true,
     features: [
       '50 Active Campaigns',
       'Unlimited Draft Campaigns',
       'Unlimited Campaign Exports',
       '2,500 Keyword Credits/Month',
       '50+ Landing Page Templates',
-      '50+ Active/Saved Landing Pages',
-      '15 Connected Domains',
-      '50+ Campaign Presets',
       '5 User Seats',
-      'Email Support',
-      'Raise Tickets'
+      'Email Support'
     ],
+    icon: Zap,
+    color: 'from-purple-500 to-purple-700',
+    borderColor: 'border-purple-300',
     buttonStyle: 'bg-gradient-to-r from-purple-500 to-purple-700 text-white hover:shadow-xl',
-    popular: true,
-    priceId: 'price_pro_monthly',
-    amount: 12999,
-    isSubscription: true
+    popular: true
   },
-  {
-    name: 'Pro (Yearly)',
-    price: '$1,247.90',
-    period: 'per year',
-    savings: 'Save 20%',
-    icon: Zap,
-    color: 'from-purple-500 to-purple-700',
-    bgColor: 'bg-purple-50',
-    borderColor: 'border-purple-300',
-    features: [
-      '50 Active Campaigns',
-      'Unlimited Draft Campaigns',
-      'Unlimited Campaign Exports',
-      '2,500 Keyword Credits/Month',
-      '50+ Landing Page Templates',
-      '50+ Active/Saved Landing Pages',
-      '15 Connected Domains',
-      '50+ Campaign Presets',
-      '5 User Seats',
-      'Email Support',
-      'Raise Tickets'
-    ],
-    buttonStyle: 'bg-white text-gray-900 border-2 border-gray-200 hover:border-gray-300',
-    popular: false,
-    priceId: 'price_pro_yearly',
-    amount: 124790,
-    isSubscription: true
-  },
-  {
+  'Lifetime': {
     name: 'Lifetime',
-    price: '$99.99',
+    displayName: 'Lifetime',
     period: 'one-time',
-    icon: Crown,
-    color: 'from-pink-500 to-purple-600',
-    bgColor: 'bg-pink-50',
-    borderColor: 'border-pink-200',
+    isSubscription: false,
     features: [
       '5 Active Campaigns',
       '3 Draft Campaigns',
       '25 Campaign Exports/Month',
       '250 Keyword Credits/Month',
       '5 Landing Page Templates',
-      '3 Active/Saved Landing Pages',
-      '2 Connected Domains',
-      '5 Campaign Presets',
       '1 User Seat',
-      'Email Support',
-      'Raise Tickets'
+      'Email Support'
     ],
+    icon: Crown,
+    color: 'from-pink-500 to-purple-600',
+    borderColor: 'border-pink-200',
     buttonStyle: 'bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:shadow-xl',
-    popular: false,
-    priceId: 'price_lifetime',
-    amount: 9999,
-    isSubscription: false
+    popular: false
   }
-];
+};
+
+const planOrder = ['Basic Monthly', 'Pro Monthly', 'Lifetime'];
 
 interface PlanSelectionProps {
   onSelectPlan: (planName: string, priceId: string, amount: number, isSubscription: boolean) => void;
@@ -154,6 +111,75 @@ export const PlanSelection: React.FC<PlanSelectionProps> = ({
   onBack,
   userName 
 }) => {
+  const [plans, setPlans] = useState<PlanData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchPrices();
+  }, []);
+
+  const fetchPrices = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/stripe/products');
+      const products: StripeProduct[] = response.products || [];
+      
+      const loadedPlans: PlanData[] = [];
+      
+      for (const productName of planOrder) {
+        const config = planConfig[productName];
+        if (!config) continue;
+        
+        const product = products.find(p => p.name === productName);
+        if (product && product.prices && product.prices.length > 0) {
+          const price = product.prices[0];
+          loadedPlans.push({
+            ...config,
+            price: `$${(price.unit_amount / 100).toFixed(2)}`,
+            priceId: price.id,
+            amount: price.unit_amount
+          });
+        }
+      }
+      
+      if (loadedPlans.length === 0) {
+        setError('No pricing plans available. Please try again later.');
+      } else {
+        setPlans(loadedPlans);
+      }
+    } catch (err) {
+      console.error('Error fetching prices:', err);
+      setError('Failed to load pricing plans. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-800 via-indigo-800 to-purple-800 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-white animate-spin mx-auto mb-4" />
+          <p className="text-white text-lg">Loading plans...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-800 via-indigo-800 to-purple-800 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-white text-lg mb-4">{error}</p>
+          <Button onClick={fetchPrices} className="bg-white text-gray-900">
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-800 via-indigo-800 to-purple-800 p-4 md:p-8">
       <div className="absolute inset-0 overflow-hidden">
@@ -197,7 +223,7 @@ export const PlanSelection: React.FC<PlanSelectionProps> = ({
         </motion.div>
 
         <div className="grid md:grid-cols-3 gap-6 mb-8">
-          {pricingPlans.map((plan, index) => {
+          {plans.map((plan, index) => {
             const Icon = plan.icon;
             return (
               <motion.div
@@ -225,7 +251,7 @@ export const PlanSelection: React.FC<PlanSelectionProps> = ({
                   </div>
 
                   <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
-                    {plan.name}
+                    {plan.displayName}
                   </h3>
 
                   <div className="text-center mb-2">
@@ -247,10 +273,10 @@ export const PlanSelection: React.FC<PlanSelectionProps> = ({
                   </div>
 
                   <Button
-                    onClick={() => onSelectPlan(plan.name, plan.priceId, plan.amount, plan.isSubscription)}
+                    onClick={() => onSelectPlan(plan.displayName, plan.priceId, plan.amount, plan.isSubscription)}
                     className={`w-full py-3 rounded-xl transition-all font-semibold ${plan.buttonStyle}`}
                   >
-                    Select {plan.name}
+                    Select {plan.displayName}
                   </Button>
                 </div>
               </motion.div>
