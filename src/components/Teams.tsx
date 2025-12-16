@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Users, UserPlus, Mail, Trash2, Crown, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Users, UserPlus, Mail, Trash2, Crown, Clock, CheckCircle, XCircle, AlertCircle, Send } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Input } from './ui/input';
@@ -31,6 +31,13 @@ interface TeamMember {
   invitedAt?: string;
 }
 
+interface UserProfile {
+  id: string;
+  email?: string;
+  full_name?: string;
+  subscription_plan?: string;
+}
+
 interface PlanLimits {
   [key: string]: number;
 }
@@ -57,7 +64,8 @@ export const Teams: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [userPlan, setUserPlan] = useState<string>('free');
-  const [currentUserEmail, setCurrentUserEmail] = useState<string>('');
+  
+  const cachedProfileRef = useRef<UserProfile | null>(null);
 
   useEffect(() => {
     loadTeamData();
@@ -67,21 +75,23 @@ export const Teams: React.FC = () => {
     try {
       const profile = await getCurrentUserProfile();
       if (profile) {
-        setCurrentUserEmail(profile.email || '');
-        setUserPlan(profile.subscription_tier || 'free');
+        cachedProfileRef.current = profile;
+        setUserPlan(profile.subscription_plan || 'free');
         
         const savedTeam = localStorage.getItem(`team_members_${profile.id}`);
         if (savedTeam) {
           setTeamMembers(JSON.parse(savedTeam));
         } else {
-          setTeamMembers([{
+          const ownerMember: TeamMember = {
             id: profile.id,
             email: profile.email || '',
             name: profile.full_name || profile.email || 'You',
             role: 'owner',
             status: 'active',
             joinedAt: new Date().toISOString(),
-          }]);
+          };
+          setTeamMembers([ownerMember]);
+          localStorage.setItem(`team_members_${profile.id}`, JSON.stringify([ownerMember]));
         }
       }
     } catch (err) {
@@ -89,18 +99,16 @@ export const Teams: React.FC = () => {
     }
   };
 
-  const saveTeamData = async (members: TeamMember[]) => {
-    try {
-      const profile = await getCurrentUserProfile();
-      if (profile) {
-        localStorage.setItem(`team_members_${profile.id}`, JSON.stringify(members));
-      }
-    } catch (err) {
-      console.error('Error saving team data:', err);
+  const saveTeamData = (members: TeamMember[]) => {
+    const profile = cachedProfileRef.current;
+    if (profile) {
+      localStorage.setItem(`team_members_${profile.id}`, JSON.stringify(members));
     }
   };
 
   const teamLimit = getTeamLimit(userPlan);
+  const activeMembers = teamMembers.filter(m => m.status === 'active');
+  const pendingInvitations = teamMembers.filter(m => m.status === 'pending');
   const currentTeamSize = teamMembers.length;
   const canInviteMore = currentTeamSize < teamLimit;
 
@@ -142,7 +150,7 @@ export const Teams: React.FC = () => {
 
       const updatedMembers = [...teamMembers, newMember];
       setTeamMembers(updatedMembers);
-      await saveTeamData(updatedMembers);
+      saveTeamData(updatedMembers);
 
       setSuccess(`Invitation sent to ${inviteEmail}`);
       setInviteEmail('');
@@ -157,7 +165,7 @@ export const Teams: React.FC = () => {
     }
   };
 
-  const handleRemoveMember = async (memberId: string) => {
+  const handleRemoveMember = (memberId: string) => {
     const member = teamMembers.find(m => m.id === memberId);
     if (!member) return;
 
@@ -166,29 +174,27 @@ export const Teams: React.FC = () => {
       return;
     }
 
-    try {
-      const updatedMembers = teamMembers.filter(m => m.id !== memberId);
-      setTeamMembers(updatedMembers);
-      await saveTeamData(updatedMembers);
-      setSuccess(`${member.email} has been removed from the team`);
-      setTimeout(() => setSuccess(null), 5000);
-    } catch (err) {
-      setError('Failed to remove team member');
-    }
+    const updatedMembers = teamMembers.filter(m => m.id !== memberId);
+    setTeamMembers(updatedMembers);
+    saveTeamData(updatedMembers);
+    
+    const action = member.status === 'pending' ? 'cancelled' : 'removed';
+    setSuccess(`${member.email} has been ${action}`);
+    setTimeout(() => setSuccess(null), 5000);
+  };
+
+  const handleResendInvite = (memberId: string) => {
+    const member = teamMembers.find(m => m.id === memberId);
+    if (!member || member.status !== 'pending') return;
+
+    setSuccess(`Invitation resent to ${member.email}`);
+    setTimeout(() => setSuccess(null), 5000);
   };
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'owner': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
       case 'admin': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
-    }
-  };
-
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'pending': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
     }
   };
@@ -239,9 +245,9 @@ export const Teams: React.FC = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Team Members</CardTitle>
+              <CardTitle>Active Team Members</CardTitle>
               <CardDescription>
-                {currentTeamSize} of {teamLimit} members ({userPlan} plan)
+                {currentTeamSize} of {teamLimit} seats used ({userPlan === 'free' ? 'Free' : userPlan} plan)
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
@@ -256,7 +262,7 @@ export const Teams: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {teamMembers.map((member) => (
+            {activeMembers.map((member) => (
               <div 
                 key={member.id}
                 className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700"
@@ -280,10 +286,9 @@ export const Teams: React.FC = () => {
                   <Badge className={getRoleBadgeColor(member.role)}>
                     {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
                   </Badge>
-                  <Badge className={getStatusBadgeColor(member.status)}>
-                    {member.status === 'pending' && <Clock className="h-3 w-3 mr-1" />}
-                    {member.status === 'active' && <CheckCircle className="h-3 w-3 mr-1" />}
-                    {member.status.charAt(0).toUpperCase() + member.status.slice(1)}
+                  <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Active
                   </Badge>
                   {member.role !== 'owner' && (
                     <Button
@@ -298,9 +303,75 @@ export const Teams: React.FC = () => {
                 </div>
               </div>
             ))}
+            {activeMembers.length === 0 && (
+              <p className="text-center text-gray-500 dark:text-gray-400 py-4">No active team members</p>
+            )}
           </div>
         </CardContent>
       </Card>
+
+      {pendingInvitations.length > 0 && (
+        <Card className="border-yellow-200 dark:border-yellow-800">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+              <CardTitle className="text-yellow-800 dark:text-yellow-200">Pending Invitations</CardTitle>
+            </div>
+            <CardDescription>
+              {pendingInvitations.length} invitation{pendingInvitations.length !== 1 ? 's' : ''} awaiting response
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {pendingInvitations.map((member) => (
+                <div 
+                  key={member.id}
+                  className="flex items-center justify-between p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center">
+                      <Mail className="h-5 w-5 text-yellow-600 dark:text-yellow-300" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white">{member.email}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Invited {member.invitedAt ? new Date(member.invitedAt).toLocaleDateString() : 'recently'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Badge className={getRoleBadgeColor(member.role)}>
+                      {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
+                    </Badge>
+                    <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                      <Clock className="h-3 w-3 mr-1" />
+                      Pending
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleResendInvite(member.id)}
+                      className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                      title="Resend invitation"
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveMember(member.id)}
+                      className="text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      title="Cancel invitation"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {!canInviteMore && (
         <Card className="border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20">
@@ -312,17 +383,43 @@ export const Teams: React.FC = () => {
                   Team limit reached
                 </h3>
                 <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                  Your {userPlan} plan allows up to {teamLimit} team members. 
-                  Upgrade to Pro for up to 5 team members.
+                  Your {userPlan === 'free' ? 'Free' : userPlan} plan allows up to {teamLimit} team member{teamLimit !== 1 ? 's' : ''}. 
+                  {userPlan !== 'Pro' && userPlan !== 'Pro (Yearly)' && ' Upgrade to Pro for up to 5 team members.'}
                 </p>
-                <Button variant="outline" size="sm" className="mt-3 border-amber-300 text-amber-800 hover:bg-amber-100">
-                  Upgrade Plan
-                </Button>
+                {userPlan !== 'Pro' && userPlan !== 'Pro (Yearly)' && (
+                  <Button variant="outline" size="sm" className="mt-3 border-amber-300 text-amber-800 hover:bg-amber-100">
+                    Upgrade Plan
+                  </Button>
+                )}
               </div>
             </div>
           </CardContent>
         </Card>
       )}
+
+      <Card className="bg-gray-50 dark:bg-gray-800/30">
+        <CardContent className="pt-6">
+          <h3 className="font-medium text-gray-900 dark:text-white mb-3">Team Limits by Plan</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className={`p-3 rounded-lg border ${userPlan === 'free' ? 'border-purple-300 bg-purple-50 dark:bg-purple-900/20' : 'border-gray-200 dark:border-gray-700'}`}>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Free</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white">1 member</p>
+            </div>
+            <div className={`p-3 rounded-lg border ${userPlan === 'Basic' || userPlan === 'Basic (Yearly)' ? 'border-purple-300 bg-purple-50 dark:bg-purple-900/20' : 'border-gray-200 dark:border-gray-700'}`}>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Basic</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white">2 members</p>
+            </div>
+            <div className={`p-3 rounded-lg border ${userPlan === 'Lifetime' ? 'border-purple-300 bg-purple-50 dark:bg-purple-900/20' : 'border-gray-200 dark:border-gray-700'}`}>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Lifetime</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white">3 members</p>
+            </div>
+            <div className={`p-3 rounded-lg border ${userPlan === 'Pro' || userPlan === 'Pro (Yearly)' ? 'border-purple-300 bg-purple-50 dark:bg-purple-900/20' : 'border-gray-200 dark:border-gray-700'}`}>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Pro</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white">5 members</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
         <DialogContent>
