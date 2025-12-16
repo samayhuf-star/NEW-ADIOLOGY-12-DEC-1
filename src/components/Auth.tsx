@@ -11,11 +11,12 @@ import { notifications } from '../utils/notifications';
 
 interface AuthProps {
   onLoginSuccess: () => void;
+  onSignupSuccess?: (userEmail: string, userName: string) => void;
   onBackToHome: () => void;
   initialMode?: 'login' | 'signup';
 }
 
-export const Auth: React.FC<AuthProps> = ({ onLoginSuccess, onBackToHome, initialMode = 'login' }) => {
+export const Auth: React.FC<AuthProps> = ({ onLoginSuccess, onSignupSuccess, onBackToHome, initialMode = 'login' }) => {
   const [isLogin, setIsLogin] = useState(initialMode === 'login');
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState('');

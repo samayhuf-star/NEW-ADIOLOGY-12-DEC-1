@@ -53,8 +53,9 @@ import { getUserPreferences, applyUserPreferences } from './utils/userPreference
 import CreativeMinimalistHomepage from './components/CreativeMinimalistHomepage';
 import { notifications as notificationService } from './utils/notifications';
 import { WebTemplates } from './components/WebTemplates';
+import { PlanSelection } from './components/PlanSelection';
 
-type AppView = 'homepage' | 'auth' | 'user' | 'verify-email' | 'reset-password' | 'payment' | 'payment-success' | 'privacy-policy' | 'terms-of-service' | 'cookie-policy' | 'gdpr-compliance' | 'refund-policy';
+type AppView = 'homepage' | 'auth' | 'user' | 'verify-email' | 'reset-password' | 'payment' | 'payment-success' | 'plan-selection' | 'privacy-policy' | 'terms-of-service' | 'cookie-policy' | 'gdpr-compliance' | 'refund-policy';
 
 const App = () => {
   const { theme } = useTheme();
@@ -412,14 +413,15 @@ const App = () => {
           } catch (error) {
             console.error('Error fetching user profile during init:', error);
             if (isMounted && lastProcessedUserId === session.user.id) {
-              // Set minimal user on error
+              // Set minimal user on error - subscription_status is 'inactive' to ensure
+              // routing logic redirects to plan-selection
               setUser({
                 id: session.user.id,
                 email: session.user.email || '',
                 full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
                 role: 'user',
                 subscription_plan: 'free',
-                subscription_status: 'active',
+                subscription_status: 'inactive',
               });
             }
           }
@@ -471,13 +473,15 @@ const App = () => {
           profileFetchInProgress = true;
           
           // Set minimal user immediately to avoid UI flicker
+          // Note: subscription_status is 'inactive' to ensure routing logic redirects to plan-selection
+          // until we fetch the real profile data with actual subscription info
           const minimalUser = {
             id: session.user.id,
             email: session.user.email || '',
             full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
             role: 'user',
             subscription_plan: 'free',
-            subscription_status: 'active',
+            subscription_status: 'inactive',
           };
           
           // Only update if user actually changed
@@ -643,7 +647,17 @@ const App = () => {
         if (user) {
           setView('payment');
         } else {
-          setAuthMode('login'); // Changed from 'signup' to 'login' - signups disabled
+          setAuthMode('login');
+          setView('auth');
+        }
+        return;
+      }
+
+      if (path.startsWith('/plan-selection')) {
+        if (user) {
+          setView('plan-selection');
+        } else {
+          setAuthMode('login');
           setView('auth');
         }
         return;
@@ -651,9 +665,19 @@ const App = () => {
 
       // Show homepage on root path
       if (path === '/' || path === '') {
-        // If user is logged in, go to user dashboard
+        // If user is logged in, check subscription status
         if (user) {
-          setView('user');
+          const subscriptionPlan = user.subscription_plan || 'free';
+          const subscriptionStatus = user.subscription_status || 'inactive';
+          const hasPaidPlan = subscriptionPlan !== 'free' && subscriptionStatus === 'active';
+          
+          if (hasPaidPlan) {
+            setView('user');
+          } else {
+            // Redirect unpaid users to plan selection
+            window.history.replaceState({}, '', '/plan-selection');
+            setView('plan-selection');
+          }
           return;
         }
         // If no user, show homepage
@@ -662,7 +686,19 @@ const App = () => {
       }
 
       // For non-root paths, use normal logic
-      setView(user ? 'user' : 'homepage');
+      if (user) {
+        const subscriptionPlan = user.subscription_plan || 'free';
+        const subscriptionStatus = user.subscription_status || 'inactive';
+        const hasPaidPlan = subscriptionPlan !== 'free' && subscriptionStatus === 'active';
+        
+        if (hasPaidPlan) {
+          setView('user');
+        } else {
+          setView('plan-selection');
+        }
+      } else {
+        setView('homepage');
+      }
     };
 
     // Only run routing if not loading
@@ -679,7 +715,7 @@ const App = () => {
   useEffect(() => {
     if (!loading && !user && (window.location.pathname === '/' || window.location.pathname === '')) {
       // Only set to homepage if we're not already on a specific route
-      if (appView !== 'homepage' && appView !== 'auth' && appView !== 'reset-password' && appView !== 'verify-email' && appView !== 'payment' && appView !== 'payment-success') {
+      if (appView !== 'homepage' && appView !== 'auth' && appView !== 'reset-password' && appView !== 'verify-email' && appView !== 'payment' && appView !== 'payment-success' && appView !== 'plan-selection') {
         setAppView('homepage');
       }
     }
@@ -700,8 +736,25 @@ const App = () => {
         return;
       }
       
+      if (path === '/plan-selection' || path.startsWith('/plan-selection')) {
+        if (user) {
+          setAppView('plan-selection');
+        } else {
+          setAppView('auth');
+        }
+        return;
+      }
+      
       if (user) {
-        setAppView('user');
+        const subscriptionPlan = user.subscription_plan || 'free';
+        const subscriptionStatus = user.subscription_status || 'inactive';
+        const hasPaidPlan = subscriptionPlan !== 'free' && subscriptionStatus === 'active';
+        
+        if (hasPaidPlan) {
+          setAppView('user');
+        } else {
+          setAppView('plan-selection');
+        }
       } else {
         // Show homepage for all paths when not logged in
         setAppView('homepage');
@@ -926,18 +979,9 @@ const App = () => {
           // Clear any pending payment attempts
           sessionStorage.removeItem('pending_payment');
           
-          // Go back to auth page
-          window.history.pushState({}, '', '/');
-          setAppView('auth');
-          setAuthMode('login');
-          
-          // Scroll to pricing section after a brief delay
-          setTimeout(() => {
-            const pricingSection = document.getElementById('pricing');
-            if (pricingSection) {
-              pricingSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-          }, 100);
+          // Go back to plan selection page
+          window.history.pushState({}, '', '/plan-selection');
+          setAppView('plan-selection');
         }}
         onSuccess={() => {
           // Clear pending payment attempts
@@ -959,6 +1003,16 @@ const App = () => {
           // Ensure user is logged in
           const authenticated = await isAuthenticated();
           if (authenticated && user) {
+            // Refresh user profile to get updated subscription status
+            try {
+              const userProfile = await getCurrentUserProfile();
+              if (userProfile) {
+                setUser(userProfile);
+              }
+            } catch (error) {
+              console.warn('Error refreshing user profile:', error);
+            }
+            
             window.history.pushState({}, '', '/');
             setAppView('user');
             setActiveTabSafe('dashboard');
@@ -1026,6 +1080,43 @@ const App = () => {
     return <RefundPolicy onBack={() => setAppView(previousView)} />;
   }
 
+  if (appView === 'plan-selection') {
+    return (
+      <PlanSelection
+        userName={user?.full_name}
+        onSelectPlan={async (planName, priceId, amount, isSubscription) => {
+          if (!user) {
+            setAuthMode('login');
+            setAppView('auth');
+            return;
+          }
+          
+          try {
+            const { createCheckoutSession } = await import('./utils/stripe');
+            await createCheckoutSession(priceId, planName, user.id, user.email);
+          } catch (error) {
+            console.error('Checkout error:', error);
+            setSelectedPlan({ name: planName, priceId, amount, isSubscription });
+            window.history.pushState({}, '', `/payment?plan=${encodeURIComponent(planName)}&priceId=${encodeURIComponent(priceId)}&amount=${amount}&subscription=${isSubscription}`);
+            setAppView('payment');
+          }
+        }}
+        onBack={() => {
+          signOut().then(() => {
+            setUser(null);
+            window.history.pushState({}, '', '/');
+            setAppView('auth');
+            setAuthMode('login');
+          }).catch((err) => {
+            console.error('Signout error:', err);
+            setAppView('auth');
+            setAuthMode('login');
+          });
+        }}
+      />
+    );
+  }
+
   if (appView === 'homepage') {
     return (
       <CreativeMinimalistHomepage
@@ -1064,44 +1155,59 @@ const App = () => {
               return;
             }
             
-            // Set minimal user immediately BEFORE navigating
-            const minimalUser = { 
+            // Fetch full profile to check subscription status
+            let userProfile = null;
+            try {
+              userProfile = await Promise.race([
+                getCurrentUserProfile(),
+                new Promise((_, reject) => 
+                  setTimeout(() => reject(new Error('Profile fetch timeout')), 8000)
+                )
+              ]) as any;
+            } catch (profileError) {
+              console.warn('⚠️ Profile fetch failed (non-critical):', profileError);
+            }
+            
+            // Determine subscription status
+            const subscriptionPlan = userProfile?.subscription_plan || 'free';
+            const subscriptionStatus = userProfile?.subscription_status || 'inactive';
+            const hasPaidPlan = subscriptionPlan !== 'free' && subscriptionStatus === 'active';
+            
+            // Set user with subscription info
+            const fullUser = userProfile || { 
               id: authUser.id, 
               email: authUser.email || '',
               full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
               role: 'user' as const,
               subscription_plan: 'free',
-              subscription_status: 'active' as const,
+              subscription_status: 'inactive' as const,
             };
             
-            setUser(minimalUser);
+            setUser(fullUser);
             
-            // Now navigate to dashboard (user state is set)
-            setAppView('user');
-            setActiveTabSafe('dashboard');
-            
-            // Fetch full profile in background (with timeout)
-            Promise.race([
-              getCurrentUserProfile(),
-              new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Profile fetch timeout')), 8000)
-              )
-            ]).then((userProfile: any) => {
-              if (userProfile) {
-                setUser(userProfile);
-                console.log('✅ User profile loaded:', userProfile);
-              }
-            }).catch((profileError: any) => {
-              console.warn('⚠️ Profile fetch failed (non-critical):', profileError);
-              // Keep using minimal user object - app will work fine
-            });
+            // Check if user has paid plan - redirect to dashboard or plan selection
+            if (hasPaidPlan) {
+              // User has active paid subscription - go to dashboard
+              setAppView('user');
+              setActiveTabSafe('dashboard');
+            } else {
+              // User doesn't have paid plan - redirect to plan selection
+              window.history.pushState({}, '', '/plan-selection');
+              setAppView('plan-selection');
+            }
           } catch (error) {
             console.error('Error in onLoginSuccess:', error);
-            // Still navigate even on error - user can see the dashboard
-            setAppView('user');
+            // On error, redirect to plan selection to be safe
+            setAppView('plan-selection');
           }
         }}
-          onBackToHome={() => {
+        onSignupSuccess={(userEmail, userName) => {
+          // After successful signup, user needs to verify email first
+          // The verification email flow will bring them back to login
+          // After login, they'll be redirected to plan selection
+          console.log('Signup successful for:', userEmail, userName);
+        }}
+        onBackToHome={() => {
           setAppView('auth');
           setAuthMode('login');
         }}
