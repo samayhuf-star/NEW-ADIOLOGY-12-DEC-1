@@ -167,17 +167,17 @@ function generatePillar1Relevance(input: UniversalAdInput): string[] {
   
   const headlines: string[] = [];
   
-  headlines.push(buildDKIHeadline(mainKw));
-  
-  if (secondKw !== mainKw) {
-    headlines.push(buildDKIHeadline(secondKw));
-  }
-  
   const kwTitle = titleCase(mainKw);
+  const secondKwTitle = titleCase(secondKw);
+  
   headlines.push(truncateToTarget(`${kwTitle} Services`));
   headlines.push(truncateToTarget(`Professional ${kwTitle}`));
   headlines.push(truncateToTarget(`Expert ${kwTitle} Help`));
   headlines.push(truncateToTarget(`${kwTitle} Near You`));
+  
+  if (secondKw !== mainKw) {
+    headlines.push(truncateToTarget(`${secondKwTitle} Experts`));
+  }
   
   if (input.location) {
     headlines.push(truncateToTarget(`${input.location} ${kwTitle}`));

@@ -708,6 +708,193 @@ export const COUNTRY_GEO_PRESETS: Record<string, {
       top25000: [],
     },
   },
+  'Netherlands': {
+    cities: {
+      top50: NETHERLANDS_CITIES_TOP_500.slice(0, 50),
+      top250: NETHERLANDS_CITIES_TOP_500,
+      top500: NETHERLANDS_CITIES_TOP_500,
+    },
+    states: {
+      top10: NETHERLANDS_STATES_ALL,
+      top25: NETHERLANDS_STATES_ALL,
+      top50: NETHERLANDS_STATES_ALL,
+    },
+    zips: {
+      top1000: NETHERLANDS_ZIP_CODES_EXTENDED.slice(0, 1000),
+      top5000: NETHERLANDS_ZIP_CODES_EXTENDED,
+      top15000: NETHERLANDS_ZIP_CODES_EXTENDED,
+      top25000: NETHERLANDS_ZIP_CODES_EXTENDED,
+    },
+  },
+  'Italy': {
+    cities: {
+      top50: ITALY_CITIES_TOP_500.slice(0, 50),
+      top250: ITALY_CITIES_TOP_500,
+      top500: ITALY_CITIES_TOP_500,
+    },
+    states: {
+      top10: ITALY_STATES_ALL.slice(0, 10),
+      top25: ITALY_STATES_ALL,
+      top50: ITALY_STATES_ALL,
+    },
+    zips: { top1000: [], top5000: [], top15000: [], top25000: [] },
+  },
+  'Spain': {
+    cities: {
+      top50: SPAIN_CITIES_TOP_500.slice(0, 50),
+      top250: SPAIN_CITIES_TOP_500,
+      top500: SPAIN_CITIES_TOP_500,
+    },
+    states: {
+      top10: SPAIN_STATES_ALL.slice(0, 10),
+      top25: SPAIN_STATES_ALL,
+      top50: SPAIN_STATES_ALL,
+    },
+    zips: { top1000: [], top5000: [], top15000: [], top25000: [] },
+  },
+  'Belgium': {
+    cities: {
+      top50: BELGIUM_CITIES_TOP_500.slice(0, 50),
+      top250: BELGIUM_CITIES_TOP_500,
+      top500: BELGIUM_CITIES_TOP_500,
+    },
+    states: {
+      top10: BELGIUM_STATES_ALL,
+      top25: BELGIUM_STATES_ALL,
+      top50: BELGIUM_STATES_ALL,
+    },
+    zips: { top1000: [], top5000: [], top15000: [], top25000: [] },
+  },
+  'Switzerland': {
+    cities: {
+      top50: SWITZERLAND_CITIES_TOP_500.slice(0, 40),
+      top250: SWITZERLAND_CITIES_TOP_500,
+      top500: SWITZERLAND_CITIES_TOP_500,
+    },
+    states: {
+      top10: SWITZERLAND_STATES_ALL.slice(0, 10),
+      top25: SWITZERLAND_STATES_ALL,
+      top50: SWITZERLAND_STATES_ALL,
+    },
+    zips: { top1000: [], top5000: [], top15000: [], top25000: [] },
+  },
+  'Sweden': {
+    cities: {
+      top50: SWEDEN_CITIES_TOP_500.slice(0, 40),
+      top250: SWEDEN_CITIES_TOP_500,
+      top500: SWEDEN_CITIES_TOP_500,
+    },
+    states: {
+      top10: SWEDEN_STATES_ALL.slice(0, 10),
+      top25: SWEDEN_STATES_ALL,
+      top50: SWEDEN_STATES_ALL,
+    },
+    zips: { top1000: [], top5000: [], top15000: [], top25000: [] },
+  },
+  'Norway': {
+    cities: {
+      top50: NORWAY_CITIES_TOP_500.slice(0, 40),
+      top250: NORWAY_CITIES_TOP_500,
+      top500: NORWAY_CITIES_TOP_500,
+    },
+    states: {
+      top10: NORWAY_STATES_ALL,
+      top25: NORWAY_STATES_ALL,
+      top50: NORWAY_STATES_ALL,
+    },
+    zips: { top1000: [], top5000: [], top15000: [], top25000: [] },
+  },
+  'Denmark': {
+    cities: {
+      top50: DENMARK_CITIES_TOP_500.slice(0, 40),
+      top250: DENMARK_CITIES_TOP_500,
+      top500: DENMARK_CITIES_TOP_500,
+    },
+    states: {
+      top10: DENMARK_STATES_ALL,
+      top25: DENMARK_STATES_ALL,
+      top50: DENMARK_STATES_ALL,
+    },
+    zips: { top1000: [], top5000: [], top15000: [], top25000: [] },
+  },
+  'Finland': {
+    cities: {
+      top50: FINLAND_CITIES_TOP_500.slice(0, 40),
+      top250: FINLAND_CITIES_TOP_500,
+      top500: FINLAND_CITIES_TOP_500,
+    },
+    states: {
+      top10: FINLAND_STATES_ALL.slice(0, 10),
+      top25: FINLAND_STATES_ALL,
+      top50: FINLAND_STATES_ALL,
+    },
+    zips: { top1000: [], top5000: [], top15000: [], top25000: [] },
+  },
+  'Poland': {
+    cities: {
+      top50: POLAND_CITIES_TOP_500.slice(0, 50),
+      top250: POLAND_CITIES_TOP_500,
+      top500: POLAND_CITIES_TOP_500,
+    },
+    states: {
+      top10: POLAND_STATES_ALL.slice(0, 10),
+      top25: POLAND_STATES_ALL,
+      top50: POLAND_STATES_ALL,
+    },
+    zips: { top1000: [], top5000: [], top15000: [], top25000: [] },
+  },
+  'Austria': {
+    cities: {
+      top50: AUSTRIA_CITIES_TOP_500.slice(0, 40),
+      top250: AUSTRIA_CITIES_TOP_500,
+      top500: AUSTRIA_CITIES_TOP_500,
+    },
+    states: {
+      top10: AUSTRIA_STATES_ALL,
+      top25: AUSTRIA_STATES_ALL,
+      top50: AUSTRIA_STATES_ALL,
+    },
+    zips: { top1000: [], top5000: [], top15000: [], top25000: [] },
+  },
+  'Ireland': {
+    cities: {
+      top50: IRELAND_CITIES_TOP_500.slice(0, 40),
+      top250: IRELAND_CITIES_TOP_500,
+      top500: IRELAND_CITIES_TOP_500,
+    },
+    states: {
+      top10: IRELAND_STATES_ALL,
+      top25: IRELAND_STATES_ALL,
+      top50: IRELAND_STATES_ALL,
+    },
+    zips: { top1000: [], top5000: [], top15000: [], top25000: [] },
+  },
+  'Portugal': {
+    cities: {
+      top50: PORTUGAL_CITIES_TOP_500.slice(0, 40),
+      top250: PORTUGAL_CITIES_TOP_500,
+      top500: PORTUGAL_CITIES_TOP_500,
+    },
+    states: {
+      top10: PORTUGAL_STATES_ALL.slice(0, 10),
+      top25: PORTUGAL_STATES_ALL,
+      top50: PORTUGAL_STATES_ALL,
+    },
+    zips: { top1000: [], top5000: [], top15000: [], top25000: [] },
+  },
+  'Greece': {
+    cities: {
+      top50: GREECE_CITIES_TOP_500.slice(0, 40),
+      top250: GREECE_CITIES_TOP_500,
+      top500: GREECE_CITIES_TOP_500,
+    },
+    states: {
+      top10: GREECE_STATES_ALL.slice(0, 10),
+      top25: GREECE_STATES_ALL,
+      top50: GREECE_STATES_ALL,
+    },
+    zips: { top1000: [], top5000: [], top15000: [], top25000: [] },
+  },
 };
 
 // Helper function to get presets for a specific country
