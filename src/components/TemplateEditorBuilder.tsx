@@ -129,11 +129,14 @@ ${exportedHtml}
       if (data.Answer && data.Answer.some((a: any) => a.data === '76.76.21.21')) {
         setDomainVerified(true);
         
-        const { data: { user } } = await supabase.auth.getUser();
-        await supabase.from('admin_websites').update({
-          custom_domain: customDomain.trim(),
-          domain_verified: true,
-        }).eq('id', savedWebsite.id);
+        await fetch('/api/verify-domain', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: savedWebsite.id,
+            custom_domain: customDomain.trim(),
+          }),
+        });
         
         alert('Domain verified successfully! Your custom domain is now connected.');
       } else {
@@ -173,22 +176,24 @@ ${exportedHtml || templateData.rawHtml || ''}
 </body>
 </html>`;
 
-      const { error } = await supabase.from('admin_websites').upsert({
-        id: savedWebsite.id,
-        name: finalName,
-        slug: slug,
-        user_email: user?.email || 'unknown',
-        domain: templateUrl,
-        html_content: fullHtml,
-        template_data: templateData,
-        status: 'Published',
-        published_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'id' });
+      const response = await fetch('/api/publish-website', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: savedWebsite.id,
+          name: finalName,
+          slug: slug,
+          user_email: user?.email || 'unknown',
+          html_content: fullHtml,
+          template_data: templateData,
+        }),
+      });
 
-      if (error) {
-        console.error('❌ Supabase error:', error);
-        throw error;
+      const result = await response.json();
+      
+      if (!response.ok) {
+        console.error('❌ Publish error:', result);
+        throw new Error(result.error || 'Failed to publish');
       }
       
       setCurrentName(finalName);

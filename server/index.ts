@@ -534,6 +534,72 @@ app.delete('/api/admin/websites/:id', async (c) => {
   }
 });
 
+app.post('/api/publish-website', async (c) => {
+  try {
+    const body = await c.req.json();
+    const { id, name, slug, user_email, html_content, template_data } = body;
+    
+    if (!id || !name || !slug) {
+      return c.json({ error: 'Missing required fields: id, name, slug' }, 400);
+    }
+    
+    const domain = `https://adiology.io/templates/${slug}`;
+    const now = new Date().toISOString();
+    
+    const existingResult = await pool.query('SELECT id FROM admin_websites WHERE id = $1', [id]);
+    
+    if (existingResult.rows.length > 0) {
+      await pool.query(
+        `UPDATE admin_websites SET 
+          name = $1, 
+          slug = $2, 
+          user_email = $3, 
+          domain = $4, 
+          html_content = $5, 
+          template_data = $6, 
+          status = $7, 
+          published_at = $8, 
+          updated_at = $9 
+        WHERE id = $10`,
+        [name, slug, user_email || 'unknown', domain, html_content, JSON.stringify(template_data), 'Published', now, now, id]
+      );
+    } else {
+      await pool.query(
+        `INSERT INTO admin_websites (id, name, slug, user_email, domain, html_content, template_data, status, published_at, created_at, updated_at) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+        [id, name, slug, user_email || 'unknown', domain, html_content, JSON.stringify(template_data), 'Published', now, now, now]
+      );
+    }
+    
+    console.log('✅ Website published:', { id, name, slug, domain });
+    return c.json({ success: true, url: domain, slug });
+  } catch (error: any) {
+    console.error('Error publishing website:', error);
+    return c.json({ error: error.message || 'Failed to publish website' }, 500);
+  }
+});
+
+app.post('/api/verify-domain', async (c) => {
+  try {
+    const body = await c.req.json();
+    const { id, custom_domain } = body;
+    
+    if (!id || !custom_domain) {
+      return c.json({ error: 'Missing required fields' }, 400);
+    }
+    
+    await pool.query(
+      'UPDATE admin_websites SET custom_domain = $1, domain_verified = $2, updated_at = $3 WHERE id = $4',
+      [custom_domain, true, new Date().toISOString(), id]
+    );
+    
+    return c.json({ success: true });
+  } catch (error: any) {
+    console.error('Error verifying domain:', error);
+    return c.json({ error: error.message || 'Failed to verify domain' }, 500);
+  }
+});
+
 app.get('/templates/:slug', async (c) => {
   try {
     const slug = c.req.param('slug');
