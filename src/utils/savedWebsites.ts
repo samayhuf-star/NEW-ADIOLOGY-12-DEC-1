@@ -201,6 +201,16 @@ export function generateTemplateHTML(data: TemplateData): string {
   <title>${data.seo.title}</title>
   <meta name="description" content="${data.seo.description}">
   <meta name="keywords" content="${data.seo.keywords}">
+  
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-14J6XMRK1E"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-14J6XMRK1E');
+  </script>
+  
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: ${styles.fontFamily || "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"}; line-height: 1.6; color: #1f2937; }
