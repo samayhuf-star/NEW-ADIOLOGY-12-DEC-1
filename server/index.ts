@@ -534,6 +534,55 @@ app.delete('/api/admin/websites/:id', async (c) => {
   }
 });
 
+app.get('/templates/:slug', async (c) => {
+  try {
+    const slug = c.req.param('slug');
+    const result = await pool.query(
+      'SELECT html_content, name, status FROM admin_websites WHERE slug = $1 AND status = $2',
+      [slug, 'Published']
+    );
+    
+    if (result.rows.length === 0) {
+      return c.html(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Template Not Found</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen flex items-center justify-center bg-gray-100">
+  <div class="text-center p-8 bg-white rounded-lg shadow-lg">
+    <h1 class="text-4xl font-bold text-gray-800 mb-4">Template Not Found</h1>
+    <p class="text-gray-600 mb-6">The template you're looking for doesn't exist or hasn't been published yet.</p>
+    <a href="/" class="text-purple-600 hover:underline">Go back home</a>
+  </div>
+</body>
+</html>`, 404);
+    }
+    
+    return c.html(result.rows[0].html_content);
+  } catch (error) {
+    console.error('Error serving template:', error);
+    return c.html(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Error</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen flex items-center justify-center bg-gray-100">
+  <div class="text-center p-8 bg-white rounded-lg shadow-lg">
+    <h1 class="text-4xl font-bold text-red-600 mb-4">Error</h1>
+    <p class="text-gray-600 mb-6">Something went wrong while loading this template.</p>
+    <a href="/" class="text-purple-600 hover:underline">Go back home</a>
+  </div>
+</body>
+</html>`, 500);
+  }
+});
+
 app.get('/api/admin/tickets', async (c) => {
   try {
     const result = await pool.query('SELECT id, subject, user_email as user, status, priority, message, created_at as created FROM support_tickets ORDER BY created_at DESC');

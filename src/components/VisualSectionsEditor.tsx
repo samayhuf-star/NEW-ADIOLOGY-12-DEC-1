@@ -5,7 +5,7 @@ import { Button } from './ui/button';
 
 interface Section {
   id: string;
-  type: 'hero' | 'features' | 'services' | 'testimonials' | 'team' | 'faq' | 'pricing' | 'gallery' | 'blog' | 'partners' | 'cta' | 'contact' | 'about';
+  type: 'hero' | 'features' | 'services' | 'testimonials' | 'team' | 'faq' | 'pricing' | 'gallery' | 'blog' | 'partners' | 'cta' | 'contact' | 'about' | 'footer' | 'policies' | 'form' | 'popup';
   name: string;
   data: any;
 }
@@ -31,13 +31,16 @@ const SECTION_TYPES = [
   { type: 'gallery', name: 'Gallery', icon: '🖼️' },
   { type: 'blog', name: 'Blog', icon: '📝' },
   { type: 'partners', name: 'Partners', icon: '🤝' },
+  { type: 'footer', name: 'Footer', icon: '🔻' },
+  { type: 'policies', name: 'Policies', icon: '📜' },
+  { type: 'form', name: 'Lead Form', icon: '📋' },
 ];
 
 function buildSectionsFromTemplate(data: TemplateData): Section[] {
   const sects: Section[] = [];
   
   if (data.hero) {
-    sects.push({ id: 'hero', type: 'hero', name: 'Hero', data: data.hero });
+    sects.push({ id: 'hero', type: 'hero', name: 'Hero', data: { ...data.hero, imageUrl: data.hero_image } });
   }
   if (data.features) {
     sects.push({ id: 'features', type: 'features', name: 'Features', data: data.features });
@@ -75,6 +78,12 @@ function buildSectionsFromTemplate(data: TemplateData): Section[] {
   if ((data as any).partners) {
     sects.push({ id: 'partners', type: 'partners', name: 'Partners', data: (data as any).partners });
   }
+  if (data.footer) {
+    sects.push({ id: 'footer', type: 'footer', name: 'Footer', data: data.footer });
+  }
+  if ((data as any).policies) {
+    sects.push({ id: 'policies', type: 'policies', name: 'Policies', data: (data as any).policies });
+  }
 
   return sects;
 }
@@ -91,6 +100,9 @@ function sectionsToTemplateData(sections: Section[], originalData: TemplateData)
     switch (section.type) {
       case 'hero':
         result.hero = section.data;
+        if (section.data.imageUrl) {
+          result.hero_image = section.data.imageUrl;
+        }
         break;
       case 'features':
         result.features = section.data;
@@ -130,6 +142,12 @@ function sectionsToTemplateData(sections: Section[], originalData: TemplateData)
         break;
       case 'faq':
         (result as any).faq = section.data;
+        break;
+      case 'footer':
+        result.footer = section.data;
+        break;
+      case 'policies':
+        (result as any).policies = section.data;
         break;
     }
   }
@@ -185,9 +203,19 @@ function EditableText({
 
 function HeroSection({ section, onUpdate }: { section: Section; onUpdate: (data: any) => void }) {
   const data = section.data;
+  const hasImage = data.imageUrl && data.imageUrl.trim() !== '';
+  
+  const backgroundStyle = hasImage 
+    ? { 
+        background: `linear-gradient(rgba(99, 102, 241, 0.85), rgba(139, 92, 246, 0.9)), url('${data.imageUrl}') center/cover no-repeat`
+      }
+    : {};
   
   return (
-    <section className="relative bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 text-white py-20 px-6">
+    <section 
+      className="relative bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 text-white py-20 px-6"
+      style={backgroundStyle}
+    >
       <div className="max-w-4xl mx-auto text-center">
         <EditableText
           value={data.heading || 'Welcome to Our Site'}
@@ -206,6 +234,20 @@ function HeroSection({ section, onUpdate }: { section: Section; onUpdate: (data:
         <button className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors">
           {data.ctaText || 'Get Started'}
         </button>
+        
+        <div className="mt-8 p-4 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20">
+          <label className="block text-sm font-medium text-white/80 mb-2">Background Image URL</label>
+          <input
+            type="url"
+            value={data.imageUrl || ''}
+            onChange={(e) => onUpdate({ ...data, imageUrl: e.target.value })}
+            placeholder="https://example.com/image.jpg"
+            className="w-full px-4 py-2 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50"
+          />
+          {data.imageUrl && (
+            <p className="text-xs text-white/60 mt-1">Image is applied as background</p>
+          )}
+        </div>
       </div>
     </section>
   );
@@ -631,6 +673,138 @@ function GenericSection({ section, onUpdate }: { section: Section; onUpdate: (da
   );
 }
 
+function FooterSection({ section, onUpdate }: { section: Section; onUpdate: (data: any) => void }) {
+  const data = section.data;
+  const links = data.links || [
+    { text: 'Home', url: '#' },
+    { text: 'Services', url: '#services' },
+    { text: 'About', url: '#about' },
+    { text: 'Contact', url: '#contact' },
+    { text: 'Privacy Policy', url: '#privacy' },
+    { text: 'Terms of Service', url: '#terms' },
+    { text: 'Refund Policy', url: '#refund' }
+  ];
+  
+  return (
+    <footer className="bg-gray-900 text-white py-12 px-6">
+      <div className="max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-4 gap-8 mb-8">
+          <div>
+            <EditableText
+              value={data.companyName || 'Company Name'}
+              onChange={(companyName) => onUpdate({ ...data, companyName })}
+              as="h3"
+              className="text-xl font-bold mb-4 text-white"
+              placeholder="Company name..."
+            />
+            <EditableText
+              value={data.description || 'Your trusted partner for quality services.'}
+              onChange={(description) => onUpdate({ ...data, description })}
+              as="p"
+              className="text-gray-400 text-sm"
+              placeholder="Company description..."
+            />
+          </div>
+          <div>
+            <h4 className="font-semibold mb-4">Quick Links</h4>
+            <ul className="space-y-2 text-gray-400 text-sm">
+              {links.slice(0, 4).map((link: any, i: number) => (
+                <li key={i}><a href={link.url} className="hover:text-white transition-colors">{link.text}</a></li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-semibold mb-4">Legal</h4>
+            <ul className="space-y-2 text-gray-400 text-sm">
+              {links.slice(4).map((link: any, i: number) => (
+                <li key={i}><a href={link.url} className="hover:text-white transition-colors">{link.text}</a></li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-semibold mb-4">Contact</h4>
+            <div className="space-y-2 text-gray-400 text-sm">
+              <EditableText
+                value={data.phone || '+1 (800) 123-4567'}
+                onChange={(phone) => onUpdate({ ...data, phone })}
+                as="p"
+                className="text-gray-400"
+                placeholder="Phone..."
+              />
+              <EditableText
+                value={data.email || 'info@example.com'}
+                onChange={(email) => onUpdate({ ...data, email })}
+                as="p"
+                className="text-gray-400"
+                placeholder="Email..."
+              />
+              <EditableText
+                value={data.address || '123 Main St, City, State'}
+                onChange={(address) => onUpdate({ ...data, address })}
+                as="p"
+                className="text-gray-400"
+                placeholder="Address..."
+              />
+            </div>
+          </div>
+        </div>
+        <div className="border-t border-gray-800 pt-6 text-center text-gray-500 text-sm">
+          <p>&copy; {new Date().getFullYear()} {data.companyName || 'Company Name'}. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+function PoliciesSection({ section, onUpdate }: { section: Section; onUpdate: (data: any) => void }) {
+  const data = section.data;
+  const items = data.items || [
+    { title: 'Privacy Policy', content: 'We respect your privacy and are committed to protecting your personal information.' },
+    { title: 'Terms of Service', content: 'By using our services, you agree to these terms.' },
+    { title: 'Refund Policy', content: 'We offer a 30-day money-back guarantee on all our services.' }
+  ];
+
+  const updateItem = (index: number, field: string, value: string) => {
+    const newItems = [...items];
+    newItems[index] = { ...newItems[index], [field]: value };
+    onUpdate({ ...data, items: newItems });
+  };
+
+  return (
+    <section className="py-16 px-6 bg-gray-50">
+      <div className="max-w-4xl mx-auto">
+        <EditableText
+          value={data.heading || 'Our Policies'}
+          onChange={(heading) => onUpdate({ ...data, heading })}
+          as="h2"
+          className="text-3xl font-bold text-center mb-12 text-gray-900"
+          placeholder="Section heading..."
+        />
+        <div className="space-y-6">
+          {items.map((item: any, index: number) => (
+            <div key={index} className="bg-white p-6 rounded-xl border border-gray-200">
+              <EditableText
+                value={item.title}
+                onChange={(title) => updateItem(index, 'title', title)}
+                as="h3"
+                className="text-xl font-semibold mb-3 text-gray-900"
+                placeholder="Policy title..."
+              />
+              <EditableText
+                value={item.content}
+                onChange={(content) => updateItem(index, 'content', content)}
+                as="p"
+                className="text-gray-600 leading-relaxed"
+                placeholder="Policy content..."
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function VisualSectionsEditor({ templateData, onUpdate, onSave, onExport }: VisualSectionsEditorProps) {
   const [sections, setSections] = useState<Section[]>(buildSectionsFromTemplate(templateData));
   const [showAddMenu, setShowAddMenu] = useState(false);
@@ -704,6 +878,8 @@ export default function VisualSectionsEditor({ templateData, onUpdate, onSave, o
       case 'contact': return <ContactSection {...sectionProps} />;
       case 'about': return <AboutSection {...sectionProps} />;
       case 'faq': return <FAQSection {...sectionProps} />;
+      case 'footer': return <FooterSection {...sectionProps} />;
+      case 'policies': return <PoliciesSection {...sectionProps} />;
       default: return <GenericSection {...sectionProps} />;
     }
   };
@@ -921,6 +1097,66 @@ function generateSectionHtml(section: Section): string {
       ${faqs.map((f: any) => `<div class="border rounded-lg p-6">
         <h3 class="font-semibold mb-2">${f.question}</h3>
         <p class="text-gray-600">${f.answer}</p>
+      </div>`).join('')}
+    </div>
+  </div>
+</section>`;
+
+    case 'footer':
+      const footerLinks = data.links || [
+        { text: 'Home', url: '#' },
+        { text: 'Services', url: '#services' },
+        { text: 'About', url: '#about' },
+        { text: 'Contact', url: '#contact' },
+        { text: 'Privacy Policy', url: '#privacy' },
+        { text: 'Terms of Service', url: '#terms' },
+        { text: 'Refund Policy', url: '#refund' }
+      ];
+      return `<footer class="bg-gray-900 text-white py-12 px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="grid md:grid-cols-4 gap-8 mb-8">
+      <div>
+        <h3 class="text-xl font-bold mb-4">${data.companyName || 'Company Name'}</h3>
+        <p class="text-gray-400 text-sm">${data.description || 'Your trusted partner for quality services.'}</p>
+      </div>
+      <div>
+        <h4 class="font-semibold mb-4">Quick Links</h4>
+        <ul class="space-y-2 text-gray-400 text-sm">
+          ${footerLinks.slice(0, 4).map((link: any) => `<li><a href="${link.url}" class="hover:text-white">${link.text}</a></li>`).join('')}
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-semibold mb-4">Legal</h4>
+        <ul class="space-y-2 text-gray-400 text-sm">
+          ${footerLinks.slice(4).map((link: any) => `<li><a href="${link.url}" class="hover:text-white">${link.text}</a></li>`).join('')}
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-semibold mb-4">Contact</h4>
+        <p class="text-gray-400 text-sm mb-2">${data.phone || '+1 (800) 123-4567'}</p>
+        <p class="text-gray-400 text-sm mb-2">${data.email || 'info@example.com'}</p>
+        <p class="text-gray-400 text-sm">${data.address || '123 Main St, City, State'}</p>
+      </div>
+    </div>
+    <div class="border-t border-gray-800 pt-6 text-center text-gray-500 text-sm">
+      <p>&copy; ${new Date().getFullYear()} ${data.companyName || 'Company Name'}. All rights reserved.</p>
+    </div>
+  </div>
+</footer>`;
+
+    case 'policies':
+      const policies = data.items || [
+        { title: 'Privacy Policy', content: 'We respect your privacy and are committed to protecting your personal information.' },
+        { title: 'Terms of Service', content: 'By using our services, you agree to these terms.' },
+        { title: 'Refund Policy', content: 'We offer a 30-day money-back guarantee on all our services.' }
+      ];
+      return `<section class="py-16 px-6 bg-gray-50">
+  <div class="max-w-4xl mx-auto">
+    <h2 class="text-3xl font-bold text-center mb-12">${data.heading || 'Our Policies'}</h2>
+    <div class="space-y-6">
+      ${policies.map((p: any) => `<div class="bg-white p-6 rounded-xl border border-gray-200">
+        <h3 class="text-xl font-semibold mb-3">${p.title}</h3>
+        <p class="text-gray-600 leading-relaxed">${p.content}</p>
       </div>`).join('')}
     </div>
   </div>
