@@ -183,31 +183,31 @@ app.get('/api/stripe/config', async (c) => {
 
 app.get('/api/stripe/products', async (c) => {
   try {
-    const rows = await stripeService.listProductsWithPrices();
-    const productsMap = new Map();
-    for (const row of rows) {
-      if (!productsMap.has(row.product_id)) {
-        productsMap.set(row.product_id, {
-          id: row.product_id,
-          name: row.product_name,
-          description: row.product_description,
-          active: row.product_active,
-          metadata: row.product_metadata,
-          prices: []
-        });
-      }
-      if (row.price_id) {
-        productsMap.get(row.product_id).prices.push({
-          id: row.price_id,
-          unit_amount: row.unit_amount,
-          currency: row.currency,
-          recurring: row.recurring,
-          active: row.price_active,
-          metadata: row.price_metadata,
-        });
-      }
-    }
-    return c.json({ products: Array.from(productsMap.values()) });
+    // Fetch products directly from Stripe API (more reliable than database sync)
+    const stripe = await getUncachableStripeClient();
+    const products = await stripe.products.list({ active: true, limit: 100 });
+    const prices = await stripe.prices.list({ active: true, limit: 100 });
+    
+    // Build products with their prices
+    const productsWithPrices = products.data.map(product => ({
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      active: product.active,
+      metadata: product.metadata,
+      prices: prices.data
+        .filter(price => price.product === product.id)
+        .map(price => ({
+          id: price.id,
+          unit_amount: price.unit_amount,
+          currency: price.currency,
+          recurring: price.recurring,
+          active: price.active,
+          metadata: price.metadata,
+        }))
+    }));
+    
+    return c.json({ products: productsWithPrices });
   } catch (error) {
     console.error('Error listing products:', error);
     return c.json({ products: [] });

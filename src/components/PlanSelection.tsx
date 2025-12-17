@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Check, ArrowLeft, Sparkle, Crown, Zap, Rocket, Loader2 } from 'lucide-react';
 import { Button } from './ui/button';
-import { api } from '../utils/api';
+
+// API calls use Vite proxy (relative URLs forward to backend on port 3001)
 
 interface StripePrice {
   id: string;
@@ -122,8 +123,13 @@ export const PlanSelection: React.FC<PlanSelectionProps> = ({
   const fetchPrices = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/stripe/products');
-      const products: StripeProduct[] = response.products || [];
+      // Use relative URL - Vite proxy forwards /api to backend
+      const response = await fetch('/api/stripe/products');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch products: ${response.status}`);
+      }
+      const data = await response.json();
+      const products: StripeProduct[] = data.products || [];
       
       const loadedPlans: PlanData[] = [];
       
