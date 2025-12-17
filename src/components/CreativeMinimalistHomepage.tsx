@@ -1090,25 +1090,6 @@ function PricingSection({ onSelectPlan }: { onSelectPlan?: (planName: string, pr
       isSubscription: true
     },
     {
-      name: 'Basic (Yearly)',
-      price: '$671.90',
-      period: 'per year',
-      savings: 'Save 20%',
-      icon: '🚀',
-      gradient: 'from-blue-400 to-blue-600',
-      features: [
-        '25 campaigns per month',
-        'AI keyword generation',
-        'All campaign structures',
-        'CSV export to Google Ads',
-        'Email support'
-      ],
-      popular: false,
-      priceId: 'price_basic_yearly',
-      amount: 67190,
-      isSubscription: true
-    },
-    {
       name: 'Pro',
       price: '$129.99',
       period: 'per month',
@@ -1124,25 +1105,6 @@ function PricingSection({ onSelectPlan }: { onSelectPlan?: (planName: string, pr
       popular: true,
       priceId: 'price_pro_monthly',
       amount: 12999,
-      isSubscription: true
-    },
-    {
-      name: 'Pro (Yearly)',
-      price: '$1,247.90',
-      period: 'per year',
-      savings: 'Save 20%',
-      icon: '⚡',
-      gradient: 'from-purple-500 to-purple-700',
-      features: [
-        'Unlimited campaigns',
-        'AI keyword generation',
-        'All campaign structures',
-        'CSV export to Google Ads',
-        '24/7 priority support'
-      ],
-      popular: false,
-      priceId: 'price_pro_yearly',
-      amount: 124790,
       isSubscription: true
     },
     {
@@ -1185,7 +1147,7 @@ function PricingSection({ onSelectPlan }: { onSelectPlan?: (planName: string, pr
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {pricingPlans.map((plan, index) => (
             <motion.div
               key={plan.name}
