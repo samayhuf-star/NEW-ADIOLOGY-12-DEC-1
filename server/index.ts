@@ -2849,41 +2849,62 @@ app.get('/api/dashboard/:userId', async (c) => {
   try {
     const { userId } = c.req.param();
     
-    // Get campaign history count
-    const campaignsResult = await pool.query(
-      `SELECT COUNT(*) as count FROM adiology_campaigns WHERE user_id = $1`,
-      [userId]
-    );
+    // Get campaign history count (handle missing table gracefully)
+    let totalCampaigns = 0;
+    let recentCampaigns: any[] = [];
+    try {
+      const campaignsResult = await pool.query(
+        `SELECT COUNT(*) as count FROM adiology_campaigns WHERE user_id = $1`,
+        [userId]
+      );
+      totalCampaigns = parseInt(campaignsResult.rows[0]?.count || '0');
+      
+      // Get recent campaigns (last 10)
+      const recentCampaignsResult = await pool.query(
+        `SELECT id, campaign_name, structure_type, step, created_at, updated_at
+         FROM adiology_campaigns 
+         WHERE user_id = $1 
+         ORDER BY updated_at DESC 
+         LIMIT 10`,
+        [userId]
+      );
+      recentCampaigns = recentCampaignsResult.rows;
+    } catch (err: any) {
+      // Table might not exist yet - return 0
+      console.log('Note: adiology_campaigns table not found, returning 0');
+    }
     
-    // Get ad search requests count
-    const searchesResult = await pool.query(
-      `SELECT COUNT(*) as count FROM ad_search_requests WHERE user_id = $1`,
-      [userId]
-    );
+    // Get ad search requests count (handle missing table gracefully)
+    let totalSearches = 0;
+    try {
+      const searchesResult = await pool.query(
+        `SELECT COUNT(*) as count FROM ad_search_requests WHERE user_id = $1`,
+        [userId]
+      );
+      totalSearches = parseInt(searchesResult.rows[0]?.count || '0');
+    } catch (err: any) {
+      console.log('Note: ad_search_requests table not found, returning 0');
+    }
     
-    // Get recent campaigns (last 10)
-    const recentCampaignsResult = await pool.query(
-      `SELECT id, campaign_name, structure_type, step, created_at, updated_at
-       FROM adiology_campaigns 
-       WHERE user_id = $1 
-       ORDER BY updated_at DESC 
-       LIMIT 10`,
-      [userId]
-    );
-    
-    // Get unread notifications count
-    const unreadResult = await pool.query(
-      `SELECT COUNT(*) as count FROM user_notifications WHERE user_id = $1 AND read = FALSE`,
-      [userId]
-    );
+    // Get unread notifications count (handle missing table gracefully)
+    let unreadNotifications = 0;
+    try {
+      const unreadResult = await pool.query(
+        `SELECT COUNT(*) as count FROM user_notifications WHERE user_id = $1 AND read = FALSE`,
+        [userId]
+      );
+      unreadNotifications = parseInt(unreadResult.rows[0]?.count || '0');
+    } catch (err: any) {
+      console.log('Note: user_notifications table not found, returning 0');
+    }
     
     return c.json({
       stats: {
-        totalCampaigns: parseInt(campaignsResult.rows[0]?.count || '0'),
-        totalSearches: parseInt(searchesResult.rows[0]?.count || '0'),
-        unreadNotifications: parseInt(unreadResult.rows[0]?.count || '0'),
+        totalCampaigns,
+        totalSearches,
+        unreadNotifications,
       },
-      recentCampaigns: recentCampaignsResult.rows,
+      recentCampaigns,
     });
   } catch (error: any) {
     console.error('Error fetching dashboard data:', error);
