@@ -247,6 +247,18 @@ ${exportedHtml || templateData.rawHtml || ''}
             <Upload className="w-4 h-4" />
             {isPublishing ? 'Publishing...' : 'Publish'}
           </button>
+          {publishedUrl && (
+            <a
+              href={publishedUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium text-sm hover:bg-indigo-700 transition-colors"
+              title="View published website"
+            >
+              <ExternalLink className="w-4 h-4" />
+              View Site
+            </a>
+          )}
         </div>
       </div>
       
