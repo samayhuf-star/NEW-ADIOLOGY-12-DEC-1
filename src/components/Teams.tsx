@@ -173,7 +173,8 @@ export const Teams: React.FC = () => {
         </div>
         <Button
           onClick={() => setIsInviteDialogOpen(true)}
-          className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700"
+          className="flex items-center gap-2 text-white"
+          style={{ background: 'linear-gradient(90deg, #9333ea, #c026d3)' }}
         >
           <Plus className="h-4 w-4" />
           Invite Team Member
