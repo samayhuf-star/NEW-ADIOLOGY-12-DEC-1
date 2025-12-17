@@ -2869,7 +2869,126 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
         })}
       </div>
 
-      {/* Inline Structure Details */}
+      {/* Structure-specific inputs - shown immediately after selection */}
+      {campaignData.selectedStructure === 'seasonal' && (
+        <Card className="mb-6 border-orange-200 bg-orange-50">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-orange-600" />
+              <CardTitle className="text-lg">Seasonal Campaign Dates</CardTitle>
+            </div>
+            <CardDescription>Set the start and end dates for your seasonal/promotional campaign</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm font-semibold mb-2 block">Start Date</Label>
+                <Input
+                  type="date"
+                  value={campaignData.startDate || ''}
+                  onChange={(e) => setCampaignData(prev => ({ ...prev, startDate: e.target.value }))}
+                  className="bg-white"
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-semibold mb-2 block">End Date</Label>
+                <Input
+                  type="date"
+                  value={campaignData.endDate || ''}
+                  onChange={(e) => setCampaignData(prev => ({ ...prev, endDate: e.target.value }))}
+                  className="bg-white"
+                />
+              </div>
+            </div>
+            <p className="text-sm text-orange-700 mt-3">
+              These dates will be included in your CSV export for Google Ads scheduling.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {campaignData.selectedStructure === 'geo' && (
+        <Card className="mb-6 border-blue-200 bg-blue-50">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Globe className="w-5 h-5 text-blue-600" />
+              <CardTitle className="text-lg">GEO-Segmented Countries</CardTitle>
+            </div>
+            <CardDescription>Select up to 3 countries - a separate CSV will be generated for each country</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {(campaignData.selectedGeoCountries || []).map((country, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Select
+                    value={country}
+                    onValueChange={(value: string) => {
+                      const updated = [...(campaignData.selectedGeoCountries || [])];
+                      updated[index] = value;
+                      setCampaignData(prev => ({ ...prev, selectedGeoCountries: updated }));
+                    }}
+                  >
+                    <SelectTrigger className="bg-white flex-1">
+                      <SelectValue placeholder="Select a country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LOCATION_PRESETS.countries.map((c) => (
+                        <SelectItem 
+                          key={c} 
+                          value={c}
+                          disabled={(campaignData.selectedGeoCountries || []).includes(c) && c !== country}
+                        >
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-red-500 hover:text-red-700 hover:bg-red-100"
+                    onClick={() => {
+                      const updated = (campaignData.selectedGeoCountries || []).filter((_, i) => i !== index);
+                      setCampaignData(prev => ({ ...prev, selectedGeoCountries: updated }));
+                    }}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+              
+              {(campaignData.selectedGeoCountries || []).length < 3 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full border-dashed border-blue-300 text-blue-600 hover:bg-blue-100"
+                  onClick={() => {
+                    const current = campaignData.selectedGeoCountries || [];
+                    if (current.length < 3) {
+                      setCampaignData(prev => ({ 
+                        ...prev, 
+                        selectedGeoCountries: [...current, ''] 
+                      }));
+                    }
+                  }}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Country {(campaignData.selectedGeoCountries || []).length > 0 ? `(${3 - (campaignData.selectedGeoCountries || []).length} remaining)` : ''}
+                </Button>
+              )}
+              
+              {(campaignData.selectedGeoCountries || []).length > 0 && (
+                <p className="text-sm text-blue-700 mt-3">
+                  {(campaignData.selectedGeoCountries || []).filter(c => c).length} CSV file(s) will be generated, one for each country selected.
+                  {(campaignData.selectedGeoCountries || []).filter(c => c).length > 1 && ' Download will be a ZIP file.'}
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Inline Structure Details - shown after inputs */}
       {campaignData.selectedStructure && (() => {
         const selectedStruct = CAMPAIGN_STRUCTURES.find(s => s.id === campaignData.selectedStructure);
         const ranking = campaignData.structureRankings.findIndex(r => r.id === campaignData.selectedStructure);
@@ -3055,124 +3174,6 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
           </Card>
         );
       })()}
-
-      {campaignData.selectedStructure === 'seasonal' && (
-        <Card className="mb-6 border-orange-200 bg-orange-50">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-orange-600" />
-              <CardTitle className="text-lg">Seasonal Campaign Dates</CardTitle>
-            </div>
-            <CardDescription>Set the start and end dates for your seasonal/promotional campaign</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-sm font-semibold mb-2 block">Start Date</Label>
-                <Input
-                  type="date"
-                  value={campaignData.startDate || ''}
-                  onChange={(e) => setCampaignData(prev => ({ ...prev, startDate: e.target.value }))}
-                  className="bg-white"
-                />
-              </div>
-              <div>
-                <Label className="text-sm font-semibold mb-2 block">End Date</Label>
-                <Input
-                  type="date"
-                  value={campaignData.endDate || ''}
-                  onChange={(e) => setCampaignData(prev => ({ ...prev, endDate: e.target.value }))}
-                  className="bg-white"
-                />
-              </div>
-            </div>
-            <p className="text-sm text-orange-700 mt-3">
-              These dates will be included in your CSV export for Google Ads scheduling.
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {campaignData.selectedStructure === 'geo' && (
-        <Card className="mb-6 border-blue-200 bg-blue-50">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Globe className="w-5 h-5 text-blue-600" />
-              <CardTitle className="text-lg">GEO-Segmented Countries</CardTitle>
-            </div>
-            <CardDescription>Select up to 3 countries - a separate CSV will be generated for each country</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {(campaignData.selectedGeoCountries || []).map((country, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <Select
-                    value={country}
-                    onValueChange={(value: string) => {
-                      const updated = [...(campaignData.selectedGeoCountries || [])];
-                      updated[index] = value;
-                      setCampaignData(prev => ({ ...prev, selectedGeoCountries: updated }));
-                    }}
-                  >
-                    <SelectTrigger className="bg-white flex-1">
-                      <SelectValue placeholder="Select a country" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {LOCATION_PRESETS.countries.map((c) => (
-                        <SelectItem 
-                          key={c} 
-                          value={c}
-                          disabled={(campaignData.selectedGeoCountries || []).includes(c) && c !== country}
-                        >
-                          {c}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-red-500 hover:text-red-700 hover:bg-red-100"
-                    onClick={() => {
-                      const updated = (campaignData.selectedGeoCountries || []).filter((_, i) => i !== index);
-                      setCampaignData(prev => ({ ...prev, selectedGeoCountries: updated }));
-                    }}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
-              
-              {(campaignData.selectedGeoCountries || []).length < 3 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full border-dashed border-blue-300 text-blue-600 hover:bg-blue-100"
-                  onClick={() => {
-                    const current = campaignData.selectedGeoCountries || [];
-                    if (current.length < 3) {
-                      setCampaignData(prev => ({ 
-                        ...prev, 
-                        selectedGeoCountries: [...current, ''] 
-                      }));
-                    }
-                  }}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Country {(campaignData.selectedGeoCountries || []).length > 0 ? `(${3 - (campaignData.selectedGeoCountries || []).length} remaining)` : ''}
-                </Button>
-              )}
-              
-              {(campaignData.selectedGeoCountries || []).length > 0 && (
-                <p className="text-sm text-blue-700 mt-3">
-                  {(campaignData.selectedGeoCountries || []).filter(c => c).length} CSV file(s) will be generated, one for each country selected.
-                  {(campaignData.selectedGeoCountries || []).filter(c => c).length > 1 && ' Download will be a ZIP file.'}
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
     </div>
   );
