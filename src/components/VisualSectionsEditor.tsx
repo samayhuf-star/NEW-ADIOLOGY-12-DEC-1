@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Plus, Trash2, Eye, EyeOff, Save, Download, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, Trash2, Eye, EyeOff, Save, Download, GripVertical, ChevronUp, ChevronDown, Undo2, ImagePlus, Pencil, Upload } from 'lucide-react';
 import { TemplateData } from '../utils/savedWebsites';
 import { Button } from './ui/button';
 
@@ -201,6 +201,96 @@ function EditableText({
   );
 }
 
+function ImageEditor({ imageUrl, onUpdate, label = 'Image' }: { imageUrl: string; onUpdate: (url: string) => void; label?: string }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [urlInput, setUrlInput] = useState(imageUrl || '');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        onUpdate(base64);
+        setUrlInput(base64);
+        setIsEditing(false);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUrlSave = () => {
+    onUpdate(urlInput);
+    setIsEditing(false);
+  };
+
+  if (!isEditing) {
+    return (
+      <button
+        onClick={() => setIsEditing(true)}
+        className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm transition-colors"
+      >
+        <Pencil className="w-4 h-4" />
+        Edit {label}
+      </button>
+    );
+  }
+
+  return (
+    <div className="p-4 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 space-y-3">
+      <div className="flex items-center justify-between">
+        <label className="text-sm font-medium text-white/80">{label}</label>
+        <button onClick={() => setIsEditing(false)} className="text-white/60 hover:text-white text-sm">Cancel</button>
+      </div>
+      
+      <div className="flex gap-2">
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm transition-colors"
+        >
+          <Upload className="w-4 h-4" />
+          Upload Image
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileUpload}
+          className="hidden"
+        />
+      </div>
+      
+      <div className="text-white/60 text-xs text-center">or</div>
+      
+      <div className="flex gap-2">
+        <input
+          type="url"
+          value={urlInput}
+          onChange={(e) => setUrlInput(e.target.value)}
+          placeholder="https://example.com/image.jpg"
+          className="flex-1 px-3 py-2 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm"
+        />
+        <button
+          onClick={handleUrlSave}
+          className="px-4 py-2 bg-green-500 hover:bg-green-600 rounded-lg text-white text-sm font-medium transition-colors"
+        >
+          Save
+        </button>
+      </div>
+      
+      {imageUrl && (
+        <button
+          onClick={() => { onUpdate(''); setUrlInput(''); setIsEditing(false); }}
+          className="text-red-300 hover:text-red-200 text-xs"
+        >
+          Remove image
+        </button>
+      )}
+    </div>
+  );
+}
+
 function HeroSection({ section, onUpdate }: { section: Section; onUpdate: (data: any) => void }) {
   const data = section.data;
   const hasImage = data.imageUrl && data.imageUrl.trim() !== '';
@@ -235,18 +325,12 @@ function HeroSection({ section, onUpdate }: { section: Section; onUpdate: (data:
           {data.ctaText || 'Get Started'}
         </button>
         
-        <div className="mt-8 p-4 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20">
-          <label className="block text-sm font-medium text-white/80 mb-2">Background Image URL</label>
-          <input
-            type="url"
-            value={data.imageUrl || ''}
-            onChange={(e) => onUpdate({ ...data, imageUrl: e.target.value })}
-            placeholder="https://example.com/image.jpg"
-            className="w-full px-4 py-2 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50"
+        <div className="mt-8 flex justify-center">
+          <ImageEditor
+            imageUrl={data.imageUrl || ''}
+            onUpdate={(imageUrl) => onUpdate({ ...data, imageUrl })}
+            label="Background Image"
           />
-          {data.imageUrl && (
-            <p className="text-xs text-white/60 mt-1">Image is applied as background</p>
-          )}
         </div>
       </div>
     </section>
@@ -809,6 +893,33 @@ export default function VisualSectionsEditor({ templateData, onUpdate, onSave, o
   const [sections, setSections] = useState<Section[]>(buildSectionsFromTemplate(templateData));
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
+  const [history, setHistory] = useState<Section[][]>([]);
+  const maxHistory = 20;
+
+  const saveToHistory = (currentSections: Section[]) => {
+    setHistory(prev => {
+      const newHistory = [...prev, JSON.parse(JSON.stringify(currentSections))];
+      if (newHistory.length > maxHistory) {
+        newHistory.shift();
+      }
+      return newHistory;
+    });
+  };
+
+  const undo = () => {
+    if (history.length > 0) {
+      const previousState = history[history.length - 1];
+      setHistory(prev => prev.slice(0, -1));
+      setSections(previousState);
+    }
+  };
+
+  const setSectionsWithHistory = (newSections: Section[] | ((prev: Section[]) => Section[])) => {
+    setSections(prev => {
+      saveToHistory(prev);
+      return typeof newSections === 'function' ? newSections(prev) : newSections;
+    });
+  };
 
   const generateHtml = useCallback((sects: Section[]): string => {
     return sects.map(s => generateSectionHtml(s)).join('\n');
@@ -828,7 +939,7 @@ export default function VisualSectionsEditor({ templateData, onUpdate, onSave, o
   }, [sections, generateHtml, onUpdate, templateData]);
 
   const updateSection = (id: string, data: any) => {
-    setSections(prev => prev.map(s => s.id === id ? { ...s, data } : s));
+    setSectionsWithHistory(prev => prev.map(s => s.id === id ? { ...s, data } : s));
   };
 
   const addSection = (type: string) => {
@@ -839,12 +950,12 @@ export default function VisualSectionsEditor({ templateData, onUpdate, onSave, o
       name: typeInfo?.name || type,
       data: {}
     };
-    setSections([...sections, newSection]);
+    setSectionsWithHistory([...sections, newSection]);
     setShowAddMenu(false);
   };
 
   const removeSection = (id: string) => {
-    setSections(sections.filter(s => s.id !== id));
+    setSectionsWithHistory(sections.filter(s => s.id !== id));
     if (selectedSection === id) {
       setSelectedSection(null);
     }
@@ -855,11 +966,11 @@ export default function VisualSectionsEditor({ templateData, onUpdate, onSave, o
     if (direction === 'up' && index > 0) {
       const newSections = [...sections];
       [newSections[index - 1], newSections[index]] = [newSections[index], newSections[index - 1]];
-      setSections(newSections);
+      setSectionsWithHistory(newSections);
     } else if (direction === 'down' && index < sections.length - 1) {
       const newSections = [...sections];
       [newSections[index], newSections[index + 1]] = [newSections[index + 1], newSections[index]];
-      setSections(newSections);
+      setSectionsWithHistory(newSections);
     }
   };
 
@@ -893,6 +1004,16 @@ export default function VisualSectionsEditor({ templateData, onUpdate, onSave, o
             <span className="text-sm text-gray-500">{sections.length} sections</span>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              onClick={undo}
+              variant="outline"
+              className="gap-2"
+              disabled={history.length === 0}
+              title="Undo last change"
+            >
+              <Undo2 className="w-4 h-4" />
+              Undo
+            </Button>
             <Button
               onClick={() => setShowAddMenu(!showAddMenu)}
               variant="outline"
