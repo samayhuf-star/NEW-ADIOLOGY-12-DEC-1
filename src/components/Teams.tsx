@@ -164,9 +164,9 @@ export const Teams: React.FC = () => {
     <div className="p-6 max-w-3xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <Users className="h-7 w-7" />
-            Team Members
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Users className="h-7 w-7" style={{ color: '#9333ea' }} />
+            <span style={{ background: 'linear-gradient(90deg, #9333ea, #c026d3)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Team Members</span>
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
             Invite and manage your team
