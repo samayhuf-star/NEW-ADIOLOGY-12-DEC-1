@@ -194,15 +194,18 @@ ${exportedHtml || templateData.rawHtml || ''}
         throw new Error(result.error || 'Failed to publish');
       }
       
+      // Use the final URL from the server (which handles slug uniqueness)
+      const finalUrl = result.url || templateUrl;
+      
       setCurrentName(finalName);
-      setPublishedUrl(templateUrl);
+      setPublishedUrl(finalUrl);
       const updated = updateSavedWebsite(savedWebsite.id, { name: finalName });
       if (updated) {
         onUpdate(updated);
       }
       
-      console.log('✅ Website published successfully to:', templateUrl);
-      alert(`Website published successfully!\n\nName: ${finalName}\nURL: ${templateUrl}\n\nYour site is now live!`);
+      console.log('✅ Website published successfully to:', finalUrl);
+      alert(`Website published successfully!\n\nName: ${finalName}\nURL: ${finalUrl}\n\nYour site is now live!`);
     } catch (error: any) {
       console.error('Error publishing website:', error);
       const errorMsg = error?.message || error?.details || 'Unknown error';

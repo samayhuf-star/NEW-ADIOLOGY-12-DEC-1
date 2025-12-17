@@ -534,16 +534,66 @@ app.delete('/api/admin/websites/:id', async (c) => {
   }
 });
 
+// Helper function to generate clean slugs on the server
+function serverGenerateSlug(name: string): string {
+  if (!name || typeof name !== 'string') {
+    return 'untitled-site';
+  }
+
+  let slug = name
+    .toLowerCase()
+    .trim()
+    .replace(/[\s_]+/g, '-')
+    .replace(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g, '$1$2$3')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  if (slug.length > 60) {
+    slug = slug.substring(0, 60);
+    const lastHyphen = slug.lastIndexOf('-');
+    if (lastHyphen > 40) {
+      slug = slug.substring(0, lastHyphen);
+    }
+    slug = slug.replace(/-+$/, '');
+  }
+
+  if (slug.length < 3) {
+    slug = slug ? `${slug}-site` : 'untitled-site';
+  }
+
+  return slug;
+}
+
 app.post('/api/publish-website', async (c) => {
   try {
     const body = await c.req.json();
-    const { id, name, slug, user_email, html_content, template_data } = body;
+    const { id, name, slug: requestedSlug, user_email, html_content, template_data } = body;
     
-    if (!id || !name || !slug) {
-      return c.json({ error: 'Missing required fields: id, name, slug' }, 400);
+    if (!id || !name) {
+      return c.json({ error: 'Missing required fields: id, name' }, 400);
     }
     
-    const domain = `https://adiology.io/templates/${slug}`;
+    // Generate a clean slug from the name (ignoring messy client-side slug)
+    let cleanSlug = serverGenerateSlug(name);
+    
+    // Check for existing slugs (excluding current website if updating)
+    const existingSlugsResult = await pool.query(
+      'SELECT slug FROM admin_websites WHERE slug LIKE $1 AND id != $2',
+      [`${cleanSlug}%`, id]
+    );
+    const existingSlugs = existingSlugsResult.rows.map(r => r.slug);
+    
+    // Make slug unique if needed
+    if (existingSlugs.includes(cleanSlug)) {
+      let counter = 2;
+      while (existingSlugs.includes(`${cleanSlug}-${counter}`)) {
+        counter++;
+      }
+      cleanSlug = `${cleanSlug}-${counter}`;
+    }
+    
+    const domain = `https://adiology.io/templates/${cleanSlug}`;
     const now = new Date().toISOString();
     
     const existingResult = await pool.query('SELECT id FROM admin_websites WHERE id = $1', [id]);
@@ -561,18 +611,18 @@ app.post('/api/publish-website', async (c) => {
           published_at = $8, 
           updated_at = $9 
         WHERE id = $10`,
-        [name, slug, user_email || 'unknown', domain, html_content, JSON.stringify(template_data), 'Published', now, now, id]
+        [name, cleanSlug, user_email || 'unknown', domain, html_content, JSON.stringify(template_data), 'Published', now, now, id]
       );
     } else {
       await pool.query(
         `INSERT INTO admin_websites (id, name, slug, user_email, domain, html_content, template_data, status, published_at, created_at, updated_at) 
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-        [id, name, slug, user_email || 'unknown', domain, html_content, JSON.stringify(template_data), 'Published', now, now, now]
+        [id, name, cleanSlug, user_email || 'unknown', domain, html_content, JSON.stringify(template_data), 'Published', now, now, now]
       );
     }
     
-    console.log('✅ Website published:', { id, name, slug, domain });
-    return c.json({ success: true, url: domain, slug });
+    console.log('✅ Website published:', { id, name, slug: cleanSlug, domain });
+    return c.json({ success: true, url: domain, slug: cleanSlug });
   } catch (error: any) {
     console.error('Error publishing website:', error);
     return c.json({ error: error.message || 'Failed to publish website' }, 500);
