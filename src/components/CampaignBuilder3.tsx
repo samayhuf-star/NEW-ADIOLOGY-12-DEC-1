@@ -342,7 +342,11 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
 
   // Scroll to top when step changes
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Use setTimeout to ensure scroll happens after render completes
+    const timer = setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }, 50);
+    return () => clearTimeout(timer);
   }, [currentStep]);
 
   // Handle initial data from Keyword Planner or saved campaigns
