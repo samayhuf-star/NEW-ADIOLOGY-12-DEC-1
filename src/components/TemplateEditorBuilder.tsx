@@ -3,6 +3,7 @@ import { ArrowLeft, Upload, X, Globe, Info, CheckCircle, Copy, ExternalLink } fr
 import VisualSectionsEditor from './VisualSectionsEditor';
 import { TemplateData, SavedWebsite, updateSavedWebsite, downloadTemplate } from '../utils/savedWebsites';
 import { supabase } from '../utils/supabase/client';
+import { generateSlug, cleanWebsiteName } from '../utils/slugify';
 
 interface TemplateEditorBuilderProps {
   savedWebsite: SavedWebsite;
@@ -48,7 +49,7 @@ export default function TemplateEditorBuilder({ savedWebsite, onClose, onUpdate 
   };
 
   const handleSaveConfirm = () => {
-    const finalName = inputName.trim() || savedWebsite.name;
+    const finalName = cleanWebsiteName(inputName.trim() || savedWebsite.name);
     setShowNameDialog(false);
     
     const updatedData = {
@@ -109,9 +110,6 @@ ${exportedHtml}
     setShowNameDialog(true);
   };
 
-  const generateSlug = (name: string) => {
-    return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').substring(0, 50);
-  };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -150,7 +148,7 @@ ${exportedHtml}
   };
 
   const handlePublishConfirm = async () => {
-    const finalName = inputName.trim() || savedWebsite.name;
+    const finalName = cleanWebsiteName(inputName.trim() || savedWebsite.name);
     setShowNameDialog(false);
     setIsPublishing(true);
     

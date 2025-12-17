@@ -29,6 +29,7 @@ import {
   duplicateSavedSite,
   SavedSite,
 } from '../utils/savedSites';
+import { generateSlug, generateDuplicateName } from '../utils/slugify';
 import {
   createSiteZip,
   downloadSiteZip,
@@ -250,9 +251,11 @@ export const SavedSites: React.FC = () => {
               </DropdownMenuItem>
             )}
             <DropdownMenuItem onClick={() => {
+              const existingTitles = savedSites.map(s => s.title);
+              const newName = generateDuplicateName(site.title, existingTitles);
               setDuplicatingSite(site);
-              setNewSlug(`${site.slug}-copy`);
-              setNewTitle(`${site.title} (Copy)`);
+              setNewSlug(generateSlug(newName));
+              setNewTitle(newName);
               setShowDuplicateDialog(true);
             }}>
               <Copy className="w-4 h-4 mr-2" />
