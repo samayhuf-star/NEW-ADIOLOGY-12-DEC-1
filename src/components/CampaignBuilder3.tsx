@@ -27,13 +27,14 @@ import { type IntentResult, IntentId } from '../utils/campaignIntelligence/schem
 import { generateCampaignStructure, type StructureSettings } from '../utils/campaignStructureGenerator';
 import { generateKeywords as generateKeywordsUtil } from '../utils/keywordGenerator';
 import {
-  generateAds as generateAdsUtility, 
-  detectUserIntent,
-  type AdGenerationInput,
-  type ResponsiveSearchAd,
-  type ExpandedTextAd,
-  type CallOnlyAd
-} from '../utils/googleAdGenerator';
+  generateUniversalRSA,
+  generateUniversalDKI,
+  generateUniversalCallAd,
+  type UniversalAdInput,
+  type UniversalRSA,
+  type UniversalDKIAd,
+  type UniversalCallAd
+} from '../utils/universalAdGenerator';
 import { exportCampaignToCSVV3, validateCSVBeforeExport } from '../utils/csvGeneratorV3';
 import { exportCampaignToGoogleAdsEditorCSV, campaignStructureToCSVRows, GOOGLE_ADS_EDITOR_HEADERS } from '../utils/googleAdsEditorCSVExporter';
 import { validateAndFixAds, formatValidationReport } from '../utils/adValidationUtils';
@@ -1479,31 +1480,27 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
         }
       }
 
-      // Always generate 3 ads: RSA, DKI, and Call
+      // Universal Ad Generator - 4-Pillar Bucket System
+      // Generate RSA, DKI, and Call ads using the new architecture
       const adTypesToGenerate = ['rsa', 'dki', 'call'];
+      
+      // Build Universal Ad Input
+      const universalInput: UniversalAdInput = {
+        industry: industry,
+        keywords: keywordTexts,
+        uniqueValueProposition: campaignData.cta || 'quality service and expert solutions',
+        audiencePainPoint: 'finding reliable service',
+        businessName: businessName,
+        location: campaignData.locations?.cities?.[0] || campaignData.locations?.states?.[0] || undefined,
+        baseUrl: campaignData.url || undefined,
+        phoneNumber: '(555) 123-4567',
+      };
       
       for (const adType of adTypesToGenerate) {
         try {
-          const adInput: AdGenerationInput = {
-            keywords: keywordTexts,
-            baseUrl: campaignData.url || undefined,
-            adType: adType === 'rsa' ? 'RSA' : adType === 'dki' ? 'ETA' : 'CALL_ONLY',
-            industry: industry,
-            businessName: businessName,
-            location: campaignData.locations?.cities?.[0] || campaignData.locations?.states?.[0] || undefined,
-            filters: {
-              matchType: campaignData.keywordTypes.phrase ? 'phrase' : campaignData.keywordTypes.exact ? 'exact' : 'broad',
-              campaignStructure: (campaignData.selectedStructure?.toUpperCase() || 'SKAG') as 'SKAG' | 'STAG' | 'IBAG' | 'Alpha-Beta',
-              uniqueSellingPoints: [],
-              callToAction: campaignData.cta || undefined,
-            },
-          };
-
-          const ad = generateAdsUtility(adInput);
-          
-          // Convert to our ad format
-          if (adType === 'rsa' && 'headlines' in ad) {
-            const rsa = ad as ResponsiveSearchAd;
+          if (adType === 'rsa') {
+            // Generate RSA using 4-Pillar System
+            const rsa = generateUniversalRSA(universalInput);
             ads.push({
               id: `ad-${Date.now()}-${Math.random()}`,
               type: 'rsa',
@@ -1514,9 +1511,11 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
               finalUrl: rsa.finalUrl || campaignData.url || '',
               selected: false,
               extensions: [],
+              pillarBreakdown: rsa.pillarBreakdown,
             });
-          } else if (adType === 'dki' && 'headline1' in ad) {
-            const dki = ad as ExpandedTextAd;
+          } else if (adType === 'dki') {
+            // Generate DKI ad
+            const dki = generateUniversalDKI(universalInput);
             ads.push({
               id: `ad-${Date.now()}-${Math.random()}`,
               type: 'dki',
@@ -1531,8 +1530,9 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
               selected: false,
               extensions: [],
             });
-          } else if (adType === 'call' && 'phoneNumber' in ad) {
-            const call = ad as CallOnlyAd;
+          } else if (adType === 'call') {
+            // Generate Call-Only ad
+            const call = generateUniversalCallAd(universalInput);
             ads.push({
               id: `ad-${Date.now()}-${Math.random()}`,
               type: 'call',
@@ -1663,23 +1663,21 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
       
       let newAd: any = null;
       
+      // Build Universal Ad Input
+      const universalInput: UniversalAdInput = {
+        industry: industry,
+        keywords: keywordTexts,
+        uniqueValueProposition: campaignData.cta || 'quality service and expert solutions',
+        audiencePainPoint: 'finding reliable service',
+        businessName: businessName,
+        location: campaignData.locations?.cities?.[0] || campaignData.locations?.states?.[0] || undefined,
+        baseUrl: campaignData.url || undefined,
+        phoneNumber: '(555) 123-4567',
+      };
+      
       if (adType === 'rsa') {
-        const adInput: AdGenerationInput = {
-          keywords: keywordTexts,
-          baseUrl: campaignData.url || undefined,
-          adType: 'RSA',
-          industry: industry,
-          businessName: businessName,
-          location: campaignData.locations?.cities?.[0] || campaignData.locations?.states?.[0] || undefined,
-          filters: {
-            matchType: campaignData.keywordTypes.phrase ? 'phrase' : campaignData.keywordTypes.exact ? 'exact' : 'broad',
-            campaignStructure: (campaignData.selectedStructure?.toUpperCase() || 'STAG') as 'SKAG' | 'STAG' | 'IBAG' | 'Alpha-Beta',
-            uniqueSellingPoints: [],
-            callToAction: campaignData.cta || undefined,
-          },
-        };
-        const ad = generateAdsUtility(adInput);
-        const rsa = ad as ResponsiveSearchAd;
+        // Generate RSA using 4-Pillar System
+        const rsa = generateUniversalRSA(universalInput);
         newAd = {
           id: `ad-${Date.now()}-${Math.random()}`,
           type: 'rsa',
@@ -1690,6 +1688,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
           finalUrl: rsa.finalUrl || campaignData.url || '',
           selected: false,
           extensions: [],
+          pillarBreakdown: rsa.pillarBreakdown,
         };
       } else if (adType === 'dki') {
         // Use AI-powered DKI generation
@@ -1766,23 +1765,20 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
         }
       }
       
-      const adInput: AdGenerationInput = {
-        keywords: keywordTexts,
-        baseUrl: campaignData.url || undefined,
-        adType: 'CALL_ONLY',
+      // Build Universal Ad Input for Call-Only Ad
+      const universalInput: UniversalAdInput = {
         industry: industry,
+        keywords: keywordTexts,
+        uniqueValueProposition: campaignData.cta || 'quality service and expert solutions',
+        audiencePainPoint: 'finding reliable service',
         businessName: businessName,
         location: campaignData.locations?.cities?.[0] || campaignData.locations?.states?.[0] || undefined,
-        filters: {
-          matchType: campaignData.keywordTypes.phrase ? 'phrase' : campaignData.keywordTypes.exact ? 'exact' : 'broad',
-          campaignStructure: (campaignData.selectedStructure?.toUpperCase() || 'STAG') as 'SKAG' | 'STAG' | 'IBAG' | 'Alpha-Beta',
-          uniqueSellingPoints: [],
-          callToAction: campaignData.cta || undefined,
-        },
+        baseUrl: campaignData.url || undefined,
+        phoneNumber: phoneNumber,
       };
 
-      const ad = generateAdsUtility(adInput);
-      const call = ad as CallOnlyAd;
+      // Generate Call-Only ad using Universal Generator
+      const call = generateUniversalCallAd(universalInput);
       
       const newAd = {
         id: `ad-${Date.now()}-${Math.random()}`,

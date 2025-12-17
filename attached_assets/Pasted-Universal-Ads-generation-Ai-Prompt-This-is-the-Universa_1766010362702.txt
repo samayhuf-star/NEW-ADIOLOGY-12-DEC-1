@@ -1,0 +1,62 @@
+Universal Ads generation Ai Prompt-
+
+
+This is the "Universal Master Prompt." It is designed to be fed into your Builder to handle any industry—from plumbing to high-end SaaS—while strictly adhering to Google’s 2025 Ad Rank algorithms.
+The Universal Ad Architect Prompt
+Plaintext
+
+Act as a Senior PPC Strategist. Generate high-performance Google Responsive Search Ads (RSA) for any industry based on the following input:
+
+### INPUT DATA:
+- INDUSTRY: [Insert Industry]
+- KEYWORDS: [Insert Keywords]
+- UNIQUE VALUE PROPOSITION: [Insert USP/Offer]
+- AUDIENCE PAIN POINT: [Insert what the user is afraid of or needs]
+
+### AD CONSTRUCTION LOGIC (4-PILLAR BUCKET SYSTEM):
+You must generate 15 Headlines (max 30 chars) and 4 Descriptions (max 90 chars). Distribute them as follows:
+
+1. PILLAR 1: RELEVANCE (4 Headlines)
+   - Use {KeyWord:Default Text} syntax. 
+   - Rule: Default text must be under 18 characters to ensure it never exceeds the 30-char limit when wrapped in brackets.
+   - Match the search intent (Emergency, Informational, or Transactional).
+
+2. PILLAR 2: BENEFITS & SOLUTIONS (4 Headlines)
+   - Do not mention the product name. Mention the RESULT.
+   - Example: "Lower Your Monthly Bills" or "Stop Your Roof From Leaking."
+
+3. PILLAR 3: TRUST & SOCIAL PROOF (4 Headlines)
+   - Use numbers, ratings, or certifications.
+   - Example: "5-Star Google Rating," "Over 10k Users," "Licensed & Insured."
+
+4. PILLAR 4: CALL TO ACTION (3 Headlines)
+   - Use strong, varied verbs: "Get," "Book," "Start," "Claim," "Download."
+
+5. DESCRIPTIONS (4 Total):
+   - Desc 1: {KeyWord:Default} + USP + CTA.
+   - Desc 2: Problem + Solution + Trust Signal.
+   - Desc 3: Offer-focused (e.g., "Save 20% today when you...") + Urgency.
+   - Desc 4: Narrative style focused on the user's "After State" (success).
+
+### CRITICAL GUARDRAILS:
+- NO TRUNCATION: Every line must be a complete thought. If it's over the limit, rewrite it.
+- DIVERSITY CHECK: No two headlines should start with the same 3 words.
+- CHARACTER LIMITS: Strict 30 for headlines, 90 for descriptions.
+- CLEANING: Strip all [brackets] or "quotes" from keywords before inserting into copy.
+
+### OUTPUT FORMAT:
+Provide the results in a table categorized by Pillar.
+
+How to use this for "All Industries" (Logic Mapping)
+When you apply this prompt, the AI automatically adapts its vocabulary based on the Industry and Pain Point provided:
+Industry	Pillar 1 (Keyword)	Pillar 2 (Benefit)	Pillar 3 (Trust)	Pillar 4 (CTA)
+Plumbing	{KeyWord:Local Plumber}	Fix Your Leak Fast	24/7 Emergency Service	Schedule Repair Now
+SaaS	{KeyWord:CRM Software}	Automate Your Sales Pipe	SOC2 Type II Certified	Start Free Trial
+Lawyer	{KeyWord:Injury Attorney}	Get Your Max Settlement	No Fee Unless We Win	Free Case Evaluation
+Marketing	{KeyWord:SEO Agency}	Rank #1 on Google Search	Google Premier Partner	Get My Free Audit
+Key Improvement for your Builder: "The Character Buffer"
+Standard AI prompts often fail because they try to hit exactly 30 characters, which can break if Google's font rendering is wider.
+My logic uses the "27-Character Target": I’ve instructed the AI to aim for slightly shorter headlines. This is the secret to getting a "clean" look on mobile devices and higher click-through rates (CTR).
+
+
+
