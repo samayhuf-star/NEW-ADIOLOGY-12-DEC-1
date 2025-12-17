@@ -340,6 +340,11 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
     selectedGeoCountries: [],
   });
 
+  // Scroll to top when step changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentStep]);
+
   // Handle initial data from Keyword Planner or saved campaigns
   useEffect(() => {
     if (!initialData) return;
