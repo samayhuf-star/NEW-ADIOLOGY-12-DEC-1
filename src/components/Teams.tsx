@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Users, UserPlus, Mail, Trash2, Crown, Clock, CheckCircle, XCircle, AlertCircle, Send, Plus } from 'lucide-react';
+import { Users, UserPlus, Mail, Trash2, XCircle, AlertCircle, Send, Plus, CheckCircle } from 'lucide-react';
 import { Button } from './ui/button';
-import { Card, CardContent } from './ui/card';
 import { Input } from './ui/input';
 import {
   Dialog,
@@ -201,79 +200,66 @@ export const Teams: React.FC = () => {
         </div>
       )}
 
-      <Card>
-        <CardContent className="pt-6">
-          <div className="space-y-3">
-            {teamMembers.map((member) => (
-              <div 
-                key={member.id}
-                className="flex items-center justify-between p-4 rounded-lg border border-gray-200"
-                style={{ backgroundColor: '#f9fafb' }}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: '#f3e8ff' }}>
-                    {member.role === 'owner' ? (
-                      <Crown className="h-5 w-5" style={{ color: '#9333ea' }} />
-                    ) : (
-                      <span className="font-medium" style={{ color: '#9333ea' }}>
-                        {member.name.charAt(0).toUpperCase()}
-                      </span>
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-medium" style={{ color: '#111827' }}>{member.name}</p>
-                    <p className="text-sm" style={{ color: '#6b7280' }}>{member.email}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  {member.status === 'active' ? (
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium" style={{ backgroundColor: '#dcfce7', color: '#166534' }}>
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                      Accepted
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium" style={{ backgroundColor: '#fef9c3', color: '#854d0e' }}>
-                      <Clock className="h-3 w-3 mr-1" />
-                      Pending
-                    </span>
-                  )}
-                  {member.role !== 'owner' && (
-                    <div className="flex items-center gap-1">
-                      {member.status === 'pending' && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleResendInvite(member.id)}
-                          className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                          title="Resend invitation"
-                        >
-                          <Send className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveMember(member.id)}
-                        className="text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-900/20"
-                        title={member.status === 'pending' ? 'Cancel invitation' : 'Remove member'}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-            {teamMembers.length === 0 && (
-              <div className="text-center py-8">
-                <Users className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500 dark:text-gray-400">No team members yet</p>
-                <p className="text-sm text-gray-400 dark:text-gray-500">Click "Invite Team Member" to get started</p>
-              </div>
-            )}
+      <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#1e293b' }}>
+        <div className="flex items-center gap-2 px-4 py-3 border-b" style={{ borderColor: '#334155' }}>
+          <div className="flex gap-1.5">
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#ef4444' }}></div>
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#eab308' }}></div>
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#22c55e' }}></div>
           </div>
-        </CardContent>
-      </Card>
+          <span className="text-sm font-mono ml-2" style={{ color: '#94a3b8' }}>&gt;_</span>
+          <span className="text-sm font-medium" style={{ color: '#f1f5f9' }}>Team Members</span>
+        </div>
+        <div className="p-4 space-y-3 font-mono text-sm">
+          {teamMembers.map((member) => (
+            <div 
+              key={member.id}
+              className="flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3">
+                <span style={{ color: '#fbbf24' }}>[$]</span>
+                <span style={{ color: '#94a3b8' }}>{member.role === 'owner' ? 'owner' : 'member'}:</span>
+                <span style={{ color: '#a78bfa' }}>{member.name}</span>
+                <span style={{ color: '#64748b' }}>({member.email})</span>
+              </div>
+              <div className="flex items-center gap-3">
+                {member.status === 'active' ? (
+                  <span style={{ color: '#4ade80' }}>accepted</span>
+                ) : (
+                  <span style={{ color: '#fbbf24' }}>pending</span>
+                )}
+                {member.role !== 'owner' && (
+                  <div className="flex items-center gap-2">
+                    {member.status === 'pending' && (
+                      <button
+                        onClick={() => handleResendInvite(member.id)}
+                        className="hover:opacity-80 transition-opacity"
+                        title="Resend invitation"
+                        style={{ color: '#60a5fa' }}
+                      >
+                        <Send className="h-4 w-4" />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleRemoveMember(member.id)}
+                      className="hover:opacity-80 transition-opacity"
+                      title={member.status === 'pending' ? 'Cancel invitation' : 'Remove member'}
+                      style={{ color: '#f87171' }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+          {teamMembers.length === 0 && (
+            <div className="text-center py-6">
+              <span style={{ color: '#64748b' }}>No team members yet. Click "Invite Team Member" to get started.</span>
+            </div>
+          )}
+        </div>
+      </div>
 
       <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
         <DialogContent>
