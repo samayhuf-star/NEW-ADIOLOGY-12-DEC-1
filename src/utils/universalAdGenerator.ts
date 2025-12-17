@@ -512,13 +512,39 @@ export function generateUniversalRSA(input: UniversalAdInput): UniversalRSA {
   let allHeadlines = [...pillar1, ...pillar2, ...pillar3, ...pillar4];
   allHeadlines = ensureDiversity(allHeadlines);
   
-  while (allHeadlines.length < 15) {
-    const keywords = cleanKeywords(input.keywords);
-    const extraKw = keywords[allHeadlines.length % keywords.length] || input.industry;
-    allHeadlines.push(truncateToTarget(`${titleCase(extraKw)} Experts`));
+  // Generate varied fallback headlines if needed to reach 15
+  const keywords = cleanKeywords(input.keywords);
+  const fallbackTemplates = [
+    (kw: string) => `${titleCase(kw)} Experts`,
+    (kw: string) => `Best ${titleCase(kw)} Team`,
+    (kw: string) => `${titleCase(kw)} Specialists`,
+    (kw: string) => `Top ${titleCase(kw)} Pros`,
+    (kw: string) => `Quality ${titleCase(kw)}`,
+    (kw: string) => `Reliable ${titleCase(kw)}`,
+    (kw: string) => `Certified ${titleCase(kw)}`,
+    (kw: string) => `Award Winning ${titleCase(kw)}`,
+    (kw: string) => `Premium ${titleCase(kw)}`,
+    (kw: string) => `Leading ${titleCase(kw)}`,
+  ];
+  
+  let templateIndex = 0;
+  while (allHeadlines.length < 15 && templateIndex < fallbackTemplates.length) {
+    const kwIndex = templateIndex % Math.max(1, keywords.length);
+    const extraKw = keywords[kwIndex] || input.industry;
+    const candidate = truncateToTarget(fallbackTemplates[templateIndex](extraKw));
+    
+    // Only add if it passes diversity check
+    const candidatePrefix = getFirstThreeWords(candidate);
+    const existingPrefixes = new Set(allHeadlines.map(h => getFirstThreeWords(h)));
+    
+    if (!existingPrefixes.has(candidatePrefix)) {
+      allHeadlines.push(candidate);
+    }
+    templateIndex++;
   }
   
-  allHeadlines = allHeadlines.slice(0, 15);
+  // Final diversity enforcement
+  allHeadlines = ensureDiversity(allHeadlines).slice(0, 15);
   
   const descriptions = generateDescriptions(input);
   const displayPath = buildDisplayPath(input);
