@@ -356,6 +356,244 @@ export const FRANCE_STATES_ALL = [
   'Bretagne', 'Normandie', 'Bourgogne-Franche-Comté', 'Centre-Val de Loire', 'Corse'
 ];
 
+// Netherlands cities
+export const NETHERLANDS_CITIES_TOP_500 = [
+  'Amsterdam', 'Rotterdam', 'The Hague', 'Utrecht', 'Eindhoven', 'Tilburg', 'Groningen',
+  'Almere', 'Breda', 'Nijmegen', 'Apeldoorn', 'Haarlem', 'Arnhem', 'Enschede', 'Amersfoort',
+  'Zaanstad', 'Haarlemmermeer', 's-Hertogenbosch', 'Zwolle', 'Zoetermeer', 'Leiden', 'Maastricht',
+  'Dordrecht', 'Ede', 'Alphen aan den Rijn', 'Alkmaar', 'Emmen', 'Delft', 'Venlo', 'Deventer',
+  'Leeuwarden', 'Helmond', 'Hilversum', 'Heerlen', 'Amstelveen', 'Oss', 'Schiedam', 'Sittard-Geleen',
+  'Spijkenisse', 'Purmerend', 'Roosendaal', 'Hengelo', 'Vlaardingen', 'Lelystad', 'Hoorn', 'Almelo',
+  'Gouda', 'Bergen op Zoom', 'Katwijk', 'Zeist'
+];
+
+// Netherlands provinces
+export const NETHERLANDS_STATES_ALL = [
+  'North Holland', 'South Holland', 'North Brabant', 'Gelderland', 'Utrecht',
+  'Overijssel', 'Limburg', 'Friesland', 'Groningen', 'Drenthe', 'Flevoland', 'Zeeland'
+];
+
+// Netherlands postal codes
+export const NETHERLANDS_ZIP_CODES_EXTENDED = (() => {
+  const zips: string[] = [];
+  for (let i = 1000; i <= 9999; i++) {
+    zips.push(`${i}AA`, `${i}AB`, `${i}AC`);
+  }
+  return zips.slice(0, 5000);
+})();
+
+// Italy cities
+export const ITALY_CITIES_TOP_500 = [
+  'Rome', 'Milan', 'Naples', 'Turin', 'Palermo', 'Genoa', 'Bologna', 'Florence',
+  'Catania', 'Bari', 'Venice', 'Verona', 'Messina', 'Padua', 'Trieste', 'Brescia',
+  'Parma', 'Taranto', 'Prato', 'Modena', 'Reggio Calabria', 'Reggio Emilia', 'Perugia',
+  'Livorno', 'Ravenna', 'Cagliari', 'Foggia', 'Rimini', 'Salerno', 'Ferrara', 'Sassari',
+  'Latina', 'Giugliano', 'Monza', 'Syracuse', 'Pescara', 'Bergamo', 'Forlì', 'Trento',
+  'Vicenza', 'Terni', 'Bolzano', 'Novara', 'Piacenza', 'Ancona', 'Andria', 'Arezzo',
+  'Udine', 'Cesena', 'Lecce'
+];
+
+// Italy regions
+export const ITALY_STATES_ALL = [
+  'Lombardy', 'Lazio', 'Campania', 'Sicily', 'Veneto', 'Emilia-Romagna', 'Piedmont',
+  'Tuscany', 'Apulia', 'Calabria', 'Sardinia', 'Liguria', 'Marche', 'Abruzzo',
+  'Friuli-Venezia Giulia', 'Trentino-Alto Adige', 'Umbria', 'Basilicata', 'Molise', "Valle d'Aosta"
+];
+
+// Spain cities
+export const SPAIN_CITIES_TOP_500 = [
+  'Madrid', 'Barcelona', 'Valencia', 'Seville', 'Zaragoza', 'Málaga', 'Murcia', 'Palma',
+  'Las Palmas', 'Bilbao', 'Alicante', 'Córdoba', 'Valladolid', 'Vigo', 'Gijón', 'Hospitalet',
+  'Vitoria-Gasteiz', 'Granada', 'Elche', 'Oviedo', 'Badalona', 'Cartagena', 'Terrassa',
+  'Jerez', 'Sabadell', 'Móstoles', 'Santa Cruz', 'Pamplona', 'Almería', 'Alcalá',
+  'Fuenlabrada', 'Leganés', 'San Sebastián', 'Getafe', 'Burgos', 'Albacete', 'Santander',
+  'Castellón', 'Alcorcón', 'San Cristóbal', 'Logroño', 'Badajoz', 'Salamanca', 'Huelva',
+  'Marbella', 'Lérida', 'Tarragona', 'León', 'Cádiz', 'Jaén'
+];
+
+// Spain autonomous communities
+export const SPAIN_STATES_ALL = [
+  'Andalusia', 'Catalonia', 'Madrid', 'Valencia', 'Galicia', 'Castile and León',
+  'Basque Country', 'Castilla-La Mancha', 'Canary Islands', 'Murcia', 'Aragon',
+  'Balearic Islands', 'Extremadura', 'Asturias', 'Navarre', 'Cantabria', 'La Rioja'
+];
+
+// Belgium cities
+export const BELGIUM_CITIES_TOP_500 = [
+  'Brussels', 'Antwerp', 'Ghent', 'Charleroi', 'Liège', 'Bruges', 'Namur', 'Leuven',
+  'Mons', 'Aalst', 'Mechelen', 'La Louvière', 'Kortrijk', 'Hasselt', 'Ostend', 'Sint-Niklaas',
+  'Tournai', 'Genk', 'Seraing', 'Roeselare', 'Verviers', 'Mouscron', 'Dendermonde', 'Beringen',
+  'Turnhout', 'Lokeren', 'Braine-l\'Alleud', 'Dilbeek', 'Heist-op-den-Berg', 'Sint-Truiden',
+  'Waregem', 'Châtelet', 'Herstal', 'Knokke-Heist', 'Binche', 'Grimbergen', 'Maasmechelen',
+  'Geraardsbergen', 'Ninove', 'Geel', 'Wetteren', 'Bilzen', 'Ieper', 'Aarschot', 'Tienen',
+  'Diest', 'Schoten', 'Brasschaat', 'Vilvoorde', 'Evergem'
+];
+
+// Belgium provinces
+export const BELGIUM_STATES_ALL = [
+  'Antwerp', 'Brussels-Capital', 'East Flanders', 'Flemish Brabant', 'Hainaut',
+  'Liège', 'Limburg', 'Luxembourg', 'Namur', 'Walloon Brabant', 'West Flanders'
+];
+
+// Switzerland cities
+export const SWITZERLAND_CITIES_TOP_500 = [
+  'Zurich', 'Geneva', 'Basel', 'Lausanne', 'Bern', 'Winterthur', 'Lucerne', 'St. Gallen',
+  'Lugano', 'Biel', 'Thun', 'Köniz', 'La Chaux-de-Fonds', 'Fribourg', 'Schaffhausen', 'Chur',
+  'Vernier', 'Neuchâtel', 'Uster', 'Sion', 'Lancy', 'Emmen', 'Yverdon-les-Bains', 'Zug',
+  'Dübendorf', 'Kriens', 'Rapperswil-Jona', 'Dietikon', 'Montreux', 'Frauenfeld', 'Wetzikon',
+  'Baar', 'Wil', 'Meyrin', 'Bulle', 'Wädenswil', 'Allschwil', 'Carouge', 'Renens', 'Nyon'
+];
+
+// Switzerland cantons
+export const SWITZERLAND_STATES_ALL = [
+  'Zurich', 'Bern', 'Vaud', 'Aargau', 'St. Gallen', 'Geneva', 'Lucerne', 'Ticino',
+  'Valais', 'Basel-Stadt', 'Fribourg', 'Thurgau', 'Basel-Landschaft', 'Solothurn',
+  'Graubünden', 'Neuchâtel', 'Schwyz', 'Zug', 'Schaffhausen', 'Jura', 'Appenzell', 'Uri', 'Glarus'
+];
+
+// Sweden cities
+export const SWEDEN_CITIES_TOP_500 = [
+  'Stockholm', 'Gothenburg', 'Malmö', 'Uppsala', 'Västerås', 'Örebro', 'Linköping', 'Helsingborg',
+  'Jönköping', 'Norrköping', 'Lund', 'Umeå', 'Gävle', 'Borås', 'Södertälje', 'Eskilstuna',
+  'Halmstad', 'Växjö', 'Karlstad', 'Sundsvall', 'Östersund', 'Trollhättan', 'Luleå', 'Borlänge',
+  'Tumba', 'Kristianstad', 'Kalmar', 'Falun', 'Skövde', 'Karlskrona', 'Skellefteå', 'Uddevalla',
+  'Varberg', 'Örnsköldsvik', 'Landskrona', 'Nyköping', 'Motala', 'Lidingö', 'Ängelholm', 'Trelleborg'
+];
+
+// Sweden counties
+export const SWEDEN_STATES_ALL = [
+  'Stockholm', 'Västra Götaland', 'Skåne', 'Östergötland', 'Uppsala', 'Jönköping',
+  'Halland', 'Örebro', 'Södermanland', 'Dalarna', 'Gävleborg', 'Västmanland',
+  'Norrbotten', 'Västernorrland', 'Kalmar', 'Kronoberg', 'Värmland', 'Västerbotten',
+  'Blekinge', 'Jämtland', 'Gotland'
+];
+
+// Norway cities
+export const NORWAY_CITIES_TOP_500 = [
+  'Oslo', 'Bergen', 'Trondheim', 'Stavanger', 'Drammen', 'Fredrikstad', 'Kristiansand', 'Sandnes',
+  'Tromsø', 'Sarpsborg', 'Skien', 'Ålesund', 'Sandefjord', 'Haugesund', 'Tønsberg', 'Moss',
+  'Porsgrunn', 'Bodø', 'Arendal', 'Hamar', 'Larvik', 'Halden', 'Lillehammer', 'Molde',
+  'Harstad', 'Gjøvik', 'Askøy', 'Kongsberg', 'Horten', 'Ski', 'Lørenskog', 'Jessheim',
+  'Kristiansund', 'Narvik', 'Steinkjer', 'Askim', 'Elverum', 'Mandal', 'Grimstad', 'Bryne'
+];
+
+// Norway counties
+export const NORWAY_STATES_ALL = [
+  'Oslo', 'Viken', 'Innlandet', 'Vestfold og Telemark', 'Agder', 'Rogaland',
+  'Vestland', 'Møre og Romsdal', 'Trøndelag', 'Nordland', 'Troms og Finnmark'
+];
+
+// Denmark cities
+export const DENMARK_CITIES_TOP_500 = [
+  'Copenhagen', 'Aarhus', 'Odense', 'Aalborg', 'Frederiksberg', 'Esbjerg', 'Gentofte', 'Gladsaxe',
+  'Randers', 'Kolding', 'Horsens', 'Vejle', 'Roskilde', 'Herning', 'Høje-Taastrup', 'Silkeborg',
+  'Næstved', 'Greve', 'Fredericia', 'Viborg', 'Køge', 'Holstebro', 'Slagelse', 'Helsingør',
+  'Hillerød', 'Sønderborg', 'Holbæk', 'Hjørring', 'Svendborg', 'Frederikshavn', 'Haderslev',
+  'Ringsted', 'Skanderborg', 'Nyborg', 'Middelfart', 'Aabenraa', 'Ikast', 'Brønderslev',
+  'Thisted', 'Vejen'
+];
+
+// Denmark regions
+export const DENMARK_STATES_ALL = [
+  'Capital Region', 'Central Denmark', 'North Denmark', 'Zealand', 'Southern Denmark'
+];
+
+// Finland cities
+export const FINLAND_CITIES_TOP_500 = [
+  'Helsinki', 'Espoo', 'Tampere', 'Vantaa', 'Oulu', 'Turku', 'Jyväskylä', 'Lahti',
+  'Kuopio', 'Pori', 'Kouvola', 'Joensuu', 'Lappeenranta', 'Hämeenlinna', 'Vaasa', 'Seinäjoki',
+  'Rovaniemi', 'Mikkeli', 'Kotka', 'Salo', 'Porvoo', 'Kokkola', 'Hyvinkää', 'Lohja',
+  'Järvenpää', 'Rauma', 'Kajaani', 'Tuusula', 'Kirkkonummi', 'Kerava', 'Savonlinna',
+  'Nokia', 'Nurmijärvi', 'Ylöjärvi', 'Kangasala', 'Riihimäki', 'Vihti', 'Imatra', 'Raisio', 'Tornio'
+];
+
+// Finland regions
+export const FINLAND_STATES_ALL = [
+  'Uusimaa', 'Southwest Finland', 'Satakunta', 'Kanta-Häme', 'Pirkanmaa', 'Päijät-Häme',
+  'Kymenlaakso', 'South Karelia', 'South Savo', 'North Savo', 'North Karelia', 'Central Finland',
+  'South Ostrobothnia', 'Ostrobothnia', 'Central Ostrobothnia', 'North Ostrobothnia', 'Kainuu', 'Lapland'
+];
+
+// Poland cities
+export const POLAND_CITIES_TOP_500 = [
+  'Warsaw', 'Kraków', 'Łódź', 'Wrocław', 'Poznań', 'Gdańsk', 'Szczecin', 'Bydgoszcz',
+  'Lublin', 'Białystok', 'Katowice', 'Gdynia', 'Częstochowa', 'Radom', 'Sosnowiec', 'Toruń',
+  'Kielce', 'Rzeszów', 'Gliwice', 'Zabrze', 'Olsztyn', 'Bielsko-Biała', 'Bytom', 'Ruda Śląska',
+  'Rybnik', 'Tychy', 'Dąbrowa Górnicza', 'Opole', 'Płock', 'Elbląg', 'Gorzów Wielkopolski',
+  'Wałbrzych', 'Zielona Góra', 'Włocławek', 'Tarnów', 'Chorzów', 'Koszalin', 'Kalisz',
+  'Legnica', 'Grudziądz', 'Słupsk', 'Jaworzno', 'Jastrzębie-Zdrój', 'Nowy Sącz', 'Jelenia Góra',
+  'Siedlce', 'Mysłowice', 'Piła', 'Ostrów Wielkopolski', 'Piotrków Trybunalski'
+];
+
+// Poland voivodeships
+export const POLAND_STATES_ALL = [
+  'Greater Poland', 'Kuyavian-Pomeranian', 'Lesser Poland', 'Łódź', 'Lower Silesian',
+  'Lublin', 'Lubusz', 'Masovian', 'Opole', 'Podlaskie', 'Pomeranian', 'Silesian',
+  'Subcarpathian', 'Świętokrzyskie', 'Warmian-Masurian', 'West Pomeranian'
+];
+
+// Austria cities
+export const AUSTRIA_CITIES_TOP_500 = [
+  'Vienna', 'Graz', 'Linz', 'Salzburg', 'Innsbruck', 'Klagenfurt', 'Villach', 'Wels',
+  'Sankt Pölten', 'Dornbirn', 'Wiener Neustadt', 'Steyr', 'Feldkirch', 'Bregenz', 'Leonding',
+  'Klosterneuburg', 'Baden', 'Wolfsberg', 'Leoben', 'Krems', 'Traun', 'Amstetten', 'Lustenau',
+  'Kapfenberg', 'Mödling', 'Hallein', 'Kufstein', 'Traiskirchen', 'Schwechat', 'Braunau',
+  'Stockerau', 'Saalfelden', 'Ansfelden', 'Tulln', 'Hohenems', 'Spittal', 'Telfs', 'Ternitz',
+  'Perchtoldsdorf', 'Feldkirchen'
+];
+
+// Austria states
+export const AUSTRIA_STATES_ALL = [
+  'Vienna', 'Lower Austria', 'Upper Austria', 'Styria', 'Tyrol', 'Carinthia',
+  'Salzburg', 'Vorarlberg', 'Burgenland'
+];
+
+// Ireland cities
+export const IRELAND_CITIES_TOP_500 = [
+  'Dublin', 'Cork', 'Limerick', 'Galway', 'Waterford', 'Drogheda', 'Dundalk', 'Swords',
+  'Bray', 'Navan', 'Ennis', 'Kilkenny', 'Carlow', 'Tralee', 'Newbridge', 'Portlaoise',
+  'Balbriggan', 'Naas', 'Athlone', 'Mullingar', 'Celbridge', 'Wexford', 'Letterkenny',
+  'Sligo', 'Greystones', 'Clonmel', 'Malahide', 'Leixlip', 'Tullamore', 'Arklow',
+  'Maynooth', 'Cobh', 'Castlebar', 'Midleton', 'Mallow', 'Ashbourne', 'Ballina', 'Enniscorthy',
+  'Wicklow', 'Tramore'
+];
+
+// Ireland provinces
+export const IRELAND_STATES_ALL = [
+  'Leinster', 'Munster', 'Connacht', 'Ulster'
+];
+
+// Portugal cities
+export const PORTUGAL_CITIES_TOP_500 = [
+  'Lisbon', 'Porto', 'Vila Nova de Gaia', 'Amadora', 'Braga', 'Funchal', 'Coimbra', 'Setúbal',
+  'Almada', 'Agualva-Cacém', 'Queluz', 'Leiria', 'Faro', 'Rio Tinto', 'Guimarães', 'Évora',
+  'Odivelas', 'Rio de Mouro', 'Corroios', 'Póvoa de Varzim', 'Vila Franca de Xira', 'Barreiro',
+  'Barcelos', 'Viseu', 'Amora', 'Maia', 'Matosinhos', 'Gondomar', 'Ermesinde', 'Santa Maria da Feira',
+  'Loures', 'Portimão', 'Aveiro', 'Albufeira', 'Vila Real', 'Caldas da Rainha', 'Santarém',
+  'Viana do Castelo', 'Torres Vedras', 'Peniche'
+];
+
+// Portugal districts
+export const PORTUGAL_STATES_ALL = [
+  'Lisbon', 'Porto', 'Braga', 'Setúbal', 'Aveiro', 'Faro', 'Leiria', 'Coimbra',
+  'Santarém', 'Viseu', 'Madeira', 'Azores', 'Viana do Castelo', 'Vila Real', 'Évora'
+];
+
+// Greece cities
+export const GREECE_CITIES_TOP_500 = [
+  'Athens', 'Thessaloniki', 'Patras', 'Heraklion', 'Larissa', 'Volos', 'Ioannina', 'Chania',
+  'Chalcis', 'Katerini', 'Trikala', 'Serres', 'Lamia', 'Alexandroupoli', 'Kozani', 'Kalamata',
+  'Kavala', 'Veria', 'Chios', 'Rhodes', 'Karditsa', 'Drama', 'Agrinio', 'Komotini',
+  'Xanthi', 'Corfu', 'Mytilene', 'Salamina', 'Elefsina', 'Tripoli', 'Rethymno', 'Ptolemaida',
+  'Giannitsa', 'Kilkis', 'Preveza', 'Florina', 'Kastoria', 'Edessa', 'Nea Ionia', 'Piraeus'
+];
+
+// Greece regions
+export const GREECE_STATES_ALL = [
+  'Attica', 'Central Macedonia', 'Thessaly', 'Western Greece', 'Crete', 'Eastern Macedonia and Thrace',
+  'Peloponnese', 'Central Greece', 'Epirus', 'South Aegean', 'Western Macedonia', 'Ionian Islands', 'North Aegean'
+];
+
 // Country-specific presets lookup
 export const COUNTRY_GEO_PRESETS: Record<string, {
   cities: { top50: string[]; top250: string[]; top500: string[] };
