@@ -43,11 +43,10 @@ interface PlanLimits {
 }
 
 const PLAN_TEAM_LIMITS: PlanLimits = {
-  'Basic': 2,
-  'Basic (Yearly)': 2,
-  'Pro': 5,
-  'Pro (Yearly)': 5,
-  'Lifetime': 1,
+  'Lifetime Limited': 2,
+  'Lifetime Unlimited': 5,
+  'Monthly Limited': 3,
+  'Monthly Unlimited': 5,
   'free': 1,
 };
 
@@ -384,9 +383,9 @@ export const Teams: React.FC = () => {
                 </h3>
                 <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
                   Your {userPlan === 'free' ? 'Free' : userPlan} plan allows up to {teamLimit} team member{teamLimit !== 1 ? 's' : ''}. 
-                  {userPlan !== 'Pro' && userPlan !== 'Pro (Yearly)' && ' Upgrade to Pro for up to 5 team members.'}
+                  {userPlan !== 'Lifetime Unlimited' && userPlan !== 'Monthly Unlimited' && ' Upgrade to an Unlimited plan for up to 5 team members.'}
                 </p>
-                {userPlan !== 'Pro' && userPlan !== 'Pro (Yearly)' && (
+                {userPlan !== 'Lifetime Unlimited' && userPlan !== 'Monthly Unlimited' && (
                   <Button variant="outline" size="sm" className="mt-3 border-amber-300 text-amber-800 hover:bg-amber-100">
                     Upgrade Plan
                   </Button>
@@ -400,21 +399,25 @@ export const Teams: React.FC = () => {
       <Card className="bg-gray-50 dark:bg-gray-800/30">
         <CardContent className="pt-6">
           <h3 className="font-medium text-gray-900 dark:text-white mb-3">Team Limits by Plan</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             <div className={`p-3 rounded-lg border ${userPlan === 'free' ? 'border-purple-300 bg-purple-50 dark:bg-purple-900/20' : 'border-gray-200 dark:border-gray-700'}`}>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Free</p>
               <p className="text-lg font-bold text-gray-900 dark:text-white">1 member</p>
             </div>
-            <div className={`p-3 rounded-lg border ${userPlan === 'Basic' || userPlan === 'Basic (Yearly)' ? 'border-purple-300 bg-purple-50 dark:bg-purple-900/20' : 'border-gray-200 dark:border-gray-700'}`}>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Basic</p>
+            <div className={`p-3 rounded-lg border ${userPlan === 'Lifetime Limited' ? 'border-purple-300 bg-purple-50 dark:bg-purple-900/20' : 'border-gray-200 dark:border-gray-700'}`}>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Lifetime Limited</p>
               <p className="text-lg font-bold text-gray-900 dark:text-white">2 members</p>
             </div>
-            <div className={`p-3 rounded-lg border ${userPlan === 'Lifetime' ? 'border-purple-300 bg-purple-50 dark:bg-purple-900/20' : 'border-gray-200 dark:border-gray-700'}`}>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Lifetime</p>
+            <div className={`p-3 rounded-lg border ${userPlan === 'Monthly Limited' ? 'border-purple-300 bg-purple-50 dark:bg-purple-900/20' : 'border-gray-200 dark:border-gray-700'}`}>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Monthly Limited</p>
               <p className="text-lg font-bold text-gray-900 dark:text-white">3 members</p>
             </div>
-            <div className={`p-3 rounded-lg border ${userPlan === 'Pro' || userPlan === 'Pro (Yearly)' ? 'border-purple-300 bg-purple-50 dark:bg-purple-900/20' : 'border-gray-200 dark:border-gray-700'}`}>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Pro</p>
+            <div className={`p-3 rounded-lg border ${userPlan === 'Lifetime Unlimited' ? 'border-purple-300 bg-purple-50 dark:bg-purple-900/20' : 'border-gray-200 dark:border-gray-700'}`}>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Lifetime Unlimited</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white">5 members</p>
+            </div>
+            <div className={`p-3 rounded-lg border ${userPlan === 'Monthly Unlimited' ? 'border-purple-300 bg-purple-50 dark:bg-purple-900/20' : 'border-gray-200 dark:border-gray-700'}`}>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Monthly Unlimited</p>
               <p className="text-lg font-bold text-gray-900 dark:text-white">5 members</p>
             </div>
           </div>
