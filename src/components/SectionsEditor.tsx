@@ -4,7 +4,7 @@ import { TemplateData } from '../utils/savedWebsites';
 
 interface Section {
   id: string;
-  type: 'hero' | 'features' | 'services' | 'testimonials' | 'team' | 'faq' | 'pricing' | 'gallery' | 'blog' | 'partners' | 'cta' | 'contact' | 'about' | 'policies' | 'footer' | 'form' | 'popup';
+  type: 'navigation' | 'hero' | 'features' | 'services' | 'testimonials' | 'team' | 'faq' | 'pricing' | 'gallery' | 'blog' | 'partners' | 'cta' | 'contact' | 'about' | 'policies' | 'footer' | 'form' | 'popup';
   name: string;
   data: any;
 }
@@ -33,6 +33,47 @@ function generateSectionHtml(section: Section): string {
   const subtextColor = hasImage || !section.data.bgColor ? 'rgba(255,255,255,0.9)' : '#6b7280';
 
   switch (section.type) {
+    case 'navigation':
+      const navLinks = section.data.links || [
+        { text: 'Home', url: '#' },
+        { text: 'Services', url: '#services' },
+        { text: 'About', url: '#about' },
+        { text: 'Contact', url: '#contact' }
+      ];
+      return `
+        <nav style="background: white; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 50; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          <style>
+            .nav-mobile-menu { display: none; }
+            .nav-mobile-menu.active { display: block; }
+            .nav-hamburger { display: none; cursor: pointer; padding: 8px; }
+            @media (max-width: 768px) {
+              .nav-desktop { display: none !important; }
+              .nav-hamburger { display: flex; flex-direction: column; gap: 4px; }
+              .nav-hamburger span { display: block; width: 20px; height: 2px; background: #374151; }
+              .nav-mobile-menu { position: absolute; top: 100%; left: 0; right: 0; background: white; border-bottom: 1px solid #e5e7eb; padding: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+              .nav-mobile-menu a { display: block; padding: 12px 16px; color: #4b5563; text-decoration: none; border-radius: 8px; }
+              .nav-mobile-menu a:hover { background: #f3f4f6; }
+            }
+          </style>
+          <div style="max-width: 1200px; margin: 0 auto; padding: 16px 24px;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <span style="font-size: 1.25rem; font-weight: bold; color: #111827;">${section.data.logo || 'Company'}</span>
+              <div class="nav-desktop" style="display: flex; align-items: center; gap: 24px;">
+                ${navLinks.map((link: any) => `<a href="${link.url}" style="color: #4b5563; text-decoration: none; font-weight: 500;">${link.text}</a>`).join('')}
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <a href="${section.data.ctaUrl || '#contact'}" style="background: #2563eb; color: white; padding: 8px 16px; border-radius: 8px; font-weight: 500; text-decoration: none; font-size: 14px;">${section.data.ctaText || 'Get Started'}</a>
+                <div class="nav-hamburger" onclick="document.querySelector('.nav-mobile-menu').classList.toggle('active')">
+                  <span></span><span></span><span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="nav-mobile-menu">
+            ${navLinks.map((link: any) => `<a href="${link.url}">${link.text}</a>`).join('')}
+          </div>
+        </nav>`;
+
     case 'hero':
       return `
         <section class="section-hero" style="${heroBackground} padding: 80px 20px; text-align: center; min-height: 400px; display: flex; align-items: center; justify-content: center;">
@@ -477,6 +518,7 @@ function generateCss(): string {
 }
 
 const SECTION_TYPES = [
+  { type: 'navigation', name: 'Navigation', color: 'bg-teal-50', icon: '🧭' },
   { type: 'hero', name: 'Hero Section', color: 'bg-blue-50', icon: '🎯' },
   { type: 'features', name: 'Features', color: 'bg-indigo-50', icon: '⭐' },
   { type: 'services', name: 'Services', color: 'bg-purple-50', icon: '🔧' },

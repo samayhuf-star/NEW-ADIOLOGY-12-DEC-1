@@ -5,7 +5,7 @@ import { Button } from './ui/button';
 
 interface Section {
   id: string;
-  type: 'hero' | 'features' | 'services' | 'testimonials' | 'team' | 'faq' | 'pricing' | 'gallery' | 'blog' | 'partners' | 'cta' | 'contact' | 'about' | 'footer' | 'policies' | 'form' | 'popup';
+  type: 'navigation' | 'hero' | 'features' | 'services' | 'testimonials' | 'team' | 'faq' | 'pricing' | 'gallery' | 'blog' | 'partners' | 'cta' | 'contact' | 'about' | 'footer' | 'policies' | 'form' | 'popup';
   name: string;
   data: any;
 }
@@ -18,6 +18,7 @@ interface VisualSectionsEditorProps {
 }
 
 const SECTION_TYPES = [
+  { type: 'navigation', name: 'Navigation', icon: '🧭' },
   { type: 'hero', name: 'Hero', icon: '🎯' },
   { type: 'features', name: 'Features', icon: '⭐' },
   { type: 'services', name: 'Services', icon: '🔧' },
@@ -38,6 +39,27 @@ const SECTION_TYPES = [
 
 function buildSectionsFromTemplate(data: TemplateData): Section[] {
   const sects: Section[] = [];
+  
+  if ((data as any).navigation) {
+    sects.push({ id: 'navigation', type: 'navigation', name: 'Navigation', data: (data as any).navigation });
+  } else {
+    sects.push({ 
+      id: 'navigation', 
+      type: 'navigation', 
+      name: 'Navigation', 
+      data: { 
+        logo: data.footer?.companyName || 'Company', 
+        links: [
+          { text: 'Home', url: '#' },
+          { text: 'Services', url: '#services' },
+          { text: 'About', url: '#about' },
+          { text: 'Contact', url: '#contact' }
+        ],
+        ctaText: 'Get Started',
+        ctaUrl: '#contact'
+      } 
+    });
+  }
   
   if (data.hero) {
     sects.push({ id: 'hero', type: 'hero', name: 'Hero', data: { ...data.hero, imageUrl: data.hero_image } });
@@ -98,6 +120,9 @@ function sectionsToTemplateData(sections: Section[], originalData: TemplateData)
   
   for (const section of sections) {
     switch (section.type) {
+      case 'navigation':
+        (result as any).navigation = section.data;
+        break;
       case 'hero':
         result.hero = section.data;
         if (section.data.imageUrl) {
@@ -288,6 +313,95 @@ function ImageEditor({ imageUrl, onUpdate, label = 'Image' }: { imageUrl: string
         </button>
       )}
     </div>
+  );
+}
+
+function NavigationSection({ section, onUpdate }: { section: Section; onUpdate: (data: any) => void }) {
+  const data = section.data;
+  const links = data.links || [
+    { text: 'Home', url: '#' },
+    { text: 'Services', url: '#services' },
+    { text: 'About', url: '#about' },
+    { text: 'Contact', url: '#contact' }
+  ];
+
+  const updateLink = (index: number, field: string, value: string) => {
+    const newLinks = [...links];
+    newLinks[index] = { ...newLinks[index], [field]: value };
+    onUpdate({ ...data, links: newLinks });
+  };
+
+  const addLink = () => {
+    const newLinks = [...links, { text: 'New Link', url: '#' }];
+    onUpdate({ ...data, links: newLinks });
+  };
+
+  const removeLink = (index: number) => {
+    const newLinks = links.filter((_: any, i: number) => i !== index);
+    onUpdate({ ...data, links: newLinks });
+  };
+
+  return (
+    <nav className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
+      <div className="max-w-6xl mx-auto px-6 py-4">
+        <div className="flex items-center justify-between">
+          <EditableText
+            value={data.logo || 'Company'}
+            onChange={(logo) => onUpdate({ ...data, logo })}
+            as="span"
+            className="text-xl font-bold text-gray-900"
+            placeholder="Logo/Company Name"
+          />
+          
+          <div className="hidden md:flex items-center gap-6">
+            {links.map((link: any, index: number) => (
+              <div key={index} className="relative group flex items-center gap-1">
+                <EditableText
+                  value={link.text}
+                  onChange={(text) => updateLink(index, 'text', text)}
+                  as="span"
+                  className="text-gray-600 hover:text-gray-900 font-medium cursor-pointer"
+                  placeholder="Link text"
+                />
+                <button
+                  onClick={() => removeLink(index)}
+                  className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 transition-opacity"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={addLink}
+              className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm">
+              <EditableText
+                value={data.ctaText || 'Get Started'}
+                onChange={(ctaText) => onUpdate({ ...data, ctaText })}
+                as="span"
+                className="text-white"
+                placeholder="CTA text"
+              />
+            </button>
+            <div className="md:hidden flex flex-col gap-1 cursor-pointer p-2">
+              <span className="block w-5 h-0.5 bg-gray-600"></span>
+              <span className="block w-5 h-0.5 bg-gray-600"></span>
+              <span className="block w-5 h-0.5 bg-gray-600"></span>
+            </div>
+          </div>
+        </div>
+        
+        <p className="text-xs text-gray-400 mt-2 md:hidden">
+          Mobile menu: Hamburger icon shown on mobile devices
+        </p>
+      </div>
+    </nav>
   );
 }
 
@@ -981,6 +1095,7 @@ export default function VisualSectionsEditor({ templateData, onUpdate, onSave, o
     };
 
     switch (section.type) {
+      case 'navigation': return <NavigationSection {...sectionProps} />;
       case 'hero': return <HeroSection {...sectionProps} />;
       case 'features': return <FeaturesSection {...sectionProps} />;
       case 'services': return <ServicesSection {...sectionProps} />;
@@ -1126,6 +1241,66 @@ function generateSectionHtml(section: Section): string {
   const data = section.data;
   
   switch (section.type) {
+    case 'navigation':
+      const navLinks = data.links || [
+        { text: 'Home', url: '#' },
+        { text: 'Services', url: '#services' },
+        { text: 'About', url: '#about' },
+        { text: 'Contact', url: '#contact' }
+      ];
+      return `<nav class="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
+  <style>
+    .mobile-menu { display: none; }
+    .mobile-menu.active { display: block; }
+    .hamburger { display: none; cursor: pointer; padding: 8px; }
+    @media (max-width: 768px) {
+      .desktop-nav { display: none !important; }
+      .hamburger { display: flex; flex-direction: column; gap: 4px; }
+      .hamburger span { display: block; width: 20px; height: 2px; background: #374151; transition: all 0.3s ease; }
+      .mobile-menu { 
+        position: absolute; 
+        top: 100%; 
+        left: 0; 
+        right: 0; 
+        background: white; 
+        border-bottom: 1px solid #e5e7eb;
+        padding: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      }
+      .mobile-menu a { 
+        display: block; 
+        padding: 12px 16px; 
+        color: #4b5563; 
+        text-decoration: none;
+        border-radius: 8px;
+        transition: background 0.2s;
+      }
+      .mobile-menu a:hover { background: #f3f4f6; }
+    }
+  </style>
+  <div class="max-w-6xl mx-auto px-6 py-4">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <span style="font-size: 1.25rem; font-weight: bold; color: #111827;">${data.logo || 'Company'}</span>
+      
+      <div class="desktop-nav" style="display: flex; align-items: center; gap: 24px;">
+        ${navLinks.map((link: any) => `<a href="${link.url}" style="color: #4b5563; text-decoration: none; font-weight: 500; transition: color 0.2s;" onmouseover="this.style.color='#111827'" onmouseout="this.style.color='#4b5563'">${link.text}</a>`).join('')}
+      </div>
+      
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <a href="${data.ctaUrl || '#contact'}" style="background: #2563eb; color: white; padding: 8px 16px; border-radius: 8px; font-weight: 500; text-decoration: none; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='#2563eb'">${data.ctaText || 'Get Started'}</a>
+        <div class="hamburger" onclick="document.querySelector('.mobile-menu').classList.toggle('active')">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="mobile-menu">
+    ${navLinks.map((link: any) => `<a href="${link.url}">${link.text}</a>`).join('')}
+  </div>
+</nav>`;
+
     case 'hero':
       return `<section class="bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 text-white py-20 px-6">
   <div class="max-w-4xl mx-auto text-center">

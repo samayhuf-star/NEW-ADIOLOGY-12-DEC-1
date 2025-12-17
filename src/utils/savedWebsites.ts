@@ -2,6 +2,15 @@ export interface TemplateData {
   slug: string;
   title: string;
   themeId: string;
+  navigation?: {
+    logo: string;
+    links: Array<{
+      text: string;
+      url: string;
+    }>;
+    ctaText?: string;
+    ctaUrl?: string;
+  };
   hero: {
     heading: string;
     subheading: string;
@@ -290,13 +299,59 @@ export function generateTemplateHTML(data: TemplateData): string {
     .contact-item { color: #9ca3af; font-size: 0.875rem; }
     .footer-copyright { text-align: center; color: #6b7280; font-size: 0.75rem; padding-top: 1.5rem; border-top: 1px solid #374151; }
     
+    /* Navigation */
+    .nav { background: white; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 50; }
+    .nav-container { max-width: 1200px; margin: 0 auto; padding: 1rem; display: flex; align-items: center; justify-content: space-between; }
+    .nav-logo { font-size: 1.25rem; font-weight: bold; color: #111827; text-decoration: none; }
+    .nav-links { display: flex; align-items: center; gap: 1.5rem; }
+    .nav-links a { color: #4b5563; text-decoration: none; font-weight: 500; transition: color 0.2s; }
+    .nav-links a:hover { color: #111827; }
+    .nav-cta { background: ${primaryColor}; color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; text-decoration: none; font-weight: 500; font-size: 0.875rem; }
+    .nav-cta:hover { background: ${secondaryColor}; }
+    .nav-hamburger { display: none; flex-direction: column; gap: 4px; cursor: pointer; padding: 8px; }
+    .nav-hamburger span { display: block; width: 20px; height: 2px; background: #374151; }
+    .mobile-menu { display: none; background: white; border-bottom: 1px solid #e5e7eb; padding: 1rem; }
+    .mobile-menu.active { display: block; }
+    .mobile-menu a { display: block; padding: 0.75rem 1rem; color: #4b5563; text-decoration: none; border-radius: 0.5rem; }
+    .mobile-menu a:hover { background: #f3f4f6; }
+    
     @media (max-width: 768px) {
       .hero h1 { font-size: 2rem; }
       .hero p { font-size: 1rem; }
+      .nav-links { display: none !important; }
+      .nav-hamburger { display: flex; }
     }
   </style>
 </head>
 <body>
+  <nav class="nav">
+    <div class="nav-container">
+      <a href="#" class="nav-logo">${data.navigation?.logo || data.footer?.companyName || 'Company'}</a>
+      <div class="nav-links">
+        ${(data.navigation?.links || [
+          { text: 'Home', url: '#' },
+          { text: 'Services', url: '#services' },
+          { text: 'About', url: '#about' },
+          { text: 'Contact', url: '#contact' }
+        ]).map(link => `<a href="${link.url}">${link.text}</a>`).join('')}
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <a href="${data.navigation?.ctaUrl || '#contact'}" class="nav-cta">${data.navigation?.ctaText || 'Get Started'}</a>
+        <div class="nav-hamburger" onclick="document.querySelector('.mobile-menu').classList.toggle('active')">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
+  </nav>
+  <div class="mobile-menu">
+    ${(data.navigation?.links || [
+      { text: 'Home', url: '#' },
+      { text: 'Services', url: '#services' },
+      { text: 'About', url: '#about' },
+      { text: 'Contact', url: '#contact' }
+    ]).map(link => `<a href="${link.url}">${link.text}</a>`).join('')}
+  </div>
+
   <section class="hero">
     <div>
       <h1>${data.hero.heading}</h1>
