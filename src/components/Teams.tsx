@@ -3,7 +3,6 @@ import { Users, UserPlus, Mail, Trash2, Crown, Clock, CheckCircle, XCircle, Aler
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { Input } from './ui/input';
-import { Badge } from './ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -208,34 +207,35 @@ export const Teams: React.FC = () => {
             {teamMembers.map((member) => (
               <div 
                 key={member.id}
-                className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700"
+                className="flex items-center justify-between p-4 rounded-lg border border-gray-200"
+                style={{ backgroundColor: '#f9fafb' }}
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: '#f3e8ff' }}>
                     {member.role === 'owner' ? (
-                      <Crown className="h-5 w-5 text-purple-600 dark:text-purple-300" />
+                      <Crown className="h-5 w-5" style={{ color: '#9333ea' }} />
                     ) : (
-                      <span className="text-purple-600 dark:text-purple-300 font-medium">
+                      <span className="font-medium" style={{ color: '#9333ea' }}>
                         {member.name.charAt(0).toUpperCase()}
                       </span>
                     )}
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900 dark:text-white">{member.name}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{member.email}</p>
+                    <p className="font-medium" style={{ color: '#111827' }}>{member.name}</p>
+                    <p className="text-sm" style={{ color: '#6b7280' }}>{member.email}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   {member.status === 'active' ? (
-                    <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium" style={{ backgroundColor: '#dcfce7', color: '#166534' }}>
                       <CheckCircle className="h-3 w-3 mr-1" />
                       Accepted
-                    </Badge>
+                    </span>
                   ) : (
-                    <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium" style={{ backgroundColor: '#fef9c3', color: '#854d0e' }}>
                       <Clock className="h-3 w-3 mr-1" />
                       Pending
-                    </Badge>
+                    </span>
                   )}
                   {member.role !== 'owner' && (
                     <div className="flex items-center gap-1">
