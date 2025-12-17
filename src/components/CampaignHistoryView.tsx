@@ -11,7 +11,6 @@ import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { TerminalCard, TerminalLine } from './ui/terminal-card';
 import { historyService } from '../utils/historyService';
 import { notifications } from '../utils/notifications';
@@ -688,10 +687,10 @@ export const CampaignHistoryView: React.FC<CampaignHistoryViewProps> = ({ onLoad
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
           <TerminalCard title="Campaign Statistics" showDots={true} variant="compact">
             <div className="space-y-1.5">
-              <TerminalLine prefix="$" label="saved_campaigns:" value={`${savedCampaigns.length}`} valueColor="green" />
-              <TerminalLine prefix="$" label="filtered_results:" value={`${filteredCampaigns.length}`} valueColor="cyan" />
-              <TerminalLine prefix="$" label="history_items:" value={`${allHistory.length}`} valueColor="yellow" />
-              <TerminalLine prefix="$" label="view_mode:" value={viewMode.toUpperCase()} valueColor="purple" />
+              <TerminalLine prefix="$" label="total_campaigns:" value={`${savedCampaigns.length}`} valueColor="green" />
+              <TerminalLine prefix="$" label="filtered:" value={`${filteredCampaigns.length}`} valueColor="cyan" />
+              <TerminalLine prefix="$" label="completed:" value={`${savedCampaigns.filter(c => c.status === 'completed').length}`} valueColor="green" />
+              <TerminalLine prefix="$" label="drafts:" value={`${savedCampaigns.filter(c => c.status === 'draft' || c.status === 'in_progress' || !c.status).length}`} valueColor="yellow" />
             </div>
           </TerminalCard>
 
@@ -705,27 +704,8 @@ export const CampaignHistoryView: React.FC<CampaignHistoryViewProps> = ({ onLoad
           </TerminalCard>
         </div>
 
-        {/* Tabs Section */}
-        <Tabs defaultValue="saved-campaigns" className="w-full">
-          <TabsList className="mb-6 bg-white border border-slate-200 p-1 rounded-lg shadow-sm">
-            <TabsTrigger 
-              value="saved-campaigns" 
-              className="px-6 py-2.5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-md transition-all"
-            >
-              <FolderOpen className="w-4 h-4 mr-2" />
-              Saved Campaigns
-            </TabsTrigger>
-            <TabsTrigger 
-              value="history" 
-              className="px-6 py-2.5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-md transition-all"
-            >
-              <Clock className="w-4 h-4 mr-2" />
-              History
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Saved Campaigns Tab */}
-          <TabsContent value="saved-campaigns" className="mt-0">
+        {/* Campaigns Section */}
+        <div className="w-full">
             {/* Search & Filters Card */}
             <Card className="border-slate-200/60 bg-white shadow-xl mb-6">
           <CardContent className="p-4 sm:p-6">
@@ -1284,100 +1264,7 @@ export const CampaignHistoryView: React.FC<CampaignHistoryViewProps> = ({ onLoad
             </CardContent>
           </Card>
         )}
-          </TabsContent>
-
-          {/* History Tab */}
-          <TabsContent value="history" className="mt-0">
-            <Card className="border-slate-200/60 bg-white shadow-xl">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <Clock className="w-5 h-5 text-indigo-600" />
-                  Campaign History
-                </CardTitle>
-                <CardDescription>
-                  View your campaign activity and changes over time
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="flex flex-col items-center justify-center py-16">
-                    <Loader2 className="w-10 h-10 text-indigo-600 animate-spin mb-4" />
-                    <p className="text-slate-600">Loading history...</p>
-                  </div>
-                ) : savedCampaigns.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-                      <Clock className="w-8 h-8 text-slate-400" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-slate-700 mb-2">No History Yet</h3>
-                    <p className="text-slate-500 max-w-md">
-                      Your campaign activity will appear here once you start creating campaigns.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {savedCampaigns.map((campaign) => {
-                      const data = campaign.data || campaign;
-                      const timestamp = new Date(campaign.timestamp);
-                      const formattedDate = timestamp.toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                      });
-                      const formattedTime = timestamp.toLocaleTimeString('en-US', {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      });
-
-                      return (
-                        <div 
-                          key={campaign.id}
-                          className="flex items-start gap-4 p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
-                        >
-                          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                            <FileText className="w-5 h-5 text-indigo-600" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h4 className="font-medium text-slate-900 truncate">
-                                {campaign.name || data.campaignName || 'Untitled Campaign'}
-                              </h4>
-                              {getStatusBadge(campaign.status || 'started')}
-                            </div>
-                            <p className="text-sm text-slate-600 mb-2">
-                              {data.structureType ? `${STRUCTURE_TYPES.find(s => s.id === data.structureType)?.name || data.structureType} structure` : 'Campaign created'}
-                              {data.selectedKeywords?.length > 0 && ` with ${data.selectedKeywords.length} keywords`}
-                            </p>
-                            <div className="flex items-center gap-4 text-xs text-slate-500">
-                              <span className="flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                {formattedDate} at {formattedTime}
-                              </span>
-                              {data.url && (
-                                <span className="truncate max-w-[200px]" title={data.url}>
-                                  {data.url}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => loadCampaignData(data)}
-                            className="flex-shrink-0 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
-                          >
-                            <Eye className="w-4 h-4 mr-1" />
-                            View
-                          </Button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        </div>
       </div>
     </div>
   );

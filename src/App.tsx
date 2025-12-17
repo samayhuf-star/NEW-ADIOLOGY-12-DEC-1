@@ -874,7 +874,7 @@ const App = () => {
         { id: 'one-click-builder', label: '1 Click Builder', icon: Zap },
         { id: 'builder-3', label: 'Builder 3.0', icon: Sparkles },
         { id: 'preset-campaigns', label: 'Preset Campaigns', icon: Package },
-        { id: 'campaign-history', label: 'Campaign History', icon: Clock },
+        { id: 'campaign-history', label: 'Saved Campaigns', icon: FolderOpen },
       ]
     },
     {
