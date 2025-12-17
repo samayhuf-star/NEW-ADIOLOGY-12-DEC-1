@@ -316,6 +316,33 @@ export const CampaignPresets: React.FC<CampaignPresetsProps> = ({ onLoadPreset }
               </div>
             </div>
 
+            {/* Ready to Launch - moved here below Campaign Details */}
+            <div className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+              <h3 className="text-base font-semibold mb-3">Ready to Launch</h3>
+              <p className="text-sm text-indigo-100 mb-6">
+                This preset is optimized for high-intent pay-per-call campaigns. Review the details and export when ready.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  onClick={handleLoadToBuilder}
+                  className="flex-1 bg-white text-slate-800 hover:bg-gray-100 hover:text-slate-900"
+                  size="lg"
+                >
+                  <Edit className="w-4 h-4 mr-2 text-slate-700" />
+                  Edit in Campaign Builder
+                </Button>
+                <Button
+                  onClick={() => handleExportCSV()}
+                  variant="outline"
+                  className="flex-1 border-white bg-white text-slate-800 hover:bg-gray-100 hover:text-slate-900"
+                  size="lg"
+                >
+                  <Download className="w-4 h-4 mr-2 text-slate-700" />
+                  Export CSV
+                </Button>
+              </div>
+            </div>
+
             {/* Keywords */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
               <h2 className="text-lg font-semibold mb-4">Keywords ({selectedPreset.keywords.length})</h2>
@@ -365,33 +392,6 @@ export const CampaignPresets: React.FC<CampaignPresetsProps> = ({ onLoadPreset }
 
           {/* Sidebar Actions */}
           <div className="space-y-6">
-            {/* Bug_69: Ensure all buttons are visible by removing overflow constraints */}
-            <div className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl shadow-lg p-6 text-white">
-              <h3 className="text-base font-semibold mb-3">Ready to Launch</h3>
-              <p className="text-sm text-indigo-100 mb-6">
-                This preset is optimized for high-intent pay-per-call campaigns. Review the details and export when ready.
-              </p>
-              <div className="flex flex-col gap-3">
-                <Button
-                  onClick={handleLoadToBuilder}
-                  className="w-full bg-white text-slate-800 hover:bg-gray-100 hover:text-slate-900"
-                  size="lg"
-                >
-                  <Edit className="w-4 h-4 mr-2 text-slate-700" />
-                  Edit in Campaign Builder
-                </Button>
-                <Button
-                  onClick={() => handleExportCSV()}
-                  variant="outline"
-                  className="w-full border-white bg-white text-slate-800 hover:bg-gray-100 hover:text-slate-900"
-                  size="lg"
-                >
-                  <Download className="w-4 h-4 mr-2 text-slate-700" />
-                  Export CSV
-                </Button>
-              </div>
-            </div>
-
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
               <h3 className="text-base font-semibold mb-4 text-slate-800">Preset Stats</h3>
               <div className="space-y-3 text-sm">
