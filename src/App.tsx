@@ -719,7 +719,8 @@ const App = () => {
         if (user) {
           const subscriptionPlan = user.subscription_plan || 'free';
           const subscriptionStatus = user.subscription_status || 'inactive';
-          const hasPaidPlan = subscriptionPlan !== 'free' && subscriptionStatus === 'active';
+          const isSuperAdmin = user.email === 'd@d.com' || user.role === 'superadmin';
+          const hasPaidPlan = isSuperAdmin || (subscriptionPlan !== 'free' && subscriptionStatus === 'active');
           
           if (hasPaidPlan) {
             setView('user');
@@ -739,7 +740,8 @@ const App = () => {
       if (user) {
         const subscriptionPlan = user.subscription_plan || 'free';
         const subscriptionStatus = user.subscription_status || 'inactive';
-        const hasPaidPlan = subscriptionPlan !== 'free' && subscriptionStatus === 'active';
+        const isSuperAdmin = user.email === 'd@d.com' || user.role === 'superadmin';
+        const hasPaidPlan = isSuperAdmin || (subscriptionPlan !== 'free' && subscriptionStatus === 'active');
         
         if (hasPaidPlan) {
           setView('user');
@@ -798,7 +800,8 @@ const App = () => {
       if (user) {
         const subscriptionPlan = user.subscription_plan || 'free';
         const subscriptionStatus = user.subscription_status || 'inactive';
-        const hasPaidPlan = subscriptionPlan !== 'free' && subscriptionStatus === 'active';
+        const isSuperAdmin = user.email === 'd@d.com' || user.role === 'superadmin';
+        const hasPaidPlan = isSuperAdmin || (subscriptionPlan !== 'free' && subscriptionStatus === 'active');
         
         if (hasPaidPlan) {
           setAppView('user');
@@ -1222,7 +1225,8 @@ const App = () => {
             // Determine subscription status
             const subscriptionPlan = userProfile?.subscription_plan || 'free';
             const subscriptionStatus = userProfile?.subscription_status || 'inactive';
-            const hasPaidPlan = subscriptionPlan !== 'free' && subscriptionStatus === 'active';
+            const isSuperAdmin = authUser.email === 'd@d.com' || userProfile?.role === 'superadmin';
+            const hasPaidPlan = isSuperAdmin || (subscriptionPlan !== 'free' && subscriptionStatus === 'active');
             
             // Set user with subscription info
             const fullUser = userProfile || { 
