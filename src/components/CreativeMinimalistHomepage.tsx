@@ -1142,7 +1142,7 @@ function PricingSection({ onSelectPlan }: { onSelectPlan?: (planName: string, pr
             'Live ad preview (RSA, DKI, Call-Only)',
             '10+ Google Ads assets & extensions',
             'CSV export to Google Ads',
-            '24/7 priority support'
+            'Email support'
           ],
           popular: false,
           priceId: 'price_lifetime',
@@ -1218,7 +1218,7 @@ function PricingSection({ onSelectPlan }: { onSelectPlan?: (planName: string, pr
           'Live ad preview (RSA, DKI, Call-Only)',
           '10+ Google Ads assets & extensions',
           'CSV export to Google Ads',
-          '24/7 priority support'
+          'Email support'
         ],
         popular: false,
         priceId: 'price_lifetime',
