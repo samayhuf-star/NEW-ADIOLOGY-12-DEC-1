@@ -1070,7 +1070,7 @@ function SocialProofSection() {
 
 // Pricing Section
 function PricingSection({ onSelectPlan }: { onSelectPlan?: (planName: string, priceId: string, amount: number, isSubscription: boolean) => void }) {
-  const [isAnnual, setIsAnnual] = React.useState(false);
+  const [isAnnual, setIsAnnual] = useState(false);
   
   const getPricingPlans = () => {
     if (isAnnual) {
