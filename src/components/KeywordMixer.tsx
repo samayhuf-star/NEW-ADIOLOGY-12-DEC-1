@@ -8,6 +8,7 @@ import { historyService } from '../utils/historyService';
 import { notifications } from '../utils/notifications';
 import { DEFAULT_MIXER_KEYWORDS } from '../utils/defaultExamples';
 import { exportKeywordsToCSV } from '../utils/googleAdsEditorCSVExporter';
+import { KeywordFilters, KeywordFiltersState, DEFAULT_FILTERS } from './KeywordFilters';
 
 // Plumbing service keywords for sample data
 const PLUMBING_KEYWORDS = {
@@ -34,6 +35,7 @@ export const KeywordMixer = ({ initialData }: { initialData?: any }) => {
     const [mixedKeywords, setMixedKeywords] = useState<string[]>([]);
     const [isSaving, setIsSaving] = useState(false);
     const [activeTab, setActiveTab] = useState('mixer');
+    const [filters, setFilters] = useState<KeywordFiltersState>(DEFAULT_FILTERS);
     const [savedItems, setSavedItems] = useState<any[]>([]);
     
     // Match types - all selected by default
@@ -274,6 +276,14 @@ export const KeywordMixer = ({ initialData }: { initialData?: any }) => {
                     <Sparkles className="w-3.5 h-3.5" />
                     Fill Sample Info
                 </button>
+            </div>
+
+            {/* Filters Bar */}
+            <div className="mb-4 p-4 bg-gradient-to-r from-slate-50 to-gray-50 rounded-xl border border-gray-200">
+                <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-700">Filters:</span>
+                    <KeywordFilters filters={filters} onFiltersChange={setFilters} />
+                </div>
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">

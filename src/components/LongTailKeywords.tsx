@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Badge } from './ui/badge';
 import { notifications } from '../utils/notifications';
 import { supabase } from '../utils/supabase/client';
+import { KeywordFilters, KeywordFiltersState, DEFAULT_FILTERS, getDifficultyBadge, formatSearchVolume, formatCPC } from './KeywordFilters';
 
 interface KeywordResult {
   keyword: string;
@@ -38,6 +39,7 @@ export function LongTailKeywords() {
   const [listName, setListName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [filters, setFilters] = useState<KeywordFiltersState>(DEFAULT_FILTERS);
 
   useEffect(() => {
     if (activeSubTab === 'saved') {
@@ -249,6 +251,14 @@ export function LongTailKeywords() {
         <p className="text-muted-foreground mt-1">
           Generate long-tail keyword variations using autocomplete suggestions and AI
         </p>
+      </div>
+
+      {/* Filters Bar */}
+      <div className="mb-6 p-4 bg-gradient-to-r from-slate-50 to-gray-50 rounded-xl border border-gray-200">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-gray-700">Filters:</span>
+          <KeywordFilters filters={filters} onFiltersChange={setFilters} />
+        </div>
       </div>
 
       <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="w-full">

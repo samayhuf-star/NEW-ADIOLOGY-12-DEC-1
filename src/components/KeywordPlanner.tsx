@@ -20,6 +20,7 @@ import { generateSeedKeywordSuggestions } from '../utils/seedKeywordSuggestions'
 import { extractLandingPageContent } from '../utils/campaignIntelligence/landingPageExtractor';
 import { generateTemplateKeywords, serviceTermsByIndustry } from '../utils/templateKeywordGenerator';
 import { mapGoalToIntent } from '../utils/campaignIntelligence/intentClassifier';
+import { KeywordFilters, KeywordFiltersState, DEFAULT_FILTERS, getDifficultyBadge, formatSearchVolume, formatCPC } from './KeywordFilters';
 
 // Inline vertical detection (same logic as Campaign Builder)
 function detectVertical(url: string, pageText: string): string {
@@ -248,6 +249,9 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
         phrase: true,
         exact: true
     });
+    
+    // Country and Device filters - default to USA and Mobile
+    const [filters, setFilters] = useState<KeywordFiltersState>(DEFAULT_FILTERS);
 
     // Fetch Google Ads customer ID on mount
     useEffect(() => {
@@ -952,6 +956,22 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                             <TerminalLine prefix=">" label="metrics:" value={showMetrics ? 'ENABLED' : 'DISABLED'} valueColor={showMetrics ? 'green' : 'slate'} />
                         </div>
                     </TerminalCard>
+                </div>
+
+                {/* Filters Bar */}
+                <div className="mb-6 p-4 bg-gradient-to-r from-slate-50 to-gray-50 rounded-xl border border-gray-200">
+                    <div className="flex items-center justify-between flex-wrap gap-4">
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-gray-700">Filters:</span>
+                            <KeywordFilters filters={filters} onFiltersChange={setFilters} />
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-gray-500">
+                            <span className="flex items-center gap-1">
+                                <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                                Volume & CPC data based on selected country
+                            </span>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Tabs */}

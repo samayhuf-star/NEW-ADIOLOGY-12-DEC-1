@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { api } from '../utils/api';
 import { historyService } from '../utils/historyService';
 import { notifications } from '../utils/notifications';
+import { KeywordFilters, KeywordFiltersState, DEFAULT_FILTERS } from './KeywordFilters';
 import {
     NEGATIVE_KEYWORD_CATEGORIES,
     buildUserPrompt,
@@ -133,6 +134,7 @@ export const NegativeKeywordsBuilder = ({ initialData }: { initialData?: any }) 
     const [generatedKeywords, setGeneratedKeywords] = useState<GeneratedKeyword[]>([]);
     const [isSaving, setIsSaving] = useState(false);
     const [activeTab, setActiveTab] = useState('builder');
+    const [filters, setFilters] = useState<KeywordFiltersState>(DEFAULT_FILTERS);
     const [savedItems, setSavedItems] = useState<any[]>([]);
     
     // Filter & Export State
@@ -521,6 +523,14 @@ export const NegativeKeywordsBuilder = ({ initialData }: { initialData?: any }) 
                 <p className="text-slate-500 font-medium">
                     AI will analyze your website to understand your business and generate thousands of relevant negative keywords in exact match type.
                 </p>
+            </div>
+
+            {/* Filters Bar */}
+            <div className="mb-6 p-4 bg-gradient-to-r from-slate-50 to-gray-50 rounded-xl border border-gray-200">
+                <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-700">Filters:</span>
+                    <KeywordFilters filters={filters} onFiltersChange={setFilters} />
+                </div>
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">
