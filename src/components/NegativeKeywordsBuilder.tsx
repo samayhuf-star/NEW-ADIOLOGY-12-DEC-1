@@ -14,6 +14,7 @@ import { api } from '../utils/api';
 import { historyService } from '../utils/historyService';
 import { notifications } from '../utils/notifications';
 import { KeywordFilters, KeywordFiltersState, DEFAULT_FILTERS } from './KeywordFilters';
+import { TerminalProgressConsole, NEGATIVE_KEYWORDS_MESSAGES } from './TerminalProgressConsole';
 import {
     NEGATIVE_KEYWORD_CATEGORIES,
     buildUserPrompt,
@@ -135,6 +136,8 @@ export const NegativeKeywordsBuilder = ({ initialData }: { initialData?: any }) 
     const [isSaving, setIsSaving] = useState(false);
     const [activeTab, setActiveTab] = useState('builder');
     const [filters, setFilters] = useState<KeywordFiltersState>(DEFAULT_FILTERS);
+    const [showTerminalConsole, setShowTerminalConsole] = useState(false);
+    const [terminalComplete, setTerminalComplete] = useState(false);
     const [savedItems, setSavedItems] = useState<any[]>([]);
     
     // Filter & Export State
@@ -318,6 +321,8 @@ export const NegativeKeywordsBuilder = ({ initialData }: { initialData?: any }) 
         }
         
         setIsGenerating(true);
+        setShowTerminalConsole(true);
+        setTerminalComplete(false);
         setGeneratedKeywords([]);
 
         try {
@@ -515,6 +520,20 @@ export const NegativeKeywordsBuilder = ({ initialData }: { initialData?: any }) 
 
     return (
         <div className="p-8 space-y-8 w-full min-h-screen bg-transparent">
+            {/* Terminal Progress Console */}
+            <TerminalProgressConsole
+                title="Negative Keywords Console"
+                messages={NEGATIVE_KEYWORDS_MESSAGES}
+                isVisible={showTerminalConsole}
+                onComplete={() => setTerminalComplete(true)}
+                nextButtonText="Next: View Generated Negatives"
+                onNextClick={() => {
+                    setShowTerminalConsole(false);
+                    setIsGenerating(false);
+                }}
+                minDuration={4500}
+            />
+
             {/* Header */}
             <div className="mb-8">
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">

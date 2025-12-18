@@ -9,6 +9,7 @@ import { Badge } from './ui/badge';
 import { notifications } from '../utils/notifications';
 import { supabase } from '../utils/supabase/client';
 import { KeywordFilters, KeywordFiltersState, DEFAULT_FILTERS, getDifficultyBadge, formatSearchVolume, formatCPC } from './KeywordFilters';
+import { TerminalProgressConsole, LONG_TAIL_MESSAGES } from './TerminalProgressConsole';
 
 interface KeywordResult {
   keyword: string;
@@ -40,6 +41,8 @@ export function LongTailKeywords() {
   const [isSaving, setIsSaving] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [filters, setFilters] = useState<KeywordFiltersState>(DEFAULT_FILTERS);
+  const [showTerminalConsole, setShowTerminalConsole] = useState(false);
+  const [terminalComplete, setTerminalComplete] = useState(false);
 
   useEffect(() => {
     if (activeSubTab === 'saved') {
@@ -79,6 +82,8 @@ export function LongTailKeywords() {
     }
 
     setIsGenerating(true);
+    setShowTerminalConsole(true);
+    setTerminalComplete(false);
     setKeywords([]);
     setSelectedKeywords(new Set());
 
@@ -243,6 +248,20 @@ export function LongTailKeywords() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
+      {/* Terminal Progress Console */}
+      <TerminalProgressConsole
+        title="Long Tail Keywords Console"
+        messages={LONG_TAIL_MESSAGES}
+        isVisible={showTerminalConsole}
+        onComplete={() => setTerminalComplete(true)}
+        nextButtonText="Next: View Generated Keywords"
+        onNextClick={() => {
+          setShowTerminalConsole(false);
+          setIsGenerating(false);
+        }}
+        minDuration={4500}
+      />
+
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
           <Sparkles className="w-6 h-6 text-purple-500" />

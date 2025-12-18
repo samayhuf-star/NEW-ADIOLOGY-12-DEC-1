@@ -9,6 +9,7 @@ import { notifications } from '../utils/notifications';
 import { DEFAULT_MIXER_KEYWORDS } from '../utils/defaultExamples';
 import { exportKeywordsToCSV } from '../utils/googleAdsEditorCSVExporter';
 import { KeywordFilters, KeywordFiltersState, DEFAULT_FILTERS } from './KeywordFilters';
+import { TerminalProgressConsole, KEYWORD_MIXER_MESSAGES } from './TerminalProgressConsole';
 
 // Plumbing service keywords for sample data
 const PLUMBING_KEYWORDS = {
@@ -36,6 +37,8 @@ export const KeywordMixer = ({ initialData }: { initialData?: any }) => {
     const [isSaving, setIsSaving] = useState(false);
     const [activeTab, setActiveTab] = useState('mixer');
     const [filters, setFilters] = useState<KeywordFiltersState>(DEFAULT_FILTERS);
+    const [showTerminalConsole, setShowTerminalConsole] = useState(false);
+    const [terminalComplete, setTerminalComplete] = useState(false);
     const [savedItems, setSavedItems] = useState<any[]>([]);
     
     // Match types - all selected by default
@@ -165,6 +168,8 @@ export const KeywordMixer = ({ initialData }: { initialData?: any }) => {
         loadSavedItems();
     }, []);
 
+    const [pendingMixedKeywords, setPendingMixedKeywords] = useState<string[]>([]);
+
     const mixKeywords = () => {
         // Parse each list - split by newlines and commas, trim, and filter empty
         const parseList = (text: string): string[] => {
@@ -218,7 +223,10 @@ export const KeywordMixer = ({ initialData }: { initialData?: any }) => {
             }
         });
         
-        setMixedKeywords(formattedKeywords);
+        // Store the keywords and show terminal console
+        setPendingMixedKeywords(formattedKeywords);
+        setShowTerminalConsole(true);
+        setTerminalComplete(false);
     };
 
     const exportToCSV = async () => {
@@ -260,6 +268,20 @@ export const KeywordMixer = ({ initialData }: { initialData?: any }) => {
 
     return (
         <div className="p-4 max-w-5xl mx-auto">
+            {/* Terminal Progress Console */}
+            <TerminalProgressConsole
+                title="Keyword Mixer Console"
+                messages={KEYWORD_MIXER_MESSAGES}
+                isVisible={showTerminalConsole}
+                onComplete={() => setTerminalComplete(true)}
+                nextButtonText="Next: View Mixed Keywords"
+                onNextClick={() => {
+                    setShowTerminalConsole(false);
+                    setMixedKeywords(pendingMixedKeywords);
+                }}
+                minDuration={4500}
+            />
+
             <div className="mb-4 flex items-start justify-between">
                 <div>
                     <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-1">

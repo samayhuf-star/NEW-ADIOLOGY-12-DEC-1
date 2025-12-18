@@ -21,6 +21,7 @@ import { extractLandingPageContent } from '../utils/campaignIntelligence/landing
 import { generateTemplateKeywords, serviceTermsByIndustry } from '../utils/templateKeywordGenerator';
 import { mapGoalToIntent } from '../utils/campaignIntelligence/intentClassifier';
 import { KeywordFilters, KeywordFiltersState, DEFAULT_FILTERS, getDifficultyBadge, formatSearchVolume, formatCPC } from './KeywordFilters';
+import { TerminalProgressConsole, KEYWORD_PLANNER_MESSAGES } from './TerminalProgressConsole';
 
 // Inline vertical detection (same logic as Campaign Builder)
 function detectVertical(url: string, pageText: string): string {
@@ -252,6 +253,10 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
     
     // Country and Device filters - default to USA and Mobile
     const [filters, setFilters] = useState<KeywordFiltersState>(DEFAULT_FILTERS);
+    
+    // Terminal console state
+    const [showTerminalConsole, setShowTerminalConsole] = useState(false);
+    const [terminalComplete, setTerminalComplete] = useState(false);
 
     // Fetch Google Ads customer ID on mount
     useEffect(() => {
@@ -572,6 +577,8 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
         const normalizedNegativeKeywords = normalizeListInput(negativeKeywords);
 
         setIsGenerating(true);
+        setShowTerminalConsole(true);
+        setTerminalComplete(false);
 
         try {
             console.log('[Keyword Planner] Calling API with:', { seeds: seedKeywordsArray });
@@ -921,6 +928,20 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
 
     return (
         <div className="min-h-screen bg-white p-6">
+            {/* Terminal Progress Console */}
+            <TerminalProgressConsole
+                title="Keyword Planner Console"
+                messages={KEYWORD_PLANNER_MESSAGES}
+                isVisible={showTerminalConsole}
+                onComplete={() => setTerminalComplete(true)}
+                nextButtonText="Next: View Generated Keywords"
+                onNextClick={() => {
+                    setShowTerminalConsole(false);
+                    setIsGenerating(false);
+                }}
+                minDuration={4500}
+            />
+
             <div className="max-w-6xl mx-auto">
                 {/* Header */}
                 <div className="mb-8">
