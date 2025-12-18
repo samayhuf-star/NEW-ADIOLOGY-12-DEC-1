@@ -7,13 +7,15 @@ interface CreativeMinimalistHomepageProps {
   onLogin?: () => void;
   onSelectPlan?: (planName: string, priceId: string, amount: number, isSubscription: boolean) => void;
   onNavigateToPolicy?: (policy: string) => void;
+  onNavigateToApp?: (tab: string) => void;
 }
 
 export default function CreativeMinimalistHomepage({ 
   onGetStarted, 
   onLogin, 
   onSelectPlan,
-  onNavigateToPolicy
+  onNavigateToPolicy,
+  onNavigateToApp
 }: CreativeMinimalistHomepageProps) {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const heroRef = useRef<HTMLDivElement>(null);
@@ -238,7 +240,7 @@ export default function CreativeMinimalistHomepage({
       <FinalCTA onGetStarted={onGetStarted} />
 
       {/* Footer */}
-      <Footer onNavigateToPolicy={onNavigateToPolicy} />
+      <Footer onNavigateToPolicy={onNavigateToPolicy} onNavigateToApp={onNavigateToApp} />
     </div>
   );
 }
@@ -1439,23 +1441,23 @@ function FinalCTA({ onGetStarted }: { onGetStarted?: () => void }) {
 }
 
 // Footer Component
-function Footer({ onNavigateToPolicy }: { onNavigateToPolicy?: (policy: string) => void }) {
+function Footer({ onNavigateToPolicy, onNavigateToApp }: { onNavigateToPolicy?: (policy: string) => void; onNavigateToApp?: (tab: string) => void }) {
   const currentYear = new Date().getFullYear();
 
   const footerLinks = {
     product: [
-      { label: 'Features', href: '#features' },
-      { label: 'Pricing', href: '#pricing' },
-      { label: 'Campaign Builder', href: '#' },
-      { label: 'Keyword Planner', href: '#' },
-      { label: 'Ad Generator', href: '#' },
+      { label: 'Features', href: '#features', type: 'scroll' as const },
+      { label: 'Pricing', href: '#pricing', type: 'scroll' as const },
+      { label: 'Campaign Builder', tab: 'one-click-builder', type: 'app' as const },
+      { label: 'Keyword Planner', tab: 'keyword-planner', type: 'app' as const },
+      { label: 'Ad Generator', tab: 'one-click-builder', type: 'app' as const },
     ],
     resources: [
-      { label: 'Documentation', href: '#' },
-      { label: 'API Reference', href: '#' },
-      { label: 'Blog', href: '#' },
-      { label: 'Help Center', href: '#' },
-      { label: 'Tutorials', href: '#' },
+      { label: 'Documentation', tab: 'support-help', type: 'app' as const },
+      { label: 'Help Center', tab: 'support-help', type: 'app' as const },
+      { label: 'Blog', href: 'https://blog.adiology.io', type: 'external' as const },
+      { label: 'API Reference', href: 'https://docs.adiology.io/api', type: 'external' as const },
+      { label: 'Tutorials', tab: 'support-help', type: 'app' as const },
     ],
     legal: [
       { label: 'Privacy Policy', action: 'privacy' as const },
@@ -1465,10 +1467,10 @@ function Footer({ onNavigateToPolicy }: { onNavigateToPolicy?: (policy: string) 
       { label: 'Refund Policy', action: 'refund' as const },
     ],
     company: [
-      { label: 'About Us', href: '/about' },
-      { label: 'Contact', href: '/contact' },
-      { label: 'Careers', href: '#' },
-      { label: 'Partners', href: '#' },
+      { label: 'About Us', href: '#features', type: 'scroll' as const },
+      { label: 'Contact', href: 'mailto:support@adiology.io', type: 'external' as const },
+      { label: 'Careers', href: 'mailto:careers@adiology.io', type: 'external' as const },
+      { label: 'Partners', href: 'mailto:partners@adiology.io', type: 'external' as const },
     ],
   };
 
@@ -1517,9 +1519,18 @@ function Footer({ onNavigateToPolicy }: { onNavigateToPolicy?: (policy: string) 
             <ul className="space-y-3">
               {footerLinks.product.map((link) => (
                 <li key={link.label}>
-                  <a href={link.href} className="text-gray-400 hover:text-white transition-colors text-sm">
-                    {link.label}
-                  </a>
+                  {link.type === 'app' ? (
+                    <button 
+                      onClick={() => onNavigateToApp?.(link.tab!)}
+                      className="text-gray-400 hover:text-white transition-colors text-sm text-left"
+                    >
+                      {link.label}
+                    </button>
+                  ) : (
+                    <a href={link.href} className="text-gray-400 hover:text-white transition-colors text-sm">
+                      {link.label}
+                    </a>
+                  )}
                 </li>
               ))}
             </ul>
@@ -1531,9 +1542,23 @@ function Footer({ onNavigateToPolicy }: { onNavigateToPolicy?: (policy: string) 
             <ul className="space-y-3">
               {footerLinks.resources.map((link) => (
                 <li key={link.label}>
-                  <a href={link.href} className="text-gray-400 hover:text-white transition-colors text-sm">
-                    {link.label}
-                  </a>
+                  {link.type === 'app' ? (
+                    <button 
+                      onClick={() => onNavigateToApp?.(link.tab!)}
+                      className="text-gray-400 hover:text-white transition-colors text-sm text-left"
+                    >
+                      {link.label}
+                    </button>
+                  ) : (
+                    <a 
+                      href={link.href} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-gray-400 hover:text-white transition-colors text-sm"
+                    >
+                      {link.label}
+                    </a>
+                  )}
                 </li>
               ))}
             </ul>
@@ -1562,9 +1587,20 @@ function Footer({ onNavigateToPolicy }: { onNavigateToPolicy?: (policy: string) 
             <ul className="space-y-3">
               {footerLinks.company.map((link) => (
                 <li key={link.label}>
-                  <a href={link.href} className="text-gray-400 hover:text-white transition-colors text-sm">
-                    {link.label}
-                  </a>
+                  {link.type === 'external' ? (
+                    <a 
+                      href={link.href} 
+                      target={link.href?.startsWith('mailto:') ? undefined : '_blank'}
+                      rel={link.href?.startsWith('mailto:') ? undefined : 'noopener noreferrer'}
+                      className="text-gray-400 hover:text-white transition-colors text-sm"
+                    >
+                      {link.label}
+                    </a>
+                  ) : (
+                    <a href={link.href} className="text-gray-400 hover:text-white transition-colors text-sm">
+                      {link.label}
+                    </a>
+                  )}
                 </li>
               ))}
             </ul>

@@ -1194,6 +1194,13 @@ const App = () => {
           else if (policy === 'gdpr') setAppView('gdpr-compliance');
           else if (policy === 'refund') setAppView('refund-policy');
         }}
+        onNavigateToApp={(tab: string) => {
+          // Store the intended destination tab in sessionStorage
+          sessionStorage.setItem('pendingNavTab', tab);
+          // Prompt user to login first
+          setAuthMode('login');
+          setAppView('auth');
+        }}
       />
     );
   }
@@ -1245,9 +1252,17 @@ const App = () => {
             
             // Check if user has paid plan - redirect to dashboard or plan selection
             if (hasPaidPlan) {
-              // User has active paid subscription - go to dashboard
-              setAppView('user');
-              setActiveTabSafe('dashboard');
+              // Check for pending navigation tab from footer links
+              const pendingTab = sessionStorage.getItem('pendingNavTab');
+              if (pendingTab) {
+                sessionStorage.removeItem('pendingNavTab');
+                setAppView('user');
+                setActiveTabSafe(pendingTab);
+              } else {
+                // User has active paid subscription - go to dashboard
+                setAppView('user');
+                setActiveTabSafe('dashboard');
+              }
             } else {
               // User doesn't have paid plan - redirect to plan selection
               window.history.pushState({}, '', '/plan-selection');
