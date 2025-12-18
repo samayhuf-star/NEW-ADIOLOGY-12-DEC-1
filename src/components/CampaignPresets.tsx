@@ -437,6 +437,45 @@ export const CampaignPresets: React.FC<CampaignPresetsProps> = ({ onLoadPreset }
           </div>
         </div>
 
+        {/* Shell View Info Boxes */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          {/* Box 1: Available Presets */}
+          <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
+              <div className="flex gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+              </div>
+              <span className="text-xs text-slate-400 ml-2 font-mono">preset_library.sh</span>
+            </div>
+            <div className="p-4 font-mono text-sm space-y-1">
+              <p className="text-green-400">✓ {campaignPresets.length} ready-to-use presets loaded</p>
+              <p className="text-slate-400">[{new Date().toLocaleTimeString()}] Categories: SKAG, STAG, GEO, Intent, Funnel</p>
+              <p className="text-slate-400">[{new Date().toLocaleTimeString()}] Industries: Home Services, Solar, HVAC, Legal</p>
+              <p className="text-emerald-400">&gt; View, customize, and export in seconds</p>
+            </div>
+          </div>
+
+          {/* Box 2: Export Stats */}
+          <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
+              <div className="flex gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+              </div>
+              <span className="text-xs text-slate-400 ml-2 font-mono">export_ready.sh</span>
+            </div>
+            <div className="p-4 font-mono text-sm space-y-1">
+              <p className="text-green-400">✓ Google Ads Editor compatible CSV format</p>
+              <p className="text-slate-400">[{new Date().toLocaleTimeString()}] Includes: Keywords, Ads, Extensions, Targeting</p>
+              <p className="text-slate-400">[{new Date().toLocaleTimeString()}] Average: 15-20 keywords per preset</p>
+              <p className="text-emerald-400">&gt; One-click export to Google Ads Editor</p>
+            </div>
+          </div>
+        </div>
+
         {/* Search and View Toggle */}
         <div className="flex items-center gap-4 mb-4">
           <div className="relative flex-1 max-w-md">
