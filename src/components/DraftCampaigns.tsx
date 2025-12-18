@@ -122,11 +122,11 @@ export function DraftCampaigns({ onLoadCampaign }: DraftCampaignsProps) {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'draft':
-        return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-400 border-yellow-500/30">Draft</Badge>;
+        return <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200">Draft</Badge>;
       case 'in_progress':
-        return <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/30">In Progress</Badge>;
+        return <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">In Progress</Badge>;
       case 'completed':
-        return <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/30">Completed</Badge>;
+        return <Badge variant="outline" className="bg-emerald-50 text-emerald-600 border-emerald-200">Completed</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -201,21 +201,21 @@ export function DraftCampaigns({ onLoadCampaign }: DraftCampaignsProps) {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 bg-white min-h-screen">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <FileText className="w-6 h-6 text-indigo-400" />
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <FileText className="w-6 h-6 text-violet-600" />
             Draft Campaigns
           </h1>
-          <p className="text-slate-400 mt-1">
+          <p className="text-gray-500 mt-1">
             Resume incomplete campaigns or manage your completed builds
           </p>
         </div>
         <Button 
           variant="outline" 
           onClick={loadCampaigns}
-          className="border-slate-600 hover:bg-slate-700"
+          className="border-gray-300 hover:bg-gray-50 text-gray-700"
         >
           <RefreshCw className="w-4 h-4 mr-2" />
           Refresh
@@ -223,40 +223,40 @@ export function DraftCampaigns({ onLoadCampaign }: DraftCampaignsProps) {
       </div>
 
       <div className="grid grid-cols-3 gap-4">
-        <Card className="bg-slate-800/50 border-slate-700">
+        <Card className="bg-white border-gray-200 shadow-sm">
           <CardContent className="p-4">
-            <div className="text-3xl font-bold text-white">{stats.total}</div>
-            <div className="text-sm text-slate-400">Total Campaigns</div>
+            <div className="text-3xl font-bold text-violet-600">{stats.total}</div>
+            <div className="text-sm text-gray-500">Total Campaigns</div>
           </CardContent>
         </Card>
-        <Card className="bg-yellow-500/10 border-yellow-500/30">
+        <Card className="bg-amber-50 border-amber-200 shadow-sm">
           <CardContent className="p-4">
-            <div className="text-3xl font-bold text-yellow-400">{stats.draft}</div>
-            <div className="text-sm text-yellow-400/70">Drafts / In Progress</div>
+            <div className="text-3xl font-bold text-amber-600">{stats.draft}</div>
+            <div className="text-sm text-amber-600/80">Drafts / In Progress</div>
           </CardContent>
         </Card>
-        <Card className="bg-green-500/10 border-green-500/30">
+        <Card className="bg-emerald-50 border-emerald-200 shadow-sm">
           <CardContent className="p-4">
-            <div className="text-3xl font-bold text-green-400">{stats.completed}</div>
-            <div className="text-sm text-green-400/70">Completed</div>
+            <div className="text-3xl font-bold text-emerald-600">{stats.completed}</div>
+            <div className="text-sm text-emerald-600/80">Completed</div>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="bg-slate-800/50 border-slate-700">
+      <Card className="bg-white border-gray-200 shadow-sm">
         <CardHeader className="pb-4">
           <div className="flex items-center gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
                 placeholder="Search by name or domain..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-slate-900/50 border-slate-600"
+                className="pl-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400"
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40 bg-slate-900/50 border-slate-600">
+              <SelectTrigger className="w-40 bg-white border-gray-300 text-gray-700">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -267,7 +267,7 @@ export function DraftCampaigns({ onLoadCampaign }: DraftCampaignsProps) {
               </SelectContent>
             </Select>
             <Select value={builderFilter} onValueChange={setBuilderFilter}>
-              <SelectTrigger className="w-40 bg-slate-900/50 border-slate-600">
+              <SelectTrigger className="w-40 bg-white border-gray-300 text-gray-700">
                 <SelectValue placeholder="Builder" />
               </SelectTrigger>
               <SelectContent>
@@ -281,27 +281,27 @@ export function DraftCampaigns({ onLoadCampaign }: DraftCampaignsProps) {
         <CardContent>
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <RefreshCw className="w-6 h-6 animate-spin text-indigo-400" />
-              <span className="ml-2 text-slate-400">Loading campaigns...</span>
+              <RefreshCw className="w-6 h-6 animate-spin text-violet-600" />
+              <span className="ml-2 text-gray-500">Loading campaigns...</span>
             </div>
           ) : filteredCampaigns.length === 0 ? (
-            <div className="text-center py-12 text-slate-400">
+            <div className="text-center py-12 text-gray-500">
               <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>No campaigns found</p>
               <p className="text-sm mt-1">Start building a campaign to see it here</p>
             </div>
           ) : (
-            <div className="rounded-md border border-slate-700 overflow-hidden">
+            <div className="rounded-lg border border-gray-200 overflow-hidden">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-slate-900/50 hover:bg-slate-900/50">
-                    <TableHead className="w-12 text-slate-300">#</TableHead>
-                    <TableHead className="text-slate-300">Campaign Name</TableHead>
-                    <TableHead className="text-slate-300">Domain</TableHead>
-                    <TableHead className="text-slate-300">Date & Time</TableHead>
-                    <TableHead className="text-slate-300">Builder</TableHead>
-                    <TableHead className="text-slate-300">Status</TableHead>
-                    <TableHead className="text-right text-slate-300">Actions</TableHead>
+                  <TableRow className="bg-gray-50 hover:bg-gray-50">
+                    <TableHead className="w-12 text-gray-600 font-semibold">#</TableHead>
+                    <TableHead className="text-gray-600 font-semibold">Campaign Name</TableHead>
+                    <TableHead className="text-gray-600 font-semibold">Domain</TableHead>
+                    <TableHead className="text-gray-600 font-semibold">Date & Time</TableHead>
+                    <TableHead className="text-gray-600 font-semibold">Builder</TableHead>
+                    <TableHead className="text-gray-600 font-semibold">Status</TableHead>
+                    <TableHead className="text-right text-gray-600 font-semibold">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -313,37 +313,37 @@ export function DraftCampaigns({ onLoadCampaign }: DraftCampaignsProps) {
                     return (
                       <TableRow 
                         key={campaign.id} 
-                        className="border-slate-700 hover:bg-slate-700/30"
+                        className="border-gray-100 hover:bg-gray-50/50"
                       >
-                        <TableCell className="text-slate-400 font-mono">
+                        <TableCell className="text-gray-500 font-mono">
                           {index + 1}
                         </TableCell>
-                        <TableCell className="font-medium text-white max-w-[200px] truncate">
+                        <TableCell className="font-medium text-gray-900 max-w-[200px] truncate">
                           {campaign.name}
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2 text-slate-300">
-                            <Globe className="w-4 h-4 text-slate-500" />
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <Globe className="w-4 h-4 text-gray-400" />
                             <span className="truncate max-w-[150px]">{extractDomain(campaign)}</span>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2 text-slate-400">
-                            <Calendar className="w-4 h-4 text-slate-500" />
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <Calendar className="w-4 h-4 text-gray-400" />
                             <div className="text-sm">
                               <div>{date}</div>
-                              <div className="text-xs text-slate-500">{time}</div>
+                              <div className="text-xs text-gray-400">{time}</div>
                             </div>
                           </div>
                         </TableCell>
                         <TableCell>
                           {builderType === '1-click' ? (
-                            <Badge variant="outline" className="bg-purple-500/10 text-purple-400 border-purple-500/30">
+                            <Badge variant="outline" className="bg-purple-50 text-purple-600 border-purple-200">
                               <Zap className="w-3 h-3 mr-1" />
                               1 Click
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="bg-indigo-500/10 text-indigo-400 border-indigo-500/30">
+                            <Badge variant="outline" className="bg-violet-50 text-violet-600 border-violet-200">
                               <Sparkles className="w-3 h-3 mr-1" />
                               Builder 3.0
                             </Badge>
@@ -359,7 +359,7 @@ export function DraftCampaigns({ onLoadCampaign }: DraftCampaignsProps) {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => handleResume(campaign)}
-                                className="h-8 w-8 text-green-400 hover:text-green-300 hover:bg-green-500/10"
+                                className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                                 title="Resume"
                               >
                                 <Play className="w-4 h-4" />
@@ -369,7 +369,7 @@ export function DraftCampaigns({ onLoadCampaign }: DraftCampaignsProps) {
                               variant="ghost"
                               size="icon"
                               onClick={() => handleEdit(campaign)}
-                              className="h-8 w-8 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+                              className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                               title="Edit"
                             >
                               <Pencil className="w-4 h-4" />
@@ -378,7 +378,7 @@ export function DraftCampaigns({ onLoadCampaign }: DraftCampaignsProps) {
                               variant="ghost"
                               size="icon"
                               onClick={() => handleDownload(campaign)}
-                              className="h-8 w-8 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10"
+                              className="h-8 w-8 text-violet-600 hover:text-violet-700 hover:bg-violet-50"
                               title="Download CSV"
                             >
                               <Download className="w-4 h-4" />
@@ -390,7 +390,7 @@ export function DraftCampaigns({ onLoadCampaign }: DraftCampaignsProps) {
                                 setCampaignToDelete(campaign.id);
                                 setDeleteDialogOpen(true);
                               }}
-                              className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                              className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
                               title="Delete"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -408,20 +408,20 @@ export function DraftCampaigns({ onLoadCampaign }: DraftCampaignsProps) {
       </Card>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="bg-slate-800 border-slate-700">
+        <AlertDialogContent className="bg-white border-gray-200">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">Delete Campaign</AlertDialogTitle>
-            <AlertDialogDescription className="text-slate-400">
+            <AlertDialogTitle className="text-gray-900">Delete Campaign</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-500">
               Are you sure you want to delete this campaign? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600">
+            <AlertDialogCancel className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-red-600 hover:bg-red-700 text-white"
             >
               Delete
             </AlertDialogAction>
