@@ -9,7 +9,7 @@ import { WebhookHandlers } from './webhookHandlers';
 import { stripeService } from './stripeService';
 import { analyzeUrlWithCheerio } from './urlAnalyzerLite';
 import { sendEmail, sendWelcomeEmail, sendPasswordResetEmail, sendTeamInviteEmail, sendCampaignExportEmail } from './emailService';
-// import { startCronScheduler, triggerManualRun } from './cronScheduler';
+import { startCronScheduler, triggerManualRun, triggerDailyReports } from './cronScheduler';
 
 const { Pool } = pg;
 
@@ -3880,8 +3880,8 @@ app.delete('/api/long-tail-keywords/lists/:id', async (c) => {
   }
 });
 
-// Start cron scheduler - DISABLED per user request
-// startCronScheduler();
+// Start cron scheduler for ads scraping and daily reports
+startCronScheduler();
 
 // ============================================
 // Email API Endpoints (Postmark)
@@ -3957,6 +3957,17 @@ app.post('/api/email/team-invite', async (c) => {
     }
   } catch (error: any) {
     console.error('Team invite email error:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// Trigger daily reports manually (admin endpoint)
+app.post('/api/cron/trigger-daily-reports', async (c) => {
+  try {
+    await triggerDailyReports();
+    return c.json({ success: true, message: 'Daily reports triggered' });
+  } catch (error: any) {
+    console.error('Manual daily reports trigger error:', error);
     return c.json({ error: error.message }, 500);
   }
 });

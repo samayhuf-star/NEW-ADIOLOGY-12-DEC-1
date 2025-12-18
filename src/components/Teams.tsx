@@ -85,6 +85,29 @@ export const Teams: React.FC = () => {
     }
   };
 
+  const sendInviteEmail = async (email: string, inviterName: string) => {
+    const baseUrl = window.location.origin;
+    const inviteLink = `${baseUrl}/accept-invite?email=${encodeURIComponent(email)}`;
+    
+    const response = await fetch('/api/email/team-invite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: email,
+        inviterName: inviterName || 'A team member',
+        teamName: 'Adiology Team',
+        inviteLink
+      })
+    });
+    
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || 'Failed to send email');
+    }
+    
+    return response.json();
+  };
+
   const handleInvite = async () => {
     if (!inviteEmail.trim()) {
       setError('Please enter an email address');
@@ -105,7 +128,10 @@ export const Teams: React.FC = () => {
     setError(null);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const profile = cachedProfileRef.current;
+      const inviterName = profile?.full_name || profile?.email || 'A team member';
+      
+      await sendInviteEmail(inviteEmail.trim(), inviterName);
 
       const newMember: TeamMember = {
         id: `invite_${Date.now()}`,
@@ -126,8 +152,9 @@ export const Teams: React.FC = () => {
       setIsInviteDialogOpen(false);
 
       setTimeout(() => setSuccess(null), 5000);
-    } catch (err) {
-      setError('Failed to send invitation. Please try again.');
+    } catch (err: any) {
+      console.error('Invite error:', err);
+      setError(err.message || 'Failed to send invitation. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -151,12 +178,28 @@ export const Teams: React.FC = () => {
     setTimeout(() => setSuccess(null), 5000);
   };
 
-  const handleResendInvite = (memberId: string) => {
+  const handleResendInvite = async (memberId: string) => {
     const member = teamMembers.find(m => m.id === memberId);
     if (!member || member.status !== 'pending') return;
 
-    setSuccess(`Invitation resent to ${member.email}`);
-    setTimeout(() => setSuccess(null), 5000);
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const profile = cachedProfileRef.current;
+      const inviterName = profile?.full_name || profile?.email || 'A team member';
+      
+      await sendInviteEmail(member.email, inviterName);
+      
+      setSuccess(`Invitation resent to ${member.email}`);
+      setTimeout(() => setSuccess(null), 5000);
+    } catch (err: any) {
+      console.error('Resend invite error:', err);
+      setError(err.message || 'Failed to resend invitation');
+      setTimeout(() => setError(null), 5000);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
