@@ -222,38 +222,58 @@ export function DraftCampaigns({ onLoadCampaign }: DraftCampaignsProps) {
         </Button>
       </div>
 
-      {/* Shell View Stats Console */}
-      <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden">
-        <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
-          <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-red-500"></div>
-            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+      {/* Shell View - Two Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Card 1: Campaign Stats */}
+        <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
+            <div className="flex gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            </div>
+            <span className="text-xs text-slate-400 ml-2 font-mono">campaign_stats.sh</span>
           </div>
-          <span className="text-xs text-slate-400 ml-2 font-mono">campaign_stats.sh</span>
+          <div className="p-4 font-mono">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-1 text-center">
+                <div className="text-2xl font-bold text-violet-400">{stats.total}</div>
+                <div className="text-xs text-slate-400">Total</div>
+              </div>
+              <div className="space-y-1 text-center">
+                <div className="text-2xl font-bold text-amber-400">{stats.draft}</div>
+                <div className="text-xs text-slate-400">Drafts</div>
+              </div>
+              <div className="space-y-1 text-center">
+                <div className="text-2xl font-bold text-emerald-400">{stats.completed}</div>
+                <div className="text-xs text-slate-400">Completed</div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="p-4 font-mono">
-          <div className="grid grid-cols-3 gap-6">
-            <div className="space-y-1">
-              <div className="text-3xl font-bold text-violet-400">{stats.total}</div>
-              <div className="text-sm text-slate-400">Total Campaigns</div>
-              <p className="text-xs text-slate-500 mt-2">
-                All saved campaign builds including drafts, in-progress, and completed exports
-              </p>
+
+        {/* Card 2: Status Info */}
+        <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
+            <div className="flex gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
             </div>
-            <div className="space-y-1">
-              <div className="text-3xl font-bold text-amber-400">{stats.draft}</div>
-              <div className="text-sm text-slate-400">Drafts / In Progress</div>
-              <p className="text-xs text-slate-500 mt-2">
-                Campaigns awaiting completion - resume anytime to finish building
-              </p>
+            <span className="text-xs text-slate-400 ml-2 font-mono">status_info.sh</span>
+          </div>
+          <div className="p-4 font-mono space-y-2 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="text-slate-500">drafts:</span>
+              <span className="text-amber-400">Resume anytime to finish building</span>
             </div>
-            <div className="space-y-1">
-              <div className="text-3xl font-bold text-emerald-400">{stats.completed}</div>
-              <div className="text-sm text-slate-400">Completed</div>
-              <p className="text-xs text-slate-500 mt-2">
-                Ready for Google Ads Editor import - download CSV anytime
-              </p>
+            <div className="flex items-center gap-2">
+              <span className="text-slate-500">completed:</span>
+              <span className="text-emerald-400">Ready for Google Ads Editor import</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-slate-500">export:</span>
+              <span className="text-blue-400">Download CSV anytime</span>
             </div>
           </div>
         </div>
