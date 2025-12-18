@@ -2,6 +2,12 @@ import { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, TrendingUp, Settings, Bell, Search, Menu, X, FileCheck, Lightbulb, Shuffle, MinusCircle, Shield, HelpCircle, Megaphone, User, LogOut, Sparkles, Zap, Package, Clock, ChevronDown, ChevronRight, FolderOpen, TestTube, Code, Download, GitCompare, Globe, CreditCard, ArrowRight, Users
 } from 'lucide-react';
+
+declare global {
+  interface Window {
+    Helploom: (action: string, data?: { uniqueId?: string; name?: string; email?: string }) => void;
+  }
+}
 import { useTheme } from './contexts/ThemeContext';
 import { COLOR_CLASSES } from './utils/colorScheme';
 import {
@@ -1249,6 +1255,15 @@ const App = () => {
             };
             
             setUser(fullUser);
+            
+            // Identify user with Helploom support widget
+            if (window.Helploom) {
+              window.Helploom('identify', {
+                uniqueId: fullUser.id,
+                name: fullUser.full_name || fullUser.email?.split('@')[0] || 'User',
+                email: fullUser.email
+              });
+            }
             
             // Check if user has paid plan - redirect to dashboard or plan selection
             if (hasPaidPlan) {
