@@ -25,7 +25,7 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
     subject,
     htmlBody,
     textBody,
-    from = 'noreply@adiology.com',
+    from = 'noreply@adiology.io',
     replyTo,
     tag,
     metadata
@@ -68,7 +68,7 @@ export async function sendTemplateEmail(options: {
   from?: string;
   tag?: string;
 }): Promise<EmailResult> {
-  const { to, templateAlias, templateModel, from = 'noreply@adiology.com', tag } = options;
+  const { to, templateAlias, templateModel, from = 'noreply@adiology.io', tag } = options;
 
   if (!process.env.POSTMARK_SERVER_API_TOKEN) {
     console.error('POSTMARK_SERVER_API_TOKEN not configured');
