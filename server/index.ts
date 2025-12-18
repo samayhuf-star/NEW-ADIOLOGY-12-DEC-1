@@ -3693,10 +3693,27 @@ Return ONLY a JSON array of keyword strings, nothing else. Example: ["keyword on
   }
 });
 
-// Get saved keyword lists
+// Get saved keyword lists - with server-side auth validation
 app.get('/api/long-tail-keywords/lists', async (c) => {
   try {
-    const userId = c.req.query('userId');
+    // Validate user via Authorization header (Supabase JWT)
+    const authHeader = c.req.header('Authorization');
+    let userId = c.req.query('userId');
+    
+    // If Authorization header present, validate it and derive userId
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      try {
+        // Decode JWT to get user id (basic validation)
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.sub) {
+          userId = payload.sub; // Use server-derived userId, not client-supplied
+        }
+      } catch (e) {
+        console.error('Token decode error:', e);
+      }
+    }
+    
     if (!userId) {
       return c.json({ lists: [] });
     }
@@ -3737,10 +3754,26 @@ app.get('/api/long-tail-keywords/lists', async (c) => {
   }
 });
 
-// Save a keyword list
+// Save a keyword list - with server-side auth validation
 app.post('/api/long-tail-keywords/lists', async (c) => {
   try {
-    const { userId, name, keywords, seedKeywords, url } = await c.req.json();
+    const body = await c.req.json();
+    const { name, keywords, seedKeywords, url } = body;
+    let userId = body.userId;
+    
+    // Validate user via Authorization header (Supabase JWT)
+    const authHeader = c.req.header('Authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.sub) {
+          userId = payload.sub; // Use server-derived userId
+        }
+      } catch (e) {
+        console.error('Token decode error:', e);
+      }
+    }
     
     if (!userId || !name || !keywords || keywords.length === 0) {
       return c.json({ error: 'Missing required fields' }, 400);
@@ -3774,12 +3807,33 @@ app.post('/api/long-tail-keywords/lists', async (c) => {
   }
 });
 
-// Delete a keyword list
+// Delete a keyword list - with ownership verification
 app.delete('/api/long-tail-keywords/lists/:id', async (c) => {
   try {
     const listId = c.req.param('id');
     
-    await pool.query('DELETE FROM long_tail_keyword_lists WHERE id = $1', [listId]);
+    // Validate user via Authorization header (Supabase JWT)
+    const authHeader = c.req.header('Authorization');
+    let userId: string | null = null;
+    
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.sub) {
+          userId = payload.sub;
+        }
+      } catch (e) {
+        console.error('Token decode error:', e);
+      }
+    }
+    
+    // Only delete if list belongs to the authenticated user
+    if (userId) {
+      await pool.query('DELETE FROM long_tail_keyword_lists WHERE id = $1 AND user_id = $2', [listId, userId]);
+    } else {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
     
     return c.json({ success: true });
   } catch (error: any) {

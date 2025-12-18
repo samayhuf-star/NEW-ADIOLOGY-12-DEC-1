@@ -48,13 +48,17 @@ export function LongTailKeywords() {
   const loadSavedLists = async () => {
     setIsLoadingLists(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
         setSavedLists([]);
         return;
       }
 
-      const response = await fetch(`/api/long-tail-keywords/lists?userId=${user.id}`);
+      const response = await fetch(`/api/long-tail-keywords/lists?userId=${session.user.id}`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
       if (response.ok) {
         const data = await response.json();
         setSavedLists(data.lists || []);
@@ -141,17 +145,20 @@ export function LongTailKeywords() {
 
     setIsSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
         notifications.error('Please log in to save lists');
         return;
       }
 
       const response = await fetch('/api/long-tail-keywords/lists', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
         body: JSON.stringify({
-          userId: user.id,
+          userId: session.user.id,
           name: listName.trim(),
           keywords: keywordsToSave,
           seedKeywords: seedKeywords,
@@ -176,8 +183,17 @@ export function LongTailKeywords() {
 
   const deleteList = async (listId: string) => {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        notifications.error('Please log in');
+        return;
+      }
+
       const response = await fetch(`/api/long-tail-keywords/lists/${listId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
       });
 
       if (!response.ok) {
