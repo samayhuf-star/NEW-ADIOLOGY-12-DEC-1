@@ -205,11 +205,26 @@ export function OneClickCampaignBuilder() {
     }
   };
 
-  const proceedToResults = () => {
+  const proceedToResults = async () => {
     if (generatedCampaign) {
       setResultsTimestamp(new Date().toLocaleTimeString('en-US', { hour12: false }));
       setCurrentStep('results');
-      notifications.success('Campaign generated successfully!', {
+      
+      // Auto-save campaign
+      try {
+        await fetch('/api/campaigns/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...generatedCampaign,
+            source: 'one-click-builder'
+          })
+        });
+      } catch (err) {
+        console.error('Auto-save error:', err);
+      }
+      
+      notifications.success('Campaign generated and saved!', {
         title: 'Success',
         description: `Generated ${generatedCampaign.campaign_data?.keywords?.length || 100}+ keywords`
       });
@@ -608,14 +623,6 @@ export function OneClickCampaignBuilder() {
               >
                 <Download className="w-5 h-5 mr-2" />
                 Download CSV for Google Ads
-              </Button>
-
-              <Button
-                onClick={saveCampaign}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white"
-              >
-                <Save className="w-5 h-5 mr-2" />
-                Save to Saved Campaigns
               </Button>
 
               <Button
