@@ -885,7 +885,7 @@ app.post('/api/analyze-url', async (c) => {
       const analysisResult = await analyzeUrlWithCheerio(cleanUrl);
 
       // Use AI to analyze and provide insights
-      const openaiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+      const openaiKey = process.env.OPENAI_API_KEY || (process.env.AI_INTEGRATIONS_OPENAI_API_KEY?.startsWith('sk-') ? process.env.AI_INTEGRATIONS_OPENAI_API_KEY : null);
       let aiInsights = null;
       
       if (openaiKey && extractionDepth === 'comprehensive') {
@@ -1085,7 +1085,7 @@ app.get('/api/admin/services-billing', async (c) => {
 
   // OpenAI - use the integration API key with usage endpoint
   try {
-    const openaiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+    const openaiKey = process.env.OPENAI_API_KEY || (process.env.AI_INTEGRATIONS_OPENAI_API_KEY?.startsWith('sk-') ? process.env.AI_INTEGRATIONS_OPENAI_API_KEY : null);
     if (openaiKey) {
       // Try fetching from OpenAI usage API (organization level)
       const now = new Date();
@@ -2488,7 +2488,7 @@ app.post('/api/ai/generate-seed-keywords', async (c) => {
       return c.json({ error: 'Please provide page context (minimum 10 characters)' }, 400);
     }
 
-    const openaiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+    const openaiKey = process.env.OPENAI_API_KEY || (process.env.AI_INTEGRATIONS_OPENAI_API_KEY?.startsWith('sk-') ? process.env.AI_INTEGRATIONS_OPENAI_API_KEY : null);
     if (!openaiKey) {
       return c.json({ 
         error: 'AI service not configured',
@@ -2595,7 +2595,7 @@ app.post('/api/ai/generate-negative-keywords', async (c) => {
       return c.json({ error: 'URL, coreKeywords, and userGoal are required' }, 400);
     }
 
-    const openaiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+    const openaiKey = process.env.OPENAI_API_KEY || (process.env.AI_INTEGRATIONS_OPENAI_API_KEY?.startsWith('sk-') ? process.env.AI_INTEGRATIONS_OPENAI_API_KEY : null);
     if (!openaiKey) {
       console.log('OpenAI key not configured, returning contextual static fallback');
       return c.json({ 
@@ -2917,7 +2917,7 @@ app.get('/api/dashboard/:userId', async (c) => {
 // ============================================
 
 const openaiClient = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || undefined,
 });
 
