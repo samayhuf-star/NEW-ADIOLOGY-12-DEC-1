@@ -1012,11 +1012,6 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                     </div>
                 </div>
 
-                {/* Compact Filters */}
-                <div className="mb-4 flex items-center gap-3">
-                    <KeywordFilters filters={filters} onFiltersChange={setFilters} compact={true} />
-                </div>
-
                 {/* Tabs */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
                     <TabsList className="bg-gray-100 border border-gray-200 p-1 rounded-xl">
@@ -1162,8 +1157,11 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                                         </div>
                                     </div>
 
-                                    {/* Generate Button */}
+                                    {/* Filters + Generate Button */}
                                     <div className="mt-6 pt-6 border-t border-gray-200 space-y-3">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <KeywordFilters filters={filters} onFiltersChange={setFilters} compact={true} />
+                                        </div>
                                         <Button
                                             onClick={() => handleGenerate(false)}
                                             disabled={isGenerating || !(typeof seedKeywords === 'string' && seedKeywords.trim())}
