@@ -947,55 +947,44 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
 
             <div className="max-w-6xl mx-auto">
                 {/* Header */}
-                <div className="mb-8">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/25">
-                            <Sparkles className="w-6 h-6 text-white" />
-                        </div>
-                        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-                            Keyword Planner
-                        </h1>
+                <div className="mb-4 flex items-center justify-between">
+                    <div>
+                        <h1 className="text-xl font-bold text-slate-800">Keyword Planner</h1>
+                        <p className="text-xs text-slate-500">Generate comprehensive keyword lists powered by AI and Google Ads data</p>
                     </div>
-                    <p className="text-gray-600 ml-14">
-                        Generate comprehensive keyword lists powered by AI and Google Ads data
-                    </p>
                 </div>
 
-                {/* Terminal-Style Stats */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-                    <TerminalCard title="Keyword Statistics" showDots={true} variant="compact">
-                        <div className="space-y-1.5">
-                            <TerminalLine prefix="$" label="keywords_generated:" value={`${generatedKeywords.length}`} valueColor="green" />
-                            <TerminalLine prefix="$" label="seed_keywords:" value={`${seedKeywords.split(',').filter(s => s.trim()).length}`} valueColor="cyan" />
-                            <TerminalLine prefix="$" label="negative_keywords:" value={`${negativeKeywords.split('\n').filter(s => s.trim()).length}`} valueColor="yellow" />
-                            <TerminalLine prefix="$" label="saved_lists:" value={`${savedLists.length}`} valueColor="purple" />
+                {/* Shell View Info Box */}
+                <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden mb-4">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
+                        <div className="flex gap-1.5">
+                            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                            <div className="w-3 h-3 rounded-full bg-green-500"></div>
                         </div>
-                    </TerminalCard>
-
-                    <TerminalCard title="System Status" showDots={true} variant="compact">
-                        <div className="space-y-1.5">
-                            <TerminalLine prefix=">" label="api_status:" value={apiStatus === 'ok' ? 'CONNECTED' : apiStatus === 'error' ? 'FALLBACK' : 'CHECKING...'} valueColor={apiStatus === 'ok' ? 'green' : apiStatus === 'error' ? 'yellow' : 'slate'} />
-                            <TerminalLine prefix=">" label="data_source:" value={dataSource === 'google_ads_api' ? 'GOOGLE_ADS_API' : dataSource === 'fallback' ? 'LOCAL_FALLBACK' : 'LOCAL'} valueColor={dataSource === 'google_ads_api' ? 'green' : 'yellow'} />
-                            <TerminalLine prefix=">" label="match_types:" value={`[${matchTypes.broad ? 'B' : '-'}${matchTypes.phrase ? 'P' : '-'}${matchTypes.exact ? 'E' : '-'}]`} valueColor="cyan" />
-                            <TerminalLine prefix=">" label="metrics:" value={showMetrics ? 'ENABLED' : 'DISABLED'} valueColor={showMetrics ? 'green' : 'slate'} />
-                        </div>
-                    </TerminalCard>
-                </div>
-
-                {/* Filters Bar */}
-                <div className="mb-6 p-4 bg-gradient-to-r from-slate-50 to-gray-50 rounded-xl border border-gray-200">
-                    <div className="flex items-center justify-between flex-wrap gap-4">
-                        <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-gray-700">Filters:</span>
-                            <KeywordFilters filters={filters} onFiltersChange={setFilters} />
-                        </div>
-                        <div className="flex items-center gap-3 text-xs text-gray-500">
-                            <span className="flex items-center gap-1">
-                                <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                                Volume & CPC data based on selected country
-                            </span>
+                        <span className="text-xs text-slate-400 ml-2 font-mono">keyword_planner.sh</span>
+                    </div>
+                    <div className="p-4 font-mono">
+                        <div className="grid grid-cols-3 gap-6">
+                            <div className="space-y-1">
+                                <div className="text-2xl font-bold text-violet-400">{generatedKeywords.length}</div>
+                                <div className="text-xs text-slate-400">Keywords Generated</div>
+                            </div>
+                            <div className="space-y-1">
+                                <div className="text-2xl font-bold text-emerald-400">{apiStatus === 'ok' ? 'LIVE' : 'LOCAL'}</div>
+                                <div className="text-xs text-slate-400">Data Source</div>
+                            </div>
+                            <div className="space-y-1">
+                                <div className="text-2xl font-bold text-amber-400">{savedLists.length}</div>
+                                <div className="text-xs text-slate-400">Saved Lists</div>
+                            </div>
                         </div>
                     </div>
+                </div>
+
+                {/* Compact Filters */}
+                <div className="mb-4 flex items-center gap-3">
+                    <KeywordFilters filters={filters} onFiltersChange={setFilters} compact={true} />
                 </div>
 
                 {/* Tabs */}

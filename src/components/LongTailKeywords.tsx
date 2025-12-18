@@ -350,19 +350,45 @@ export function LongTailKeywords() {
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-          <Sparkles className="w-6 h-6 text-purple-500" />
-          Long Tail Keywords
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Generate long-tail keyword variations using autocomplete suggestions and AI
-        </p>
+    <div className="p-4 max-w-5xl mx-auto">
+      {/* Header */}
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-slate-800">Long Tail Keywords</h1>
+          <p className="text-xs text-slate-500">Generate long-tail variations using autocomplete and AI</p>
+        </div>
       </div>
 
-      {/* Compact Filters Bar */}
-      <div className="mb-4 flex items-center gap-3 flex-wrap">
+      {/* Shell View Info Box */}
+      <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden mb-4">
+        <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
+          <div className="flex gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+          </div>
+          <span className="text-xs text-slate-400 ml-2 font-mono">long_tail_keywords.sh</span>
+        </div>
+        <div className="p-4 font-mono">
+          <div className="grid grid-cols-3 gap-6">
+            <div className="space-y-1">
+              <div className="text-2xl font-bold text-violet-400">{keywords.length}</div>
+              <div className="text-xs text-slate-400">Keywords Generated</div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-2xl font-bold text-emerald-400">{savedLists.length}</div>
+              <div className="text-xs text-slate-400">Saved Lists</div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-2xl font-bold text-amber-400">AI+</div>
+              <div className="text-xs text-slate-400">Hybrid Engine</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Compact Filters */}
+      <div className="mb-4 flex items-center gap-3">
         <KeywordFilters filters={filters} onFiltersChange={setFilters} compact={true} />
       </div>
 

@@ -521,39 +521,95 @@ export const NegativeKeywordsBuilder = ({ initialData }: { initialData?: any }) 
     };
 
     return (
-        <div className="p-8 space-y-8 w-full min-h-screen bg-transparent">
-            {/* Terminal Progress Console */}
-            <TerminalProgressConsole
-                title="Negative Keywords Console"
-                messages={NEGATIVE_KEYWORDS_MESSAGES}
-                isVisible={showTerminalConsole}
-                onComplete={() => setTerminalComplete(true)}
-                nextButtonText="Next: View Generated Negatives"
-                onNextClick={() => {
-                    setShowTerminalConsole(false);
-                    setIsGenerating(false);
-                    setShowResultsConsole(true);
-                }}
-                minDuration={4500}
-            />
-
+        <div className="p-4 max-w-5xl mx-auto">
             {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
-                    AI Negative Keyword Generator
-                </h1>
-                <p className="text-slate-500 font-medium">
-                    AI will analyze your website to understand your business and generate thousands of relevant negative keywords in exact match type.
-                </p>
+            <div className="mb-4 flex items-center justify-between">
+                <div>
+                    <h1 className="text-xl font-bold text-slate-800">Negative Keywords</h1>
+                    <p className="text-xs text-slate-500">AI-powered negative keyword generation to protect your ad spend</p>
+                </div>
+                <button
+                    onClick={handleFillInfo}
+                    className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-medium rounded-lg shadow-sm transition-all flex items-center gap-1.5"
+                >
+                    <RefreshCw className="w-3 h-3" />
+                    Sample
+                </button>
             </div>
 
-            {/* Filters Bar */}
-            <div className="mb-6 p-4 bg-gradient-to-r from-slate-50 to-gray-50 rounded-xl border border-gray-200">
-                <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-700">Filters:</span>
-                    <KeywordFilters filters={filters} onFiltersChange={setFilters} />
+            {/* Shell View Info Box */}
+            <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden mb-4">
+                <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
+                    <div className="flex gap-1.5">
+                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                        <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                        <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                    </div>
+                    <span className="text-xs text-slate-400 ml-2 font-mono">negative_keywords.sh</span>
+                </div>
+                <div className="p-4 font-mono">
+                    <div className="grid grid-cols-3 gap-6">
+                        <div className="space-y-1">
+                            <div className="text-2xl font-bold text-violet-400">{generatedKeywords.length}</div>
+                            <div className="text-xs text-slate-400">Negatives Generated</div>
+                        </div>
+                        <div className="space-y-1">
+                            <div className="text-2xl font-bold text-emerald-400">AI</div>
+                            <div className="text-xs text-slate-400">Powered Engine</div>
+                        </div>
+                        <div className="space-y-1">
+                            <div className="text-2xl font-bold text-amber-400">EXACT</div>
+                            <div className="text-xs text-slate-400">Match Type</div>
+                        </div>
+                    </div>
                 </div>
             </div>
+
+            {/* Compact Filters */}
+            <div className="mb-4 flex items-center gap-3">
+                <KeywordFilters filters={filters} onFiltersChange={setFilters} compact={true} />
+            </div>
+
+            {/* Inline Generation Progress */}
+            {showTerminalConsole && (
+                <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden mb-4">
+                    <div className="flex items-center justify-between px-4 py-2 bg-slate-800 border-b border-slate-700">
+                        <div className="flex items-center gap-2">
+                            <div className="flex gap-1.5">
+                                <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                            </div>
+                            <span className="text-xs text-slate-400 font-mono">generating_negatives.sh</span>
+                        </div>
+                        {terminalComplete && (
+                            <button
+                                onClick={() => {
+                                    setShowTerminalConsole(false);
+                                    setIsGenerating(false);
+                                    setShowResultsConsole(true);
+                                }}
+                                className="text-xs text-emerald-400 hover:text-emerald-300 font-mono"
+                            >
+                                View Results →
+                            </button>
+                        )}
+                    </div>
+                    <div className="p-4 font-mono text-sm space-y-1 max-h-48 overflow-y-auto">
+                        <p className="text-green-400">✓ AI engine initialized</p>
+                        <p className="text-slate-400">&gt; Analyzing target URL...</p>
+                        <p className="text-green-400">✓ Website content extracted</p>
+                        <p className="text-slate-400">&gt; Processing core keywords...</p>
+                        <p className="text-green-400">✓ Industry identified: {url ? 'detected' : 'pending'}</p>
+                        <p className="text-slate-400">&gt; Generating negative keywords...</p>
+                        {!terminalComplete ? (
+                            <p className="text-cyan-400 animate-pulse">&gt; Processing with AI...</p>
+                        ) : (
+                            <p className="text-emerald-400">✓ Complete! {generatedKeywords.length} negatives ready</p>
+                        )}
+                    </div>
+                </div>
+            )}
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">
                 <TabsList>

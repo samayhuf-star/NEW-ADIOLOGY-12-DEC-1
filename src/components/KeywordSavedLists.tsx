@@ -154,12 +154,41 @@ export const KeywordSavedLists = () => {
   );
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">Saved Lists</h1>
-        <p className="text-slate-600">
-          View and manage your saved keyword lists from Keyword Planner, Keyword Mixer, and Negative Keywords tools.
-        </p>
+    <div className="p-4 max-w-5xl mx-auto">
+      {/* Header */}
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-slate-800">Saved Lists</h1>
+          <p className="text-xs text-slate-500">View and manage your saved keyword lists</p>
+        </div>
+      </div>
+
+      {/* Shell View Info Box */}
+      <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden mb-4">
+        <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
+          <div className="flex gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+          </div>
+          <span className="text-xs text-slate-400 ml-2 font-mono">saved_lists.sh</span>
+        </div>
+        <div className="p-4 font-mono">
+          <div className="grid grid-cols-3 gap-6">
+            <div className="space-y-1">
+              <div className="text-2xl font-bold text-violet-400">{plannerHistory.length}</div>
+              <div className="text-xs text-slate-400">Planner Lists</div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-2xl font-bold text-emerald-400">{mixerHistory.length}</div>
+              <div className="text-xs text-slate-400">Mixer Lists</div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-2xl font-bold text-amber-400">{negativeHistory.length}</div>
+              <div className="text-xs text-slate-400">Negative Lists</div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={(value: string) => setActiveTab(value as 'planner' | 'mixer' | 'negative')} className="w-full">
