@@ -387,7 +387,7 @@ export function OneClickCampaignBuilder() {
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="hidden md:block space-y-4">
               <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-blue-50 rounded-2xl border border-indigo-100 p-6 shadow-sm">
                 <div className="flex items-center gap-3 mb-5">
                   <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
