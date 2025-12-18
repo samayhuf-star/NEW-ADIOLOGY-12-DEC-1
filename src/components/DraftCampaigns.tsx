@@ -222,25 +222,41 @@ export function DraftCampaigns({ onLoadCampaign }: DraftCampaignsProps) {
         </Button>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        <Card className="bg-white border-gray-200 shadow-sm">
-          <CardContent className="p-4">
-            <div className="text-3xl font-bold text-violet-600">{stats.total}</div>
-            <div className="text-sm text-gray-500">Total Campaigns</div>
-          </CardContent>
-        </Card>
-        <Card className="bg-amber-50 border-amber-200 shadow-sm">
-          <CardContent className="p-4">
-            <div className="text-3xl font-bold text-amber-600">{stats.draft}</div>
-            <div className="text-sm text-amber-600/80">Drafts / In Progress</div>
-          </CardContent>
-        </Card>
-        <Card className="bg-emerald-50 border-emerald-200 shadow-sm">
-          <CardContent className="p-4">
-            <div className="text-3xl font-bold text-emerald-600">{stats.completed}</div>
-            <div className="text-sm text-emerald-600/80">Completed</div>
-          </CardContent>
-        </Card>
+      {/* Shell View Stats Console */}
+      <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden">
+        <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
+          <div className="flex gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+          </div>
+          <span className="text-xs text-slate-400 ml-2 font-mono">campaign_stats.sh</span>
+        </div>
+        <div className="p-4 font-mono">
+          <div className="grid grid-cols-3 gap-6">
+            <div className="space-y-1">
+              <div className="text-3xl font-bold text-violet-400">{stats.total}</div>
+              <div className="text-sm text-slate-400">Total Campaigns</div>
+              <p className="text-xs text-slate-500 mt-2">
+                All saved campaign builds including drafts, in-progress, and completed exports
+              </p>
+            </div>
+            <div className="space-y-1">
+              <div className="text-3xl font-bold text-amber-400">{stats.draft}</div>
+              <div className="text-sm text-slate-400">Drafts / In Progress</div>
+              <p className="text-xs text-slate-500 mt-2">
+                Campaigns awaiting completion - resume anytime to finish building
+              </p>
+            </div>
+            <div className="space-y-1">
+              <div className="text-3xl font-bold text-emerald-400">{stats.completed}</div>
+              <div className="text-sm text-slate-400">Completed</div>
+              <p className="text-xs text-slate-500 mt-2">
+                Ready for Google Ads Editor import - download CSV anytime
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <Card className="bg-white border-gray-200 shadow-sm">
