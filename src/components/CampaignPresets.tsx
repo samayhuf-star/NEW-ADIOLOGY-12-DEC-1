@@ -437,41 +437,30 @@ export const CampaignPresets: React.FC<CampaignPresetsProps> = ({ onLoadPreset }
           </div>
         </div>
 
-        {/* Shell View Info Boxes */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          {/* Box 1: Available Presets */}
-          <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
-              <div className="flex gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-              </div>
-              <span className="text-xs text-slate-400 ml-2 font-mono">preset_library.sh</span>
+        {/* Shell View Info Box */}
+        <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden mb-6">
+          <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
+            <div className="flex gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
             </div>
-            <div className="p-4 font-mono text-sm space-y-1">
-              <p className="text-green-400">✓ {campaignPresets.length} ready-to-use presets loaded</p>
-              <p className="text-slate-400">[{new Date().toLocaleTimeString()}] Categories: SKAG, STAG, GEO, Intent, Funnel</p>
-              <p className="text-slate-400">[{new Date().toLocaleTimeString()}] Industries: Home Services, Solar, HVAC, Legal</p>
-              <p className="text-emerald-400">&gt; View, customize, and export in seconds</p>
-            </div>
+            <span className="text-xs text-slate-400 ml-2 font-mono">preset_library.sh</span>
           </div>
-
-          {/* Box 2: Export Stats */}
-          <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
-              <div className="flex gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+          <div className="p-4 font-mono">
+            <div className="grid grid-cols-3 gap-6">
+              <div className="space-y-1">
+                <div className="text-3xl font-bold text-violet-400">{campaignPresets.length}</div>
+                <div className="text-sm text-slate-400">Ready-to-Use Presets</div>
               </div>
-              <span className="text-xs text-slate-400 ml-2 font-mono">export_ready.sh</span>
-            </div>
-            <div className="p-4 font-mono text-sm space-y-1">
-              <p className="text-green-400">✓ Google Ads Editor compatible CSV format</p>
-              <p className="text-slate-400">[{new Date().toLocaleTimeString()}] Includes: Keywords, Ads, Extensions, Targeting</p>
-              <p className="text-slate-400">[{new Date().toLocaleTimeString()}] Average: 15-20 keywords per preset</p>
-              <p className="text-emerald-400">&gt; One-click export to Google Ads Editor</p>
+              <div className="space-y-1">
+                <div className="text-3xl font-bold text-emerald-400">5</div>
+                <div className="text-sm text-slate-400">Campaign Structures</div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-3xl font-bold text-amber-400">CSV</div>
+                <div className="text-sm text-slate-400">Google Ads Editor Export</div>
+              </div>
             </div>
           </div>
         </div>
