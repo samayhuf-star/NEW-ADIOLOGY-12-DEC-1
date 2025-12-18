@@ -448,7 +448,7 @@ export const CampaignPresets: React.FC<CampaignPresetsProps> = ({ onLoadPreset }
             <span className="text-xs text-slate-400 ml-2 font-mono">preset_library.sh</span>
           </div>
           <div className="p-4 font-mono">
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-3 gap-6 mb-4">
               <div className="space-y-1">
                 <div className="text-3xl font-bold text-violet-400">{campaignPresets.length}</div>
                 <div className="text-sm text-slate-400">Ready-to-Use Presets</div>
@@ -460,6 +460,34 @@ export const CampaignPresets: React.FC<CampaignPresetsProps> = ({ onLoadPreset }
               <div className="space-y-1">
                 <div className="text-3xl font-bold text-amber-400">CSV</div>
                 <div className="text-sm text-slate-400">Google Ads Editor Export</div>
+              </div>
+            </div>
+            <div className="border-t border-slate-700 pt-3 space-y-2 text-xs">
+              <div className="flex items-center gap-6 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-500">industries:</span>
+                  <span className="text-cyan-400">Home Services, Medical, Legal, Auto, Real Estate</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-6 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-500">keyword_range:</span>
+                  <span className="text-amber-400">410-710</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-500">ad_types:</span>
+                  <span className="text-pink-400">RSA, Call-Only, DKI</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-500">extensions:</span>
+                  <span className="text-blue-400">Sitelinks, Callouts, Snippets</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-6 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-500">structures:</span>
+                  <span className="text-emerald-400">SKAG, STAG, Intent-Based, Alpha-Beta, Hybrid</span>
+                </div>
               </div>
             </div>
           </div>
