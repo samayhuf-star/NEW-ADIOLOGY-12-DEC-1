@@ -9,7 +9,7 @@ import { WebhookHandlers } from './webhookHandlers';
 import { stripeService } from './stripeService';
 import { analyzeUrlWithCheerio } from './urlAnalyzerLite';
 import { sendEmail, sendWelcomeEmail, sendPasswordResetEmail, sendTeamInviteEmail, sendCampaignExportEmail } from './emailService';
-import { startCronScheduler, triggerManualRun, triggerDailyReports } from './cronScheduler';
+import { startCronScheduler, triggerDailyReports } from './cronScheduler';
 
 const { Pool } = pg;
 

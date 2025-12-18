@@ -1,4 +1,3 @@
-import { runCronJob } from './adsTransparencyScraper';
 import { sendEmail } from './emailService';
 import pg from 'pg';
 
@@ -7,25 +6,12 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL
 });
 
-const HOUR_IN_MS = 60 * 60 * 1000;
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
-let cronInterval: ReturnType<typeof setInterval> | null = null;
 let dailyReportInterval: ReturnType<typeof setInterval> | null = null;
 
 export function startCronScheduler(): void {
-  console.log('[Cron] Starting schedulers...');
-  
-  runCronJob().catch(err => {
-    console.error('[Cron] Initial ads scraper job error:', err);
-  });
-  
-  cronInterval = setInterval(() => {
-    console.log('[Cron] Running hourly ads scraper job...');
-    runCronJob().catch(err => {
-      console.error('[Cron] Scheduled ads scraper job error:', err);
-    });
-  }, HOUR_IN_MS);
+  console.log('[Cron] Starting daily reports scheduler...');
   
   const now = new Date();
   const nextMorning = new Date(now);
@@ -48,24 +34,15 @@ export function startCronScheduler(): void {
     }, DAY_IN_MS);
   }, msUntilMorning);
   
-  console.log(`[Cron] Schedulers started - ads scraper: hourly, daily reports: 9 AM (in ${Math.round(msUntilMorning / 1000 / 60)} minutes)`);
+  console.log(`[Cron] Daily reports scheduled for 9 AM (in ${Math.round(msUntilMorning / 1000 / 60)} minutes)`);
 }
 
 export function stopCronScheduler(): void {
-  if (cronInterval) {
-    clearInterval(cronInterval);
-    cronInterval = null;
-  }
   if (dailyReportInterval) {
     clearInterval(dailyReportInterval);
     dailyReportInterval = null;
   }
-  console.log('[Cron] All schedulers stopped');
-}
-
-export async function triggerManualRun(): Promise<void> {
-  console.log('[Cron] Manual trigger requested');
-  await runCronJob();
+  console.log('[Cron] Scheduler stopped');
 }
 
 export async function triggerDailyReports(): Promise<void> {
