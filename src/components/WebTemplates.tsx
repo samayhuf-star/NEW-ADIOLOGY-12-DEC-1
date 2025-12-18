@@ -3866,72 +3866,117 @@ export const WebTemplates = ({ initialTab = 'templates' }: WebTemplatesProps) =>
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Web Templates</h1>
-        <p className="text-gray-600">Browse templates, edit with AI chat, and download your customized website</p>
+    <div className="p-4 max-w-5xl mx-auto">
+      {/* Header */}
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-slate-800">Web Templates</h1>
+          <p className="text-xs text-slate-500">Browse, edit with AI, and download customized websites</p>
+        </div>
       </div>
 
-      <div className="flex gap-2 mb-6">
+      {/* Shell View Info Box */}
+      <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden mb-4">
+        <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
+          <div className="flex gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+          </div>
+          <span className="text-xs text-slate-400 ml-2 font-mono">web_templates.sh</span>
+        </div>
+        <div className="p-4 font-mono">
+          <div className="grid grid-cols-3 gap-6 mb-3">
+            <div className="space-y-1">
+              <div className="text-2xl font-bold text-violet-400">{templates.length}</div>
+              <div className="text-xs text-slate-400">Templates Available</div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-2xl font-bold text-emerald-400">{savedWebsites.length}</div>
+              <div className="text-xs text-slate-400">Saved Websites</div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-2xl font-bold text-amber-400">{savedWebsites.filter(w => (w as any).customDomain).length}</div>
+              <div className="text-xs text-slate-400">Connected Domains</div>
+            </div>
+          </div>
+          <div className="border-t border-slate-700 pt-3 space-y-1.5 text-xs">
+            <div className="flex items-center gap-6 flex-wrap">
+              <div className="flex items-center gap-2">
+                <span className="text-slate-500">categories:</span>
+                <span className="text-cyan-400">{categories.length - 1}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-slate-500">ai_editor:</span>
+                <span className="text-green-400">ENABLED</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-slate-500">export:</span>
+                <span className="text-pink-400">HTML, ZIP</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-6 flex-wrap">
+              <div className="flex items-center gap-2">
+                <span className="text-slate-500">industries:</span>
+                <span className="text-blue-400">Home Services, IT, Travel, Healthcare</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex gap-2 mb-4">
         <button
           onClick={() => setActiveTab('templates')}
-          className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
             activeTab === 'templates'
-              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'
+              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
-          <Plus className="w-4 h-4" />
-          Browse Templates
+          <Plus className="w-3 h-3" />
+          Browse
         </button>
         <button
           onClick={() => setActiveTab('saved')}
-          className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
             activeTab === 'saved'
-              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'
+              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
-          <FolderOpen className="w-4 h-4" />
-          Saved Websites
-          {savedWebsites.length > 0 && (
-            <span className={`px-2 py-0.5 rounded-full text-xs ${activeTab === 'saved' ? 'bg-white/20' : 'bg-indigo-100 text-indigo-700'}`}>
-              {savedWebsites.length}
-            </span>
-          )}
+          <FolderOpen className="w-3 h-3" />
+          Saved ({savedWebsites.length})
         </button>
         <button
           onClick={() => setActiveTab('connected')}
-          className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
             activeTab === 'connected'
-              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'
+              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
-          <Globe className="w-4 h-4" />
-          Connected Websites
-          {savedWebsites.filter(w => (w as any).customDomain).length > 0 && (
-            <span className={`px-2 py-0.5 rounded-full text-xs ${activeTab === 'connected' ? 'bg-white/20' : 'bg-indigo-100 text-indigo-700'}`}>
-              {savedWebsites.filter(w => (w as any).customDomain).length}
-            </span>
-          )}
+          <Globe className="w-3 h-3" />
+          Connected ({savedWebsites.filter(w => (w as any).customDomain).length})
         </button>
       </div>
 
       {activeTab === 'templates' && (
         <>
-          <div className="flex flex-wrap gap-2 mb-8">
+          {/* Category Filters */}
+          <div className="flex flex-wrap gap-1.5 mb-4">
             {categories.map((category) => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
                   selectedCategory === category
-                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                {category === 'all' ? 'All Templates' : category}
+                {category === 'all' ? 'All' : category}
               </button>
             ))}
           </div>
