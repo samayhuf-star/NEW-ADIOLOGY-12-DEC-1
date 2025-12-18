@@ -3574,6 +3574,220 @@ app.post('/api/campaigns/save', async (c) => {
   }
 });
 
+// ============================================
+// Long Tail Keywords API
+// ============================================
+
+// Generate long-tail keywords using autocomplete + AI
+app.post('/api/long-tail-keywords/generate', async (c) => {
+  try {
+    const { url, seedKeywords } = await c.req.json();
+    
+    if (!seedKeywords || !Array.isArray(seedKeywords) || seedKeywords.length === 0) {
+      return c.json({ error: 'Please provide at least one seed keyword' }, 400);
+    }
+
+    const allKeywords: { keyword: string; source: 'autocomplete' | 'ai' }[] = [];
+    const seenKeywords = new Set<string>();
+
+    // Generate autocomplete-style variations for each seed keyword
+    const prefixes = ['', 'how to ', 'best ', 'cheap ', 'top ', 'affordable ', 'professional ', 'local ', 'near me ', 'services ', 'cost of ', 'price of '];
+    const suffixes = ['', ' near me', ' services', ' cost', ' prices', ' reviews', ' companies', ' in my area', ' for sale', ' online', ' today', ' fast'];
+    const questions = ['what is', 'how much does', 'where to find', 'when to', 'why choose', 'who offers'];
+
+    for (const seed of seedKeywords.slice(0, 10)) {
+      const cleanSeed = seed.toLowerCase().trim();
+      
+      // Add variations with prefixes
+      for (const prefix of prefixes) {
+        const variation = `${prefix}${cleanSeed}`.trim();
+        if (!seenKeywords.has(variation) && variation.length > 3) {
+          seenKeywords.add(variation);
+          allKeywords.push({ keyword: variation, source: 'autocomplete' });
+        }
+      }
+      
+      // Add variations with suffixes
+      for (const suffix of suffixes) {
+        const variation = `${cleanSeed}${suffix}`.trim();
+        if (!seenKeywords.has(variation) && variation.length > 3) {
+          seenKeywords.add(variation);
+          allKeywords.push({ keyword: variation, source: 'autocomplete' });
+        }
+      }
+      
+      // Add question-based variations
+      for (const q of questions) {
+        const variation = `${q} ${cleanSeed}`.trim();
+        if (!seenKeywords.has(variation)) {
+          seenKeywords.add(variation);
+          allKeywords.push({ keyword: variation, source: 'autocomplete' });
+        }
+      }
+    }
+
+    // Use AI to generate additional contextual long-tail keywords
+    const apiKey = process.env.OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+    if (apiKey && apiKey !== 'placeholder') {
+      try {
+        const contextInfo = url ? `for the website ${url}` : '';
+        const prompt = `Generate 30 unique long-tail keyword variations ${contextInfo} based on these seed keywords: ${seedKeywords.join(', ')}.
+
+Requirements:
+- Each keyword should be 3-6 words long
+- Include buyer intent keywords (e.g., "buy", "hire", "get quote")
+- Include informational keywords (e.g., "how to", "what is", "guide")
+- Include local intent keywords (e.g., "near me", "in [city]")
+- Include comparison keywords (e.g., "vs", "best", "top rated")
+- Make them specific and searchable
+- No duplicates
+
+Return ONLY a JSON array of keyword strings, nothing else. Example: ["keyword one", "keyword two"]`;
+
+        const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [{ role: 'user', content: prompt }],
+            temperature: 0.8,
+            max_tokens: 1000
+          })
+        });
+
+        if (aiResponse.ok) {
+          const aiData = await aiResponse.json();
+          const content = aiData.choices?.[0]?.message?.content || '';
+          
+          try {
+            const jsonMatch = content.match(/\[[\s\S]*\]/);
+            if (jsonMatch) {
+              const aiKeywords = JSON.parse(jsonMatch[0]);
+              for (const kw of aiKeywords) {
+                const cleanKw = kw.toLowerCase().trim();
+                if (!seenKeywords.has(cleanKw) && cleanKw.length > 3) {
+                  seenKeywords.add(cleanKw);
+                  allKeywords.push({ keyword: cleanKw, source: 'ai' });
+                }
+              }
+            }
+          } catch (parseErr) {
+            console.error('Error parsing AI keywords:', parseErr);
+          }
+        }
+      } catch (aiErr) {
+        console.error('AI keyword generation error:', aiErr);
+      }
+    }
+
+    // Limit to reasonable number and sort
+    const finalKeywords = allKeywords.slice(0, 200);
+    
+    return c.json({ keywords: finalKeywords });
+  } catch (error: any) {
+    console.error('Long tail keywords error:', error);
+    return c.json({ error: error.message || 'Failed to generate keywords' }, 500);
+  }
+});
+
+// Get saved keyword lists
+app.get('/api/long-tail-keywords/lists', async (c) => {
+  try {
+    const userId = c.req.query('userId');
+    if (!userId) {
+      return c.json({ lists: [] });
+    }
+
+    // Create table if not exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS long_tail_keyword_lists (
+        id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid()::text,
+        user_id VARCHAR(255) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        keywords JSONB NOT NULL DEFAULT '[]',
+        seed_keywords TEXT,
+        url TEXT,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    const result = await pool.query(
+      'SELECT id, name, keywords, seed_keywords, url, created_at FROM long_tail_keyword_lists WHERE user_id = $1 ORDER BY created_at DESC',
+      [userId]
+    );
+
+    const lists = result.rows.map(row => ({
+      id: row.id,
+      name: row.name,
+      keywords: row.keywords || [],
+      seedKeywords: row.seed_keywords || '',
+      url: row.url || '',
+      createdAt: row.created_at,
+      userId: userId
+    }));
+
+    return c.json({ lists });
+  } catch (error: any) {
+    console.error('Error fetching keyword lists:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// Save a keyword list
+app.post('/api/long-tail-keywords/lists', async (c) => {
+  try {
+    const { userId, name, keywords, seedKeywords, url } = await c.req.json();
+    
+    if (!userId || !name || !keywords || keywords.length === 0) {
+      return c.json({ error: 'Missing required fields' }, 400);
+    }
+
+    // Create table if not exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS long_tail_keyword_lists (
+        id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid()::text,
+        user_id VARCHAR(255) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        keywords JSONB NOT NULL DEFAULT '[]',
+        seed_keywords TEXT,
+        url TEXT,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    const result = await pool.query(
+      `INSERT INTO long_tail_keyword_lists (user_id, name, keywords, seed_keywords, url)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id`,
+      [userId, name, JSON.stringify(keywords), seedKeywords || '', url || '']
+    );
+
+    return c.json({ success: true, id: result.rows[0]?.id });
+  } catch (error: any) {
+    console.error('Error saving keyword list:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// Delete a keyword list
+app.delete('/api/long-tail-keywords/lists/:id', async (c) => {
+  try {
+    const listId = c.req.param('id');
+    
+    await pool.query('DELETE FROM long_tail_keyword_lists WHERE id = $1', [listId]);
+    
+    return c.json({ success: true });
+  } catch (error: any) {
+    console.error('Error deleting keyword list:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
 // Start cron scheduler - DISABLED per user request
 // startCronScheduler();
 
