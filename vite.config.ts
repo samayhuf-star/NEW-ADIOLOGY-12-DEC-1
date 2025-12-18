@@ -16,6 +16,17 @@
           changeOrigin: true,
         },
       },
+      watch: {
+        ignored: [
+          '**/node_modules/**',
+          '**/.cache/**',
+          '**/.local/**',
+          '**/.replit',
+          '**/replit.nix',
+          '**/.config/**',
+          '**/server/**',
+        ],
+      },
     },
     resolve: {
       extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
