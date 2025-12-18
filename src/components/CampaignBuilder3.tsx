@@ -541,6 +541,44 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
     }
   }, [campaignData.url]);
 
+  // Auto-save campaign progress when step changes or key data updates
+  useEffect(() => {
+    // Don't save if on step 1 with no data, or if already on success step
+    if (currentStep === 1 && !campaignData.url) return;
+    if (currentStep === 7) return; // Don't auto-save after completion
+    
+    // Debounce auto-save to avoid too many saves
+    const saveTimeout = setTimeout(async () => {
+      try {
+        await historyService.save('campaign', campaignData.campaignName || 'Untitled Campaign', {
+          name: campaignData.campaignName,
+          url: campaignData.url,
+          structure: campaignData.selectedStructure || 'stag',
+          keywords: campaignData.selectedKeywords,
+          ads: campaignData.ads,
+          locations: campaignData.locations,
+          intent: campaignData.intent,
+          vertical: campaignData.vertical,
+          cta: campaignData.cta,
+          negativeKeywords: campaignData.negativeKeywords,
+          adGroups: campaignData.adGroups,
+          seedKeywords: campaignData.seedKeywords,
+          generatedKeywords: campaignData.generatedKeywords,
+          structureRankings: campaignData.structureRankings,
+          targetCountry: campaignData.targetCountry,
+          selectedGeoCountries: campaignData.selectedGeoCountries,
+          currentStep: currentStep,
+          lastSavedAt: new Date().toISOString(),
+        }, 'draft');
+        console.log('📝 Campaign auto-saved at step', currentStep);
+      } catch (error) {
+        console.error('Auto-save failed:', error);
+      }
+    }, 2000); // 2 second debounce
+    
+    return () => clearTimeout(saveTimeout);
+  }, [currentStep, campaignData.url, campaignData.selectedStructure, campaignData.selectedKeywords.length, campaignData.ads.length, campaignData.adGroups.length]);
+
 
   // Helper function to safely extract domain from URL
   const extractDomain = (url: string): string => {
@@ -2510,10 +2548,8 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
       const { cities, zipCodes, states, countries } = campaignData.locations;
       const locationsCount = cities.length + zipCodes.length + states.length + countries.length;
       
-      // Count total ads across all ad groups
-      const totalAds = campaignData.adGroups.reduce((sum, group) => {
-        return sum + (group.ads?.length || 0);
-      }, 0) || campaignData.ads.length;
+      // Count total ads: each ad is applied to every ad group
+      const totalAds = campaignData.ads.length * Math.max(1, campaignData.adGroups.length);
       
       // Count total keywords across all ad groups
       const totalKeywords = campaignData.adGroups.reduce((sum, group) => {
@@ -2543,14 +2579,16 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
     }
   };
 
-  const handleDownloadCSV = () => {
+  const handleDownloadCSV = async () => {
+    // If CSV not generated yet, generate it first
     if (!campaignData.csvData) {
-      notifications.warning('CSV not generated yet', {
-        title: 'No CSV Data',
-        description: 'Please generate CSV first before downloading.'
-      });
-        return;
-      }
+      await handleGenerateCSV();
+      // Wait a moment for state to update, then show dialog
+      setTimeout(() => {
+        setShowExportDialog(true);
+      }, 100);
+      return;
+    }
     
     // Show export brief dialog
     setShowExportDialog(true);
@@ -4619,32 +4657,13 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
 
           {/* Primary Action Section */}
           <div className="mb-6">
-            <div className="flex flex-col sm:flex-row gap-3">
           <Button
             onClick={handleDownloadCSV}
-            className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-purple-700 text-white shadow-lg shadow-green-200/50 h-14 text-lg font-semibold"
+            className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-purple-700 text-white shadow-lg shadow-green-200/50 h-14 text-lg font-semibold"
           >
             <Download className="w-5 h-5 mr-2" />
             Download CSV for Google Ads Editor
           </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  // Dispatch custom event for App.tsx to handle
-                  const event = new CustomEvent('navigate', { detail: { tab: 'campaign-history' } });
-                  window.dispatchEvent(event);
-                  
-                  // Fallback: Update URL hash
-                  if (window.location.hash !== '#campaign-history') {
-                    window.location.hash = '#campaign-history';
-                  }
-                }}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white border-0 shadow-lg shadow-indigo-200/50 h-14 text-lg font-semibold"
-          >
-                <FolderOpen className="w-5 h-5 mr-2" />
-                View Saved Campaigns
-              </Button>
-            </div>
           </div>
 
           {/* Secondary Actions */}
