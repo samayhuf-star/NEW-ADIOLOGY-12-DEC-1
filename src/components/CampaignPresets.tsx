@@ -670,121 +670,65 @@ export const CampaignPresets: React.FC<CampaignPresetsProps> = ({ onLoadPreset }
             );
           }
           
-          // Grid View Layout (existing)
+          // Grid View Layout - Simplified UI
           return (
           <div
             key={preset.slug}
-            className="bg-white rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-all cursor-pointer group relative overflow-hidden p-2.5 flex flex-col h-full"
+            className="bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-lg hover:border-indigo-200 transition-all cursor-pointer group relative overflow-hidden p-4 flex flex-col h-full"
             onClick={() => handleSelectPreset(preset)}
           >
             {/* Structure Type Tag - Top Right */}
-            <div className="absolute top-1 right-1 z-10">
-              <Badge className="text-[8px] px-1 py-0.5 bg-indigo-100 text-indigo-700 border-indigo-200 font-semibold">
+            <div className="absolute top-2 right-2 z-10">
+              <Badge className="text-[9px] px-1.5 py-0.5 bg-indigo-100 text-indigo-700 border-indigo-200 font-semibold uppercase tracking-wide">
                 {preset.structure}
               </Badge>
             </div>
+            
             <div className="flex-1 flex flex-col">
-              <div className="mb-2">
-                <div className="flex items-start justify-between gap-1.5 mb-0.5">
-                  <h3 className="text-xs font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors leading-tight flex-1">
-                    {preset.title}
-                  </h3>
-                </div>
-                <p className="text-[10px] text-slate-500 leading-tight">{preset.campaign_name}</p>
+              {/* Title Section */}
+              <div className="mb-3 pr-12">
+                <h3 className="text-sm font-bold text-slate-800 group-hover:text-indigo-600 transition-colors leading-tight">
+                  {preset.title}
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">{preset.campaign_name}</p>
               </div>
 
-              <div className="space-y-1 mb-2 flex-1">
-                <div className="flex items-center gap-1 text-[10px] text-slate-600">
-                  <Sparkles className="w-3 h-3 shrink-0" />
-                  <span>{preset.keywords.length} keywords</span>
-                </div>
-                <div className="flex items-center gap-1 text-[10px] text-slate-600">
-                  <Zap className="w-3 h-3 shrink-0" />
-                  <span>{preset.ad_groups.length} ad groups</span>
-                </div>
-                <div className="flex items-center gap-1 text-[10px] text-slate-600">
-                  <CheckCircle className="w-3 h-3 shrink-0" />
-                  <span>${preset.max_cpc.toFixed(2)} max CPC</span>
-                </div>
+              {/* Compact Stats Row */}
+              <div className="flex items-center gap-3 mb-4 text-xs text-slate-600">
+                <span className="flex items-center gap-1">
+                  <span className="font-semibold text-indigo-600">{preset.keywords.length}</span> keywords
+                </span>
+                <span className="text-slate-300">|</span>
+                <span className="flex items-center gap-1">
+                  <span className="font-semibold text-indigo-600">{preset.ad_groups.length}</span> ad groups
+                </span>
               </div>
 
-              {/* Example Keywords - Display as normal text */}
-              <div className="mb-2 space-y-1">
-                {preset.keywords.slice(0, 2).map((keyword, idx) => (
-                  <p key={idx} className="text-[10px] text-slate-600 leading-tight">
-                    {keyword}
-                  </p>
-                ))}
-                {preset.keywords.length > 2 && (
-                  <p className="text-[9px] text-slate-500 leading-tight">
-                    +{preset.keywords.length - 2} more keywords
-                  </p>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-1 mt-auto">
-                <div className="flex gap-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1 border-slate-300 hover:bg-slate-50 text-[10px] h-7 px-1.5"
-                    onClick={(e: React.MouseEvent) => {
-                      e.stopPropagation();
-                      handleSelectPreset(preset);
-                    }}
-                    title="View campaign details"
-                  >
-                    <Eye className="w-3 h-3 mr-0.5" />
-                    VIEW
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1 border-indigo-300 text-indigo-600 hover:bg-indigo-50 text-[10px] h-7 px-1.5"
-                    onClick={async (e: React.MouseEvent) => {
-                      e.stopPropagation();
-                      await historyService.save(
-                        'campaign',
-                        preset.title,
-                        {
-                          presetId: preset.slug,
-                          presetData: preset,
-                          campaignName: preset.campaign_name,
-                          structure: preset.structure,
-                          keywords: preset.keywords,
-                          adGroups: preset.ad_groups,
-                          ads: preset.ads,
-                          negativeKeywords: preset.negative_keywords,
-                          finalUrl: preset.final_url,
-                          maxCpc: preset.max_cpc,
-                          dailyBudget: preset.daily_budget,
-                          fromPreset: true,
-                          editable: true
-                        },
-                        'draft'
-                      );
-                      notifications.success(`Saved to campaigns`, {
-                        title: 'Ready to Edit'
-                      });
-                      setSelectedPreset(preset);
-                      setShowReview(true);
-                    }}
-                    title="Edit and save to campaigns"
-                  >
-                    <Edit className="w-3 h-3 mr-0.5" />
-                    Edit
-                  </Button>
-                </div>
+              {/* Action Buttons - Clean Layout */}
+              <div className="flex gap-2 mt-auto">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 border-slate-200 hover:bg-slate-50 text-xs h-8"
+                  onClick={(e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    handleSelectPreset(preset);
+                  }}
+                  title="View campaign details"
+                >
+                  <Eye className="w-3.5 h-3.5 mr-1" />
+                  View
+                </Button>
                 <Button
                   size="sm"
-                  className="w-full theme-button-primary text-[10px] h-7 px-1.5"
+                  className="flex-1 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-xs h-8"
                   onClick={(e: React.MouseEvent) => {
                     e.stopPropagation();
                     handleExportCSV(preset);
                   }}
                   title="Download Google Ads Editor CSV"
                 >
-                  <Download className="w-3 h-3 mr-0.5" />
+                  <Download className="w-3.5 h-3.5 mr-1" />
                   Export
                 </Button>
               </div>
