@@ -640,18 +640,6 @@ export const CampaignPresets: React.FC<CampaignPresetsProps> = ({ onLoadPreset }
                         <Edit className="w-4 h-4 mr-1.5" />
                         Edit
                       </Button>
-                      <Button
-                        size="sm"
-                        className="theme-button-primary whitespace-nowrap"
-                        onClick={(e: React.MouseEvent) => {
-                          e.stopPropagation();
-                          handleExportCSV(preset);
-                        }}
-                        title="Download Google Ads Editor CSV"
-                      >
-                        <Download className="w-4 h-4 mr-1.5" />
-                        Export
-                      </Button>
                     </div>
                   </div>
                 </div>
@@ -693,12 +681,11 @@ export const CampaignPresets: React.FC<CampaignPresetsProps> = ({ onLoadPreset }
                 </span>
               </div>
 
-              {/* Action Buttons - Clean Layout */}
-              <div className="flex gap-2 mt-auto">
+              {/* Action Button */}
+              <div className="mt-auto">
                 <Button
-                  variant="outline"
                   size="sm"
-                  className="flex-1 border-slate-200 hover:bg-slate-50 text-xs h-8"
+                  className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-xs h-8"
                   onClick={(e: React.MouseEvent) => {
                     e.stopPropagation();
                     handleSelectPreset(preset);
@@ -706,19 +693,7 @@ export const CampaignPresets: React.FC<CampaignPresetsProps> = ({ onLoadPreset }
                   title="View campaign details"
                 >
                   <Eye className="w-3.5 h-3.5 mr-1" />
-                  View
-                </Button>
-                <Button
-                  size="sm"
-                  className="flex-1 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-xs h-8"
-                  onClick={(e: React.MouseEvent) => {
-                    e.stopPropagation();
-                    handleExportCSV(preset);
-                  }}
-                  title="Download Google Ads Editor CSV"
-                >
-                  <Download className="w-3.5 h-3.5 mr-1" />
-                  Export
+                  View Details
                 </Button>
               </div>
             </div>
