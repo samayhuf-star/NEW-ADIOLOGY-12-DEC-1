@@ -6,6 +6,9 @@ Adiology is a Google Ads campaign builder platform designed to automate and stre
 
 Preferred communication style: Simple, everyday language.
 
+## UI Preferences
+- **Shell View**: A terminal-style console display with dark background (slate-900), traffic light dots (red/yellow/green), timestamps in brackets, and animated progress messages. Uses ">" prefix for in-progress actions and "✓" (green) for completed actions. This pattern should always be displayed inline within the page, NOT as a popup/modal. Components: `TerminalProgressConsole` and `TerminalResultsConsole`.
+
 # System Architecture
 
 ## UI/UX Decisions
