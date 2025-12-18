@@ -4884,107 +4884,80 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/30 to-purple-50/30">
-      {/* Navigation Above Wizard */}
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-6 py-3">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="outline"
-              onClick={handleBackStep}
-              disabled={currentStep === 1}
-              size="sm"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                onClick={handleResetCampaign}
-                size="sm"
-                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300"
-              >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Reset Campaign
-              </Button>
-              <Button
-                onClick={handleNextStep}
-                disabled={loading || currentStep === 6}
-                size="sm"
-                className="bg-indigo-600 hover:bg-indigo-700 text-white"
-              >
-                {currentStep === 5 ? 'Save & Finish' : currentStep === 6 ? 'Download CSV' : 'Next Step'}
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
+      {/* Shell View Navigation & Progress */}
+      <div className="bg-slate-900 sticky top-0 z-20">
+        {/* Terminal Header */}
+        <div className="flex items-center justify-between px-4 py-2 bg-slate-800 border-b border-slate-700">
+          <div className="flex items-center gap-3">
+            <div className="flex gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
             </div>
+            <span className="text-xs text-slate-400 font-mono">campaign_builder.sh</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleResetCampaign}
+              className="text-xs text-red-400 hover:text-red-300 font-mono flex items-center gap-1"
+            >
+              <RefreshCw className="w-3 h-3" />
+              reset
+            </button>
           </div>
         </div>
-      </div>
 
-      {/* Progress Bar - Compact */}
-      <div className="bg-white border-b border-slate-200 sticky top-[49px] z-10">
-        <div className="max-w-7xl mx-auto px-4 py-2 overflow-x-auto">
-          <div className="flex items-center justify-between min-w-max">
-            {steps.map((step, idx) => (
-              <React.Fragment key={step.id}>
-                <div className="flex items-center flex-shrink-0">
-                  <div
-                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
-                      currentStep > step.id
-                        ? 'bg-indigo-500 text-white'
-                        : currentStep === step.id
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-slate-200 text-slate-600'
-                    }`}
-                  >
-                    {currentStep > step.id ? (
-                      <Check className="w-3 h-3" />
-                    ) : (
-                      <span>{step.id}</span>
-                    )}
-                  </div>
-                  <span className={`ml-1.5 text-xs font-medium whitespace-nowrap ${
-                    currentStep === step.id ? 'text-indigo-600' : 'text-slate-500'
-                  }`}>
-                    {step.label}
-                  </span>
-                </div>
-                {idx < steps.length - 1 && (
-                  <div className={`flex-1 h-0.5 mx-2 min-w-[16px] ${
-                    currentStep > step.id ? 'bg-indigo-500' : 'bg-slate-200'
-                  }`} />
-                )}
-              </React.Fragment>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Top Navigation (Legacy - keeping for compatibility) */}
-      <div className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-6 py-3 flex justify-between items-center">
-            <Button
-              variant="outline"
+        {/* Progress Steps */}
+        <div className="px-4 py-3 overflow-x-auto">
+          <div className="flex items-center justify-between min-w-max gap-2">
+            <button
               onClick={handleBackStep}
               disabled={currentStep === 1}
-            size="sm"
+              className="text-xs text-slate-400 hover:text-slate-200 font-mono flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-          <span className="text-sm text-slate-600">
-            Step {Math.min(currentStep, 6)} of {steps.length}
-          </span>
-            <Button
+              <ArrowLeft className="w-3 h-3" />
+              back
+            </button>
+            
+            <div className="flex items-center gap-1 flex-1 justify-center">
+              {steps.map((step, idx) => (
+                <React.Fragment key={step.id}>
+                  <div className="flex items-center">
+                    <span className={`font-mono text-xs ${
+                      currentStep > step.id
+                        ? 'text-green-400'
+                        : currentStep === step.id
+                        ? 'text-cyan-400'
+                        : 'text-slate-500'
+                    }`}>
+                      {currentStep > step.id ? '✓' : `${step.id}.`}
+                    </span>
+                    <span className={`ml-1 font-mono text-xs whitespace-nowrap ${
+                      currentStep === step.id ? 'text-cyan-400' : currentStep > step.id ? 'text-green-400' : 'text-slate-500'
+                    }`}>
+                      {step.label}
+                    </span>
+                  </div>
+                  {idx < steps.length - 1 && (
+                    <span className={`mx-2 font-mono text-xs ${
+                      currentStep > step.id ? 'text-green-400' : 'text-slate-600'
+                    }`}>→</span>
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+            
+            <button
               onClick={handleNextStep}
               disabled={loading || currentStep === 6}
-            size="sm"
+              className="text-xs text-emerald-400 hover:text-emerald-300 font-mono flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-            {currentStep === 5 ? 'Save & Finish' : currentStep === 6 ? 'Download CSV' : 'Next Step'}
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
+              {currentStep === 5 ? 'finish' : currentStep === 6 ? 'done' : 'next'}
+              <ArrowRight className="w-3 h-3" />
+            </button>
           </div>
         </div>
+      </div>
 
       {/* Content */}
       <div className="py-8">
