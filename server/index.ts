@@ -10,6 +10,17 @@ import { stripeService } from './stripeService';
 import { analyzeUrlWithCheerio } from './urlAnalyzerLite';
 import { sendEmail, sendWelcomeEmail, sendPasswordResetEmail, sendTeamInviteEmail, sendCampaignExportEmail } from './emailService';
 import { startCronScheduler, triggerDailyReports } from './cronScheduler';
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client for syncing published websites to production
+const supabaseUrl = process.env.SUPABASE_URL || '';
+const supabaseKey = process.env.SUPABASE_ANON_KEY || '';
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+if (supabase) {
+  console.log('✅ Supabase client initialized for production sync');
+} else {
+  console.warn('⚠️ Supabase not configured - published sites will only be available in development');
+}
 
 const { Pool } = pg;
 
@@ -620,6 +631,35 @@ app.post('/api/publish-website', async (c) => {
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
         [id, name, cleanSlug, user_email || 'unknown', domain, html_content, JSON.stringify(template_data), 'Published', now, now, now]
       );
+    }
+    
+    // Also sync to Supabase for production access
+    if (supabase) {
+      try {
+        const { error: supabaseError } = await supabase
+          .from('admin_websites')
+          .upsert({
+            id,
+            name,
+            slug: cleanSlug,
+            user_email: user_email || 'unknown',
+            domain,
+            html_content,
+            template_data: template_data,
+            status: 'Published',
+            published_at: now,
+            created_at: now,
+            updated_at: now
+          }, { onConflict: 'id' });
+        
+        if (supabaseError) {
+          console.warn('Supabase sync warning:', supabaseError.message);
+        } else {
+          console.log('✅ Synced to Supabase');
+        }
+      } catch (syncError) {
+        console.warn('Supabase sync error:', syncError);
+      }
     }
     
     console.log('✅ Website published:', { id, name, slug: cleanSlug, domain });
