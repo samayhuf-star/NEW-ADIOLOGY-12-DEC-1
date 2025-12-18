@@ -3875,51 +3875,60 @@ export const WebTemplates = ({ initialTab = 'templates' }: WebTemplatesProps) =>
         </div>
       </div>
 
-      {/* Shell View Info Box */}
-      <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden mb-4">
-        <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
-          <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-red-500"></div>
-            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+      {/* Shell View - Two Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        {/* Card 1: Stats */}
+        <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
+            <div className="flex gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            </div>
+            <span className="text-xs text-slate-400 ml-2 font-mono">template_stats.sh</span>
           </div>
-          <span className="text-xs text-slate-400 ml-2 font-mono">web_templates.sh</span>
+          <div className="p-4 font-mono">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-1 text-center">
+                <div className="text-2xl font-bold text-violet-400">{templates.length}</div>
+                <div className="text-xs text-slate-400">Templates</div>
+              </div>
+              <div className="space-y-1 text-center">
+                <div className="text-2xl font-bold text-emerald-400">{savedWebsites.length}</div>
+                <div className="text-xs text-slate-400">Saved</div>
+              </div>
+              <div className="space-y-1 text-center">
+                <div className="text-2xl font-bold text-amber-400">{savedWebsites.filter(w => (w as any).customDomain).length}</div>
+                <div className="text-xs text-slate-400">Domains</div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="p-4 font-mono">
-          <div className="grid grid-cols-3 gap-6 mb-3">
-            <div className="space-y-1">
-              <div className="text-2xl font-bold text-violet-400">{templates.length}</div>
-              <div className="text-xs text-slate-400">Templates Available</div>
+
+        {/* Card 2: Config */}
+        <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
+            <div className="flex gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
             </div>
-            <div className="space-y-1">
-              <div className="text-2xl font-bold text-emerald-400">{savedWebsites.length}</div>
-              <div className="text-xs text-slate-400">Saved Websites</div>
-            </div>
-            <div className="space-y-1">
-              <div className="text-2xl font-bold text-amber-400">{savedWebsites.filter(w => (w as any).customDomain).length}</div>
-              <div className="text-xs text-slate-400">Connected Domains</div>
-            </div>
+            <span className="text-xs text-slate-400 ml-2 font-mono">template_config.sh</span>
           </div>
-          <div className="border-t border-slate-700 pt-3 space-y-1.5 text-xs">
-            <div className="flex items-center gap-6 flex-wrap">
-              <div className="flex items-center gap-2">
-                <span className="text-slate-500">categories:</span>
-                <span className="text-cyan-400">{categories.length - 1}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-slate-500">ai_editor:</span>
-                <span className="text-green-400">ENABLED</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-slate-500">export:</span>
-                <span className="text-pink-400">HTML, ZIP</span>
-              </div>
+          <div className="p-4 font-mono space-y-2 text-xs">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-slate-500">categories:</span>
+              <span className="text-cyan-400">{categories.length - 1}</span>
+              <span className="text-slate-600 mx-1">|</span>
+              <span className="text-slate-500">ai_editor:</span>
+              <span className="text-green-400">ENABLED</span>
+              <span className="text-slate-600 mx-1">|</span>
+              <span className="text-slate-500">export:</span>
+              <span className="text-pink-400">HTML, ZIP</span>
             </div>
-            <div className="flex items-center gap-6 flex-wrap">
-              <div className="flex items-center gap-2">
-                <span className="text-slate-500">industries:</span>
-                <span className="text-blue-400">Home Services, IT, Travel, Healthcare</span>
-              </div>
+            <div className="flex items-center gap-2">
+              <span className="text-slate-500">industries:</span>
+              <span className="text-blue-400">Home Services, IT, Travel, Healthcare</span>
             </div>
           </div>
         </div>
