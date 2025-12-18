@@ -41,7 +41,6 @@ import { ResetPassword } from './components/ResetPassword';
 import { CampaignPresets } from './components/CampaignPresets';
 import { Dashboard } from './components/Dashboard';
 import { HistoryPanel } from './components/HistoryPanel';
-import { CampaignHistoryView } from './components/CampaignHistoryView';
 import { FeedbackButton } from './components/FeedbackButton';
 import { PrivacyPolicy } from './components/PrivacyPolicy';
 import { TermsOfService } from './components/TermsOfService';
@@ -126,7 +125,6 @@ const App = () => {
     'preset-campaigns',
     'builder-3',
     'one-click-builder',
-    'campaign-history',
     'keyword-planner',
     'keyword-mixer',
     'negative-keywords',
@@ -876,7 +874,6 @@ const App = () => {
         { id: 'one-click-builder', label: '1 Click Builder', icon: Zap },
         { id: 'builder-3', label: 'Builder 3.0', icon: Sparkles },
         { id: 'preset-campaigns', label: 'Preset Campaigns', icon: Package },
-        { id: 'campaign-history', label: 'Saved Campaigns', icon: FolderOpen },
       ]
     },
     {
@@ -1320,17 +1317,6 @@ const App = () => {
         return <CampaignBuilder3 initialData={activeTab === 'builder-3' ? historyData : null} />;
       case 'one-click-builder':
         return <OneClickCampaignBuilder />;
-      case 'campaign-history':
-        // Campaign History - Show only saved campaigns, not all activity history
-        return <CampaignHistoryView onLoadCampaign={(data) => {
-          try {
-            setHistoryData(data);
-            // Route to builder-3 (new campaign builder) instead of builder-2
-            setActiveTabSafe('builder-3');
-          } catch (error) {
-            console.error('Error loading campaign from history:', error);
-          }
-        }} />;
       case 'keyword-planner':
         return <KeywordPlanner initialData={activeTab === 'keyword-planner' ? historyData : null} />;
       case 'keyword-mixer':
