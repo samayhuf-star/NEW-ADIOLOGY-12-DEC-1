@@ -22,6 +22,7 @@ import { generateTemplateKeywords, serviceTermsByIndustry } from '../utils/templ
 import { mapGoalToIntent } from '../utils/campaignIntelligence/intentClassifier';
 import { KeywordFilters, KeywordFiltersState, DEFAULT_FILTERS, getDifficultyBadge, formatSearchVolume, formatCPC } from './KeywordFilters';
 import { TerminalProgressConsole, KEYWORD_PLANNER_MESSAGES } from './TerminalProgressConsole';
+import { TerminalResultsConsole, ResultStat } from './TerminalResultsConsole';
 
 // Inline vertical detection (same logic as Campaign Builder)
 function detectVertical(url: string, pageText: string): string {
@@ -257,6 +258,7 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
     // Terminal console state
     const [showTerminalConsole, setShowTerminalConsole] = useState(false);
     const [terminalComplete, setTerminalComplete] = useState(false);
+    const [showResultsConsole, setShowResultsConsole] = useState(false);
 
     // Fetch Google Ads customer ID on mount
     useEffect(() => {
@@ -938,6 +940,7 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                 onNextClick={() => {
                     setShowTerminalConsole(false);
                     setIsGenerating(false);
+                    setShowResultsConsole(true);
                 }}
                 minDuration={4500}
             />
@@ -1178,6 +1181,38 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                             <div className="relative group">
                                 <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-500 to-purple-500 rounded-2xl blur opacity-10 group-hover:opacity-20 transition duration-500"></div>
                                 <div className="relative bg-white rounded-2xl p-6 border border-gray-200 shadow-lg h-full flex flex-col">
+                                    {/* Terminal Results Console */}
+                                    {showResultsConsole && generatedKeywords.length > 0 && (
+                                        <div className="mb-6">
+                                            <TerminalResultsConsole
+                                                title="Keyword Planner Export Console"
+                                                isVisible={showResultsConsole}
+                                                stats={[
+                                                    { label: 'Keywords Generated', value: generatedKeywords.length, color: 'green' },
+                                                    { label: 'Seed Keywords', value: seedKeywords.split(',').filter(s => s.trim()).length, color: 'cyan' },
+                                                    { label: 'Match Types', value: `${matchTypes.broad ? 'Broad' : ''}${matchTypes.phrase ? ' Phrase' : ''}${matchTypes.exact ? ' Exact' : ''}`.trim() || 'None', color: 'yellow' },
+                                                    { label: 'Data Source', value: dataSource === 'google_ads_api' ? 'Google Ads API' : dataSource === 'fallback' ? 'Estimated' : 'Local', color: 'purple' },
+                                                    { label: 'Country', value: filters.country, color: 'cyan' },
+                                                ]}
+                                                onDownloadCSV={handleDownloadKeywords}
+                                                onSave={handleSave}
+                                                onCopy={handleCopyAll}
+                                                onGenerateAnother={() => {
+                                                    setShowResultsConsole(false);
+                                                    setGeneratedKeywords([]);
+                                                    setEnrichedKeywords([]);
+                                                }}
+                                                showDownload={true}
+                                                showSave={true}
+                                                showCopy={true}
+                                                downloadButtonText="Download CSV for Google Ads"
+                                                saveButtonText="Save to Saved Lists"
+                                                copyButtonText="Copy Keywords"
+                                                isSaving={isSaving}
+                                            />
+                                        </div>
+                                    )}
+
                                     {/* Panel Header */}
                                     <div className="mb-4">
                                         <div className="flex items-center justify-between mb-2">

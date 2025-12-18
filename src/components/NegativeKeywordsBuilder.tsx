@@ -15,6 +15,7 @@ import { historyService } from '../utils/historyService';
 import { notifications } from '../utils/notifications';
 import { KeywordFilters, KeywordFiltersState, DEFAULT_FILTERS } from './KeywordFilters';
 import { TerminalProgressConsole, NEGATIVE_KEYWORDS_MESSAGES } from './TerminalProgressConsole';
+import { TerminalResultsConsole, ResultStat } from './TerminalResultsConsole';
 import {
     NEGATIVE_KEYWORD_CATEGORIES,
     buildUserPrompt,
@@ -138,6 +139,7 @@ export const NegativeKeywordsBuilder = ({ initialData }: { initialData?: any }) 
     const [filters, setFilters] = useState<KeywordFiltersState>(DEFAULT_FILTERS);
     const [showTerminalConsole, setShowTerminalConsole] = useState(false);
     const [terminalComplete, setTerminalComplete] = useState(false);
+    const [showResultsConsole, setShowResultsConsole] = useState(false);
     const [savedItems, setSavedItems] = useState<any[]>([]);
     
     // Filter & Export State
@@ -530,6 +532,7 @@ export const NegativeKeywordsBuilder = ({ initialData }: { initialData?: any }) 
                 onNextClick={() => {
                     setShowTerminalConsole(false);
                     setIsGenerating(false);
+                    setShowResultsConsole(true);
                 }}
                 minDuration={4500}
             />
@@ -663,6 +666,34 @@ export const NegativeKeywordsBuilder = ({ initialData }: { initialData?: any }) 
 
                 {/* Right Panel: Results */}
                 <Card className="lg:col-span-2 border-slate-200/60 bg-white/60 backdrop-blur-xl shadow-xl min-h-[600px] flex flex-col">
+                    {/* Terminal Results Console */}
+                    {showResultsConsole && generatedKeywords.length > 0 && (
+                        <div className="p-4">
+                            <TerminalResultsConsole
+                                title="Negative Keywords Export Console"
+                                isVisible={showResultsConsole}
+                                stats={[
+                                    { label: 'Negative Keywords', value: generatedKeywords.length, color: 'green' },
+                                    { label: 'Categories', value: Object.keys(getCategoryStats(generatedKeywords as any)).length, color: 'cyan' },
+                                    { label: 'Match Type', value: 'Exact', color: 'yellow' },
+                                    { label: 'Target URL', value: url.substring(0, 30) + (url.length > 30 ? '...' : ''), color: 'purple' },
+                                ]}
+                                onDownloadCSV={() => handleDownload('google-ads-editor')}
+                                onSave={handleSave}
+                                onGenerateAnother={() => {
+                                    setShowResultsConsole(false);
+                                    setGeneratedKeywords([]);
+                                }}
+                                showDownload={true}
+                                showSave={true}
+                                showCopy={false}
+                                downloadButtonText="Download for Google Ads"
+                                saveButtonText="Save to History"
+                                isSaving={isSaving}
+                            />
+                        </div>
+                    )}
+
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <div>
                             <CardTitle>Generated Keywords</CardTitle>

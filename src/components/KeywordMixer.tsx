@@ -10,6 +10,7 @@ import { DEFAULT_MIXER_KEYWORDS } from '../utils/defaultExamples';
 import { exportKeywordsToCSV } from '../utils/googleAdsEditorCSVExporter';
 import { KeywordFilters, KeywordFiltersState, DEFAULT_FILTERS } from './KeywordFilters';
 import { TerminalProgressConsole, KEYWORD_MIXER_MESSAGES } from './TerminalProgressConsole';
+import { TerminalResultsConsole, ResultStat } from './TerminalResultsConsole';
 
 // Plumbing service keywords for sample data
 const PLUMBING_KEYWORDS = {
@@ -39,6 +40,7 @@ export const KeywordMixer = ({ initialData }: { initialData?: any }) => {
     const [filters, setFilters] = useState<KeywordFiltersState>(DEFAULT_FILTERS);
     const [showTerminalConsole, setShowTerminalConsole] = useState(false);
     const [terminalComplete, setTerminalComplete] = useState(false);
+    const [showResultsConsole, setShowResultsConsole] = useState(false);
     const [savedItems, setSavedItems] = useState<any[]>([]);
     
     // Match types - all selected by default
@@ -278,6 +280,7 @@ export const KeywordMixer = ({ initialData }: { initialData?: any }) => {
                 onNextClick={() => {
                     setShowTerminalConsole(false);
                     setMixedKeywords(pendingMixedKeywords);
+                    setShowResultsConsole(true);
                 }}
                 minDuration={4500}
             />
@@ -410,6 +413,35 @@ export const KeywordMixer = ({ initialData }: { initialData?: any }) => {
 
                 {/* Results Section */}
                 <div className="bg-white/80 backdrop-blur-xl rounded-xl p-4 border border-slate-200/60 shadow-lg">
+                    {/* Terminal Results Console */}
+                    {showResultsConsole && mixedKeywords.length > 0 && (
+                        <div className="mb-4">
+                            <TerminalResultsConsole
+                                title="Keyword Mixer Export Console"
+                                isVisible={showResultsConsole}
+                                stats={[
+                                    { label: 'Mixed Keywords', value: mixedKeywords.length, color: 'green' },
+                                    { label: 'List A Keywords', value: listA.split('\n').flatMap(l => l.split(',')).filter(s => s.trim()).length, color: 'cyan' },
+                                    { label: 'List B Keywords', value: listB.split('\n').flatMap(l => l.split(',')).filter(s => s.trim()).length, color: 'yellow' },
+                                    { label: 'List C Keywords', value: listC.split('\n').flatMap(l => l.split(',')).filter(s => s.trim()).length || 0, color: 'purple' },
+                                    { label: 'Match Types', value: `${matchTypes.broad ? 'Broad ' : ''}${matchTypes.phrase ? 'Phrase ' : ''}${matchTypes.exact ? 'Exact' : ''}`.trim() || 'None', color: 'cyan' },
+                                ]}
+                                onDownloadCSV={exportToCSV}
+                                onSave={handleSave}
+                                onGenerateAnother={() => {
+                                    setShowResultsConsole(false);
+                                    setMixedKeywords([]);
+                                }}
+                                showDownload={true}
+                                showSave={true}
+                                showCopy={false}
+                                downloadButtonText="Download CSV for Google Ads"
+                                saveButtonText="Save Mix"
+                                isSaving={isSaving}
+                            />
+                        </div>
+                    )}
+
                     <div className="flex justify-between items-center mb-3">
                         <h2 className="text-lg font-bold text-slate-800">
                             Generated Keywords {mixedKeywords.length > 0 && `(${mixedKeywords.length})`}

@@ -10,6 +10,7 @@ import { notifications } from '../utils/notifications';
 import { supabase } from '../utils/supabase/client';
 import { KeywordFilters, KeywordFiltersState, DEFAULT_FILTERS, getDifficultyBadge, formatSearchVolume, formatCPC } from './KeywordFilters';
 import { TerminalProgressConsole, LONG_TAIL_MESSAGES } from './TerminalProgressConsole';
+import { TerminalResultsConsole, ResultStat } from './TerminalResultsConsole';
 
 interface KeywordResult {
   keyword: string;
@@ -43,6 +44,7 @@ export function LongTailKeywords() {
   const [filters, setFilters] = useState<KeywordFiltersState>(DEFAULT_FILTERS);
   const [showTerminalConsole, setShowTerminalConsole] = useState(false);
   const [terminalComplete, setTerminalComplete] = useState(false);
+  const [showResultsConsole, setShowResultsConsole] = useState(false);
 
   useEffect(() => {
     if (activeSubTab === 'saved') {
@@ -258,6 +260,7 @@ export function LongTailKeywords() {
         onNextClick={() => {
           setShowTerminalConsole(false);
           setIsGenerating(false);
+          setShowResultsConsole(true);
         }}
         minDuration={4500}
       />
@@ -353,6 +356,38 @@ export function LongTailKeywords() {
               </Button>
             </CardContent>
           </Card>
+
+          {/* Terminal Results Console */}
+          {showResultsConsole && keywords.length > 0 && (
+            <div className="mb-6">
+              <TerminalResultsConsole
+                title="Long Tail Keywords Export Console"
+                isVisible={showResultsConsole}
+                stats={[
+                  { label: 'Keywords Generated', value: keywords.length, color: 'green' },
+                  { label: 'Seed Keywords', value: seedKeywords.split('\n').filter(s => s.trim()).length, color: 'cyan' },
+                  { label: 'AI Generated', value: keywords.filter(k => k.source === 'ai').length, color: 'purple' },
+                  { label: 'Autocomplete', value: keywords.filter(k => k.source === 'autocomplete').length, color: 'yellow' },
+                  { label: 'Selected', value: selectedKeywords.size || 'All', color: 'cyan' },
+                ]}
+                onDownloadCSV={() => exportKeywords()}
+                onSave={saveList}
+                onCopy={copyAllKeywords}
+                onGenerateAnother={() => {
+                  setShowResultsConsole(false);
+                  setKeywords([]);
+                  setSelectedKeywords(new Set());
+                }}
+                showDownload={true}
+                showSave={true}
+                showCopy={true}
+                downloadButtonText="Download CSV"
+                saveButtonText="Save List"
+                copyButtonText="Copy Keywords"
+                isSaving={isSaving}
+              />
+            </div>
+          )}
 
           {keywords.length > 0 && (
             <Card>
