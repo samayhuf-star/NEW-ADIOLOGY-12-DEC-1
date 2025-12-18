@@ -39,6 +39,7 @@ import { SettingsPanel } from './components/SettingsPanel';
 import { SupportHelpCombined } from './components/SupportHelpCombined';
 import { ResetPassword } from './components/ResetPassword';
 import { CampaignPresets } from './components/CampaignPresets';
+import { DraftCampaigns } from './components/DraftCampaigns';
 import { Dashboard } from './components/Dashboard';
 import { HistoryPanel } from './components/HistoryPanel';
 import { FeedbackButton } from './components/FeedbackButton';
@@ -125,6 +126,7 @@ const App = () => {
     'preset-campaigns',
     'builder-3',
     'one-click-builder',
+    'draft-campaigns',
     'keyword-planner',
     'keyword-mixer',
     'negative-keywords',
@@ -874,6 +876,7 @@ const App = () => {
         { id: 'one-click-builder', label: '1 Click Builder', icon: Zap },
         { id: 'builder-3', label: 'Builder 3.0', icon: Sparkles },
         { id: 'preset-campaigns', label: 'Preset Campaigns', icon: Package },
+        { id: 'draft-campaigns', label: 'Draft Campaigns', icon: FolderOpen },
       ]
     },
     {
@@ -1317,6 +1320,15 @@ const App = () => {
         return <CampaignBuilder3 initialData={activeTab === 'builder-3' ? historyData : null} />;
       case 'one-click-builder':
         return <OneClickCampaignBuilder />;
+      case 'draft-campaigns':
+        return <DraftCampaigns onLoadCampaign={(data, mode) => {
+          try {
+            setHistoryData(data);
+            setActiveTabSafe('builder-3');
+          } catch (error) {
+            console.error('Error loading campaign:', error);
+          }
+        }} />;
       case 'keyword-planner':
         return <KeywordPlanner initialData={activeTab === 'keyword-planner' ? historyData : null} />;
       case 'keyword-mixer':
