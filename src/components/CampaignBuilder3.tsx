@@ -4958,55 +4958,6 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
           </div>
         </div>
 
-        {/* Campaign Stats Panel */}
-        <div className="px-4 py-3 font-mono text-xs space-y-1.5">
-          <div className="flex items-center gap-6 flex-wrap">
-            <div className="flex items-center gap-2">
-              <span className="text-slate-500">campaign:</span>
-              <span className="text-violet-400">{campaignData.campaignName || '—'}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-slate-500">structure:</span>
-              <span className="text-cyan-400">{campaignData.selectedStructure?.toUpperCase() || '—'}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-slate-500">url:</span>
-              <span className="text-emerald-400 max-w-[200px] truncate">{campaignData.websiteUrl || '—'}</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-6 flex-wrap">
-            <div className="flex items-center gap-2">
-              <span className="text-slate-500">keywords:</span>
-              <span className="text-amber-400">{campaignData.keywords?.length || 0}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-slate-500">ads:</span>
-              <span className="text-pink-400">{campaignData.ads?.length || 0}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-slate-500">extensions:</span>
-              <span className="text-blue-400">{(campaignData.sitelinks?.length || 0) + (campaignData.callouts?.length || 0) + (campaignData.snippets?.length || 0)}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-slate-500">locations:</span>
-              <span className="text-orange-400">{campaignData.geoTargeting?.length || 0}</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-6 flex-wrap">
-            <div className="flex items-center gap-2">
-              <span className="text-slate-500">match_types:</span>
-              <span className="text-slate-300">[{campaignData.matchTypes?.broad ? 'B' : '-'}{campaignData.matchTypes?.phrase ? 'P' : '-'}{campaignData.matchTypes?.exact ? 'E' : '-'}]</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-slate-500">status:</span>
-              <span className={currentStep === 6 ? 'text-green-400' : 'text-yellow-400'}>{currentStep === 6 ? 'COMPLETE' : 'IN_PROGRESS'}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-slate-500">step:</span>
-              <span className="text-slate-300">{currentStep}/6</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Content */}
