@@ -296,18 +296,48 @@ export const KeywordMixer = ({ initialData }: { initialData?: any }) => {
                     <span className="text-xs text-slate-400 ml-2 font-mono">keyword_mixer.sh</span>
                 </div>
                 <div className="p-4 font-mono">
-                    <div className="grid grid-cols-3 gap-6">
+                    <div className="grid grid-cols-3 gap-6 mb-3">
                         <div className="space-y-1">
                             <div className="text-2xl font-bold text-violet-400">3</div>
                             <div className="text-xs text-slate-400">Keyword Lists</div>
                         </div>
                         <div className="space-y-1">
-                            <div className="text-2xl font-bold text-emerald-400">∞</div>
+                            <div className="text-2xl font-bold text-emerald-400">{mixedKeywords.length || '∞'}</div>
                             <div className="text-xs text-slate-400">Combinations</div>
                         </div>
                         <div className="space-y-1">
                             <div className="text-2xl font-bold text-amber-400">CSV</div>
                             <div className="text-xs text-slate-400">Export Ready</div>
+                        </div>
+                    </div>
+                    <div className="border-t border-slate-700 pt-3 space-y-1.5 text-xs">
+                        <div className="flex items-center gap-6 flex-wrap">
+                            <div className="flex items-center gap-2">
+                                <span className="text-slate-500">list_a:</span>
+                                <span className="text-cyan-400">{listA.split('\n').filter(k => k.trim()).length} items</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-slate-500">list_b:</span>
+                                <span className="text-pink-400">{listB.split('\n').filter(k => k.trim()).length} items</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-slate-500">list_c:</span>
+                                <span className="text-blue-400">{listC.split('\n').filter(k => k.trim()).length} items</span>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-6 flex-wrap">
+                            <div className="flex items-center gap-2">
+                                <span className="text-slate-500">match_types:</span>
+                                <span className="text-slate-300">[{matchTypes.broad ? 'B' : '-'}{matchTypes.phrase ? 'P' : '-'}{matchTypes.exact ? 'E' : '-'}]</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-slate-500">country:</span>
+                                <span className="text-orange-400">{filters.country}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-slate-500">device:</span>
+                                <span className="text-emerald-400">{filters.device}</span>
+                            </div>
                         </div>
                     </div>
                 </div>

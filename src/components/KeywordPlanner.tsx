@@ -965,7 +965,7 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                         <span className="text-xs text-slate-400 ml-2 font-mono">keyword_planner.sh</span>
                     </div>
                     <div className="p-4 font-mono">
-                        <div className="grid grid-cols-3 gap-6">
+                        <div className="grid grid-cols-3 gap-6 mb-3">
                             <div className="space-y-1">
                                 <div className="text-2xl font-bold text-violet-400">{generatedKeywords.length}</div>
                                 <div className="text-xs text-slate-400">Keywords Generated</div>
@@ -977,6 +977,36 @@ export const KeywordPlanner = ({ initialData }: { initialData?: any }) => {
                             <div className="space-y-1">
                                 <div className="text-2xl font-bold text-amber-400">{savedLists.length}</div>
                                 <div className="text-xs text-slate-400">Saved Lists</div>
+                            </div>
+                        </div>
+                        <div className="border-t border-slate-700 pt-3 space-y-1.5 text-xs">
+                            <div className="flex items-center gap-6 flex-wrap">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-slate-500">seed_keywords:</span>
+                                    <span className="text-cyan-400">{seedKeywords.split(',').filter(s => s.trim()).length}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-slate-500">negative_keywords:</span>
+                                    <span className="text-pink-400">{negativeKeywords.split('\n').filter(s => s.trim()).length}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-slate-500">match_types:</span>
+                                    <span className="text-slate-300">[{matchTypes.broad ? 'B' : '-'}{matchTypes.phrase ? 'P' : '-'}{matchTypes.exact ? 'E' : '-'}]</span>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-6 flex-wrap">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-slate-500">country:</span>
+                                    <span className="text-blue-400">{filters.country}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-slate-500">device:</span>
+                                    <span className="text-orange-400">{filters.device}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-slate-500">metrics:</span>
+                                    <span className={showMetrics ? 'text-green-400' : 'text-slate-500'}>{showMetrics ? 'ENABLED' : 'DISABLED'}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
