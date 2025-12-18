@@ -3578,7 +3578,7 @@ app.post('/api/campaigns/save', async (c) => {
 // Long Tail Keywords API
 // ============================================
 
-// Generate long-tail keywords using autocomplete + AI
+// Generate TRUE long-tail keywords using multi-slot patterns + AI
 app.post('/api/long-tail-keywords/generate', async (c) => {
   try {
     const { url, seedKeywords } = await c.req.json();
@@ -3589,60 +3589,99 @@ app.post('/api/long-tail-keywords/generate', async (c) => {
 
     const allKeywords: { keyword: string; source: 'autocomplete' | 'ai' }[] = [];
     const seenKeywords = new Set<string>();
+    
+    // Helper to add keyword if valid (minimum 4 words for true long-tail)
+    const addKeyword = (kw: string, source: 'autocomplete' | 'ai') => {
+      const clean = kw.toLowerCase().trim();
+      const wordCount = clean.split(/\s+/).length;
+      if (!seenKeywords.has(clean) && wordCount >= 4 && clean.length > 10) {
+        seenKeywords.add(clean);
+        allKeywords.push({ keyword: clean, source });
+      }
+    };
 
-    // Generate autocomplete-style variations for each seed keyword
-    const prefixes = ['', 'how to ', 'best ', 'cheap ', 'top ', 'affordable ', 'professional ', 'local ', 'near me ', 'services ', 'cost of ', 'price of '];
-    const suffixes = ['', ' near me', ' services', ' cost', ' prices', ' reviews', ' companies', ' in my area', ' for sale', ' online', ' today', ' fast'];
-    const questions = ['what is', 'how much does', 'where to find', 'when to', 'why choose', 'who offers'];
+    // Multi-slot pattern templates for TRUE long-tail keywords
+    const modifiers = ['best', 'top rated', 'affordable', 'professional', 'reliable', 'trusted', 'certified', 'experienced', 'licensed'];
+    const audiences = ['for small business', 'for startups', 'for beginners', 'for seniors', 'for homeowners', 'for contractors', 'for freelancers', 'for agencies', 'for enterprise', 'for families'];
+    const needs = ['on a budget', 'with no experience', 'that actually works', 'with free trial', 'with good reviews', 'near me open now', 'same day service', 'with guarantee', 'step by step guide'];
+    const intents = ['how to choose', 'how to find', 'how to use', 'where to get', 'what is the best', 'why you need', 'when to hire', 'complete guide to'];
+    const comparisons = ['vs competitors', 'compared to alternatives', 'pros and cons', 'reviews and ratings', 'cost breakdown'];
+    const questions = [
+      'what is the best way to',
+      'how much does it cost to',
+      'where can i find affordable',
+      'what are the benefits of',
+      'how do i choose the right',
+      'is it worth it to get',
+      'what should i look for in'
+    ];
 
     for (const seed of seedKeywords.slice(0, 10)) {
       const cleanSeed = seed.toLowerCase().trim();
       
-      // Add variations with prefixes
-      for (const prefix of prefixes) {
-        const variation = `${prefix}${cleanSeed}`.trim();
-        if (!seenKeywords.has(variation) && variation.length > 3) {
-          seenKeywords.add(variation);
-          allKeywords.push({ keyword: variation, source: 'autocomplete' });
+      // Pattern: modifier + seed + audience (e.g., "best marketing tool for small business")
+      for (const mod of modifiers) {
+        for (const aud of audiences) {
+          addKeyword(`${mod} ${cleanSeed} ${aud}`, 'autocomplete');
         }
       }
       
-      // Add variations with suffixes
-      for (const suffix of suffixes) {
-        const variation = `${cleanSeed}${suffix}`.trim();
-        if (!seenKeywords.has(variation) && variation.length > 3) {
-          seenKeywords.add(variation);
-          allKeywords.push({ keyword: variation, source: 'autocomplete' });
+      // Pattern: modifier + seed + need (e.g., "affordable marketing tool with free trial")
+      for (const mod of modifiers.slice(0, 5)) {
+        for (const need of needs) {
+          addKeyword(`${mod} ${cleanSeed} ${need}`, 'autocomplete');
         }
       }
       
-      // Add question-based variations
+      // Pattern: question + seed + audience (e.g., "how to choose marketing tool for startups")
+      for (const q of intents) {
+        addKeyword(`${q} ${cleanSeed}`, 'autocomplete');
+        for (const aud of audiences.slice(0, 4)) {
+          addKeyword(`${q} ${cleanSeed} ${aud}`, 'autocomplete');
+        }
+      }
+      
+      // Pattern: full questions (e.g., "what is the best way to use marketing tool")
       for (const q of questions) {
-        const variation = `${q} ${cleanSeed}`.trim();
-        if (!seenKeywords.has(variation)) {
-          seenKeywords.add(variation);
-          allKeywords.push({ keyword: variation, source: 'autocomplete' });
-        }
+        addKeyword(`${q} ${cleanSeed}`, 'autocomplete');
+      }
+      
+      // Pattern: seed + comparisons (e.g., "marketing tool pros and cons")
+      for (const comp of comparisons) {
+        addKeyword(`${cleanSeed} ${comp}`, 'autocomplete');
       }
     }
 
-    // Use AI to generate additional contextual long-tail keywords
+    // Use AI to generate additional SPECIFIC long-tail keywords
     const apiKey = process.env.OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
     if (apiKey && apiKey !== 'placeholder') {
       try {
-        const contextInfo = url ? `for the website ${url}` : '';
-        const prompt = `Generate 30 unique long-tail keyword variations ${contextInfo} based on these seed keywords: ${seedKeywords.join(', ')}.
+        const contextInfo = url ? `Context: This is for the website ${url}.` : '';
+        const prompt = `You are an SEO expert. Generate 50 TRUE long-tail keywords based on these seed terms: ${seedKeywords.join(', ')}.
 
-Requirements:
-- Each keyword should be 3-6 words long
-- Include buyer intent keywords (e.g., "buy", "hire", "get quote")
-- Include informational keywords (e.g., "how to", "what is", "guide")
-- Include local intent keywords (e.g., "near me", "in [city]")
-- Include comparison keywords (e.g., "vs", "best", "top rated")
-- Make them specific and searchable
-- No duplicates
+${contextInfo}
 
-Return ONLY a JSON array of keyword strings, nothing else. Example: ["keyword one", "keyword two"]`;
+CRITICAL REQUIREMENTS:
+- Each keyword MUST be 5-8 words long (this is non-negotiable)
+- Keywords must be specific, niche phrases that real users would search
+- Include specific audience segments (e.g., "for small business owners", "for first-time buyers")
+- Include specific pain points or needs (e.g., "without breaking the bank", "with step by step instructions")
+- Include specific contexts (e.g., "in 2024", "for remote teams", "without technical knowledge")
+- Mix of intents: informational ("how to"), commercial ("best"), transactional ("buy", "hire")
+
+GOOD EXAMPLES:
+- "best marketing automation tool for small business owners"
+- "how to choose email marketing software for beginners"
+- "affordable crm software for real estate agents 2024"
+- "step by step guide to using project management tools"
+- "what is the best way to automate social media marketing"
+
+BAD EXAMPLES (too short, reject these):
+- "marketing tool"
+- "best marketing"
+- "cheap software"
+
+Return ONLY a JSON array of 50 keyword strings. Example format: ["keyword phrase one here", "another keyword phrase here"]`;
 
         const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
@@ -3653,8 +3692,8 @@ Return ONLY a JSON array of keyword strings, nothing else. Example: ["keyword on
           body: JSON.stringify({
             model: 'gpt-4o-mini',
             messages: [{ role: 'user', content: prompt }],
-            temperature: 0.8,
-            max_tokens: 1000
+            temperature: 0.9,
+            max_tokens: 2000
           })
         });
 
@@ -3667,10 +3706,8 @@ Return ONLY a JSON array of keyword strings, nothing else. Example: ["keyword on
             if (jsonMatch) {
               const aiKeywords = JSON.parse(jsonMatch[0]);
               for (const kw of aiKeywords) {
-                const cleanKw = kw.toLowerCase().trim();
-                if (!seenKeywords.has(cleanKw) && cleanKw.length > 3) {
-                  seenKeywords.add(cleanKw);
-                  allKeywords.push({ keyword: cleanKw, source: 'ai' });
+                if (typeof kw === 'string') {
+                  addKeyword(kw, 'ai');
                 }
               }
             }
