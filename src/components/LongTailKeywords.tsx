@@ -359,59 +359,66 @@ export function LongTailKeywords() {
         </div>
       </div>
 
-      {/* Shell View Info Box */}
-      <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden mb-4">
-        <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
-          <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-red-500"></div>
-            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+      {/* Shell View - Two Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        {/* Card 1: Stats */}
+        <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
+            <div className="flex gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            </div>
+            <span className="text-xs text-slate-400 ml-2 font-mono">longtail_stats.sh</span>
           </div>
-          <span className="text-xs text-slate-400 ml-2 font-mono">long_tail_keywords.sh</span>
+          <div className="p-4 font-mono">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-1 text-center">
+                <div className="text-2xl font-bold text-violet-400">{keywords.length}</div>
+                <div className="text-xs text-slate-400">Generated</div>
+              </div>
+              <div className="space-y-1 text-center">
+                <div className="text-2xl font-bold text-emerald-400">{savedLists.length}</div>
+                <div className="text-xs text-slate-400">Saved</div>
+              </div>
+              <div className="space-y-1 text-center">
+                <div className="text-2xl font-bold text-amber-400">AI+</div>
+                <div className="text-xs text-slate-400">Hybrid</div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="p-4 font-mono">
-          <div className="grid grid-cols-3 gap-6 mb-3">
-            <div className="space-y-1">
-              <div className="text-2xl font-bold text-violet-400">{keywords.length}</div>
-              <div className="text-xs text-slate-400">Keywords Generated</div>
+
+        {/* Card 2: Config */}
+        <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
+            <div className="flex gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
             </div>
-            <div className="space-y-1">
-              <div className="text-2xl font-bold text-emerald-400">{savedLists.length}</div>
-              <div className="text-xs text-slate-400">Saved Lists</div>
-            </div>
-            <div className="space-y-1">
-              <div className="text-2xl font-bold text-amber-400">AI+</div>
-              <div className="text-xs text-slate-400">Hybrid Engine</div>
-            </div>
+            <span className="text-xs text-slate-400 ml-2 font-mono">longtail_config.sh</span>
           </div>
-          <div className="border-t border-slate-700 pt-3 space-y-1.5 text-xs">
-            <div className="flex items-center gap-6 flex-wrap">
-              <div className="flex items-center gap-2">
-                <span className="text-slate-500">seed_keywords:</span>
-                <span className="text-cyan-400">{seedKeywords.split('\n').filter(k => k.trim()).length}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-slate-500">selected:</span>
-                <span className="text-pink-400">{selectedKeywords.size}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-slate-500">sources:</span>
-                <span className="text-blue-400">Autocomplete + AI</span>
-              </div>
+          <div className="p-4 font-mono space-y-2 text-xs">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-slate-500">seeds:</span>
+              <span className="text-cyan-400">{seedKeywords.split('\n').filter(k => k.trim()).length}</span>
+              <span className="text-slate-600 mx-1">|</span>
+              <span className="text-slate-500">selected:</span>
+              <span className="text-pink-400">{selectedKeywords.size}</span>
+              <span className="text-slate-600 mx-1">|</span>
+              <span className="text-slate-500">sources:</span>
+              <span className="text-blue-400">Auto + AI</span>
             </div>
-            <div className="flex items-center gap-6 flex-wrap">
-              <div className="flex items-center gap-2">
-                <span className="text-slate-500">country:</span>
-                <span className="text-orange-400">{filters.country}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-slate-500">device:</span>
-                <span className="text-emerald-400">{filters.device}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-slate-500">metrics:</span>
-                <span className="text-slate-300">Volume, CPC, Difficulty</span>
-              </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-slate-500">country:</span>
+              <span className="text-orange-400">{filters.country}</span>
+              <span className="text-slate-600 mx-1">|</span>
+              <span className="text-slate-500">device:</span>
+              <span className="text-emerald-400">{filters.device}</span>
+              <span className="text-slate-600 mx-1">|</span>
+              <span className="text-slate-500">metrics:</span>
+              <span className="text-slate-300">Vol, CPC, Diff</span>
             </div>
           </div>
         </div>

@@ -285,59 +285,66 @@ export const KeywordMixer = ({ initialData }: { initialData?: any }) => {
                 </button>
             </div>
 
-            {/* Shell View Info Box */}
-            <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden mb-4">
-                <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
-                    <div className="flex gap-1.5">
-                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                        <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                        <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            {/* Shell View - Two Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                {/* Card 1: Stats */}
+                <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
+                        <div className="flex gap-1.5">
+                            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                        </div>
+                        <span className="text-xs text-slate-400 ml-2 font-mono">mixer_stats.sh</span>
                     </div>
-                    <span className="text-xs text-slate-400 ml-2 font-mono">keyword_mixer.sh</span>
+                    <div className="p-4 font-mono">
+                        <div className="grid grid-cols-3 gap-4">
+                            <div className="space-y-1 text-center">
+                                <div className="text-2xl font-bold text-violet-400">3</div>
+                                <div className="text-xs text-slate-400">Lists</div>
+                            </div>
+                            <div className="space-y-1 text-center">
+                                <div className="text-2xl font-bold text-emerald-400">{mixedKeywords.length || '∞'}</div>
+                                <div className="text-xs text-slate-400">Combos</div>
+                            </div>
+                            <div className="space-y-1 text-center">
+                                <div className="text-2xl font-bold text-amber-400">CSV</div>
+                                <div className="text-xs text-slate-400">Export</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div className="p-4 font-mono">
-                    <div className="grid grid-cols-3 gap-6 mb-3">
-                        <div className="space-y-1">
-                            <div className="text-2xl font-bold text-violet-400">3</div>
-                            <div className="text-xs text-slate-400">Keyword Lists</div>
+
+                {/* Card 2: Config */}
+                <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
+                        <div className="flex gap-1.5">
+                            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                            <div className="w-3 h-3 rounded-full bg-green-500"></div>
                         </div>
-                        <div className="space-y-1">
-                            <div className="text-2xl font-bold text-emerald-400">{mixedKeywords.length || '∞'}</div>
-                            <div className="text-xs text-slate-400">Combinations</div>
-                        </div>
-                        <div className="space-y-1">
-                            <div className="text-2xl font-bold text-amber-400">CSV</div>
-                            <div className="text-xs text-slate-400">Export Ready</div>
-                        </div>
+                        <span className="text-xs text-slate-400 ml-2 font-mono">mixer_config.sh</span>
                     </div>
-                    <div className="border-t border-slate-700 pt-3 space-y-1.5 text-xs">
-                        <div className="flex items-center gap-6 flex-wrap">
-                            <div className="flex items-center gap-2">
-                                <span className="text-slate-500">list_a:</span>
-                                <span className="text-cyan-400">{listA.split('\n').filter(k => k.trim()).length} items</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-slate-500">list_b:</span>
-                                <span className="text-pink-400">{listB.split('\n').filter(k => k.trim()).length} items</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-slate-500">list_c:</span>
-                                <span className="text-blue-400">{listC.split('\n').filter(k => k.trim()).length} items</span>
-                            </div>
+                    <div className="p-4 font-mono space-y-2 text-xs">
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-slate-500">list_a:</span>
+                            <span className="text-cyan-400">{listA.split('\n').filter(k => k.trim()).length}</span>
+                            <span className="text-slate-600 mx-1">|</span>
+                            <span className="text-slate-500">list_b:</span>
+                            <span className="text-pink-400">{listB.split('\n').filter(k => k.trim()).length}</span>
+                            <span className="text-slate-600 mx-1">|</span>
+                            <span className="text-slate-500">list_c:</span>
+                            <span className="text-blue-400">{listC.split('\n').filter(k => k.trim()).length}</span>
                         </div>
-                        <div className="flex items-center gap-6 flex-wrap">
-                            <div className="flex items-center gap-2">
-                                <span className="text-slate-500">match_types:</span>
-                                <span className="text-slate-300">[{matchTypes.broad ? 'B' : '-'}{matchTypes.phrase ? 'P' : '-'}{matchTypes.exact ? 'E' : '-'}]</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-slate-500">country:</span>
-                                <span className="text-orange-400">{filters.country}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-slate-500">device:</span>
-                                <span className="text-emerald-400">{filters.device}</span>
-                            </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-slate-500">match:</span>
+                            <span className="text-slate-300">[{matchTypes.broad ? 'B' : '-'}{matchTypes.phrase ? 'P' : '-'}{matchTypes.exact ? 'E' : '-'}]</span>
+                            <span className="text-slate-600 mx-1">|</span>
+                            <span className="text-slate-500">country:</span>
+                            <span className="text-orange-400">{filters.country}</span>
+                            <span className="text-slate-600 mx-1">|</span>
+                            <span className="text-slate-500">device:</span>
+                            <span className="text-emerald-400">{filters.device}</span>
                         </div>
                     </div>
                 </div>

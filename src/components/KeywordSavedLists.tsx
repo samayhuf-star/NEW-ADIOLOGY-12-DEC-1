@@ -163,29 +163,58 @@ export const KeywordSavedLists = () => {
         </div>
       </div>
 
-      {/* Shell View Info Box */}
-      <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden mb-4">
-        <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
-          <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-red-500"></div>
-            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+      {/* Shell View - Two Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        {/* Card 1: Stats */}
+        <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
+            <div className="flex gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            </div>
+            <span className="text-xs text-slate-400 ml-2 font-mono">saved_stats.sh</span>
           </div>
-          <span className="text-xs text-slate-400 ml-2 font-mono">saved_lists.sh</span>
+          <div className="p-4 font-mono">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-1 text-center">
+                <div className="text-2xl font-bold text-violet-400">{plannerHistory.length}</div>
+                <div className="text-xs text-slate-400">Planner</div>
+              </div>
+              <div className="space-y-1 text-center">
+                <div className="text-2xl font-bold text-emerald-400">{mixerHistory.length}</div>
+                <div className="text-xs text-slate-400">Mixer</div>
+              </div>
+              <div className="space-y-1 text-center">
+                <div className="text-2xl font-bold text-amber-400">{negativeHistory.length}</div>
+                <div className="text-xs text-slate-400">Negative</div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="p-4 font-mono">
-          <div className="grid grid-cols-3 gap-6">
-            <div className="space-y-1">
-              <div className="text-2xl font-bold text-violet-400">{plannerHistory.length}</div>
-              <div className="text-xs text-slate-400">Planner Lists</div>
+
+        {/* Card 2: Info */}
+        <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
+            <div className="flex gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
             </div>
-            <div className="space-y-1">
-              <div className="text-2xl font-bold text-emerald-400">{mixerHistory.length}</div>
-              <div className="text-xs text-slate-400">Mixer Lists</div>
+            <span className="text-xs text-slate-400 ml-2 font-mono">saved_info.sh</span>
+          </div>
+          <div className="p-4 font-mono space-y-2 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="text-slate-500">total:</span>
+              <span className="text-cyan-400">{plannerHistory.length + mixerHistory.length + negativeHistory.length} lists</span>
             </div>
-            <div className="space-y-1">
-              <div className="text-2xl font-bold text-amber-400">{negativeHistory.length}</div>
-              <div className="text-xs text-slate-400">Negative Lists</div>
+            <div className="flex items-center gap-2">
+              <span className="text-slate-500">storage:</span>
+              <span className="text-emerald-400">Supabase Cloud</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-slate-500">actions:</span>
+              <span className="text-blue-400">Export, Delete, View</span>
             </div>
           </div>
         </div>
