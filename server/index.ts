@@ -119,7 +119,7 @@ async function seedStripeProducts() {
       {
         name: 'Lifetime',
         description: 'Unlimited campaigns forever with lifetime access',
-        priceAmount: 9999, // $99.99
+        priceAmount: 4999, // $49.99
         priceType: 'one_time' as const,
       },
     ];

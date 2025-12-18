@@ -1127,7 +1127,7 @@ function PricingSection({ onSelectPlan }: { onSelectPlan?: (planName: string, pr
         },
         {
           name: 'Lifetime',
-          price: '$99.99',
+          price: '$49.99',
           period: 'one-time payment',
           icon: '👑',
           gradient: 'from-pink-500 to-purple-600',
@@ -1146,7 +1146,7 @@ function PricingSection({ onSelectPlan }: { onSelectPlan?: (planName: string, pr
           ],
           popular: false,
           priceId: 'price_lifetime',
-          amount: 9999,
+          amount: 4999,
           isSubscription: false
         }
       ];
@@ -1203,7 +1203,7 @@ function PricingSection({ onSelectPlan }: { onSelectPlan?: (planName: string, pr
       },
       {
         name: 'Lifetime',
-        price: '$99.99',
+        price: '$49.99',
         period: 'one-time payment',
         icon: '👑',
         gradient: 'from-pink-500 to-purple-600',
@@ -1222,7 +1222,7 @@ function PricingSection({ onSelectPlan }: { onSelectPlan?: (planName: string, pr
         ],
         popular: false,
         priceId: 'price_lifetime',
-        amount: 9999,
+        amount: 4999,
         isSubscription: false
       }
     ];
