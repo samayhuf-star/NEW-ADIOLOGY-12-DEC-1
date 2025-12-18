@@ -4487,7 +4487,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
       : `${campaignData.targetCountry} (${locationInfo.type})`;
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/30 to-purple-50/30 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-indigo-100/60 to-purple-100/70 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
           {/* Hero Section */}
           <div className="text-center mb-6">
@@ -4883,7 +4883,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/30 to-purple-50/30">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-indigo-100/60 to-purple-100/70">
       {/* Shell View Navigation & Progress */}
       <div className="bg-slate-900 sticky top-0 z-20">
         {/* Terminal Header */}
