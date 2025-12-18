@@ -97,4 +97,5 @@ Preferred communication style: Simple, everyday language.
 - **Backend API (FastAPI)**: Provides endpoints for keyword generation, ad generation, and CSV export.
 - **Google Ads Editor CSV Format**: Strict adherence to Google's schema for CSV exports.
 - **OpenAI API**: Powers intelligent chatbot in the web template editor.
+- **Postmark API**: Transactional email service for welcome emails, team invites, password resets, and campaign exports. Server API token stored as POSTMARK_SERVER_API_TOKEN secret. Email service module: server/emailService.ts. API endpoints: `/api/email/send`, `/api/email/welcome`, `/api/email/team-invite`, `/api/email/campaign-export`.
 - **Real-time Expense Tracking**: Integrates with Stripe, OpenAI, Supabase, Vercel, SendGrid, GitHub, and Replit APIs.

@@ -8,6 +8,7 @@ import { getStripeSync, getStripePublishableKey, getUncachableStripeClient } fro
 import { WebhookHandlers } from './webhookHandlers';
 import { stripeService } from './stripeService';
 import { analyzeUrlWithCheerio } from './urlAnalyzerLite';
+import { sendEmail, sendWelcomeEmail, sendPasswordResetEmail, sendTeamInviteEmail, sendCampaignExportEmail } from './emailService';
 // import { startCronScheduler, triggerManualRun } from './cronScheduler';
 
 const { Pool } = pg;
@@ -3881,6 +3882,106 @@ app.delete('/api/long-tail-keywords/lists/:id', async (c) => {
 
 // Start cron scheduler - DISABLED per user request
 // startCronScheduler();
+
+// ============================================
+// Email API Endpoints (Postmark)
+// ============================================
+
+// Send a generic email
+app.post('/api/email/send', async (c) => {
+  try {
+    const { to, subject, htmlBody, textBody, from, replyTo, tag } = await c.req.json();
+    
+    if (!to || !subject) {
+      return c.json({ error: 'Missing required fields: to, subject' }, 400);
+    }
+
+    const result = await sendEmail({
+      to,
+      subject,
+      htmlBody,
+      textBody,
+      from,
+      replyTo,
+      tag
+    });
+
+    if (result.success) {
+      return c.json({ success: true, messageId: result.messageId });
+    } else {
+      return c.json({ error: result.error }, 500);
+    }
+  } catch (error: any) {
+    console.error('Email send error:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// Send welcome email
+app.post('/api/email/welcome', async (c) => {
+  try {
+    const { to, name } = await c.req.json();
+    
+    if (!to) {
+      return c.json({ error: 'Missing required field: to' }, 400);
+    }
+
+    const result = await sendWelcomeEmail(to, name || '');
+    
+    if (result.success) {
+      return c.json({ success: true, messageId: result.messageId });
+    } else {
+      return c.json({ error: result.error }, 500);
+    }
+  } catch (error: any) {
+    console.error('Welcome email error:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// Send team invite email
+app.post('/api/email/team-invite', async (c) => {
+  try {
+    const { to, inviterName, teamName, inviteLink } = await c.req.json();
+    
+    if (!to || !inviterName || !teamName || !inviteLink) {
+      return c.json({ error: 'Missing required fields' }, 400);
+    }
+
+    const result = await sendTeamInviteEmail(to, inviterName, teamName, inviteLink);
+    
+    if (result.success) {
+      return c.json({ success: true, messageId: result.messageId });
+    } else {
+      return c.json({ error: result.error }, 500);
+    }
+  } catch (error: any) {
+    console.error('Team invite email error:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// Send campaign export email
+app.post('/api/email/campaign-export', async (c) => {
+  try {
+    const { to, campaignName, downloadLink } = await c.req.json();
+    
+    if (!to || !campaignName || !downloadLink) {
+      return c.json({ error: 'Missing required fields' }, 400);
+    }
+
+    const result = await sendCampaignExportEmail(to, campaignName, downloadLink);
+    
+    if (result.success) {
+      return c.json({ success: true, messageId: result.messageId });
+    } else {
+      return c.json({ error: result.error }, 500);
+    }
+  } catch (error: any) {
+    console.error('Campaign export email error:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
 
 // Determine ports - in production, use PORT env var; in development, use 3001 for API
 const isProduction = process.env.NODE_ENV === 'production';
