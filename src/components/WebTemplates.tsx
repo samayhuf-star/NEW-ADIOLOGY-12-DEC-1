@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { Eye, Download, Star, Phone, Mail, Clock, Edit3, Trash2, FolderOpen, Plus, Sparkles, X, Search, Filter, Globe, Copy, Check, CheckCircle, AlertCircle, Loader } from 'lucide-react';
+import { Eye, Download, Star, Phone, Mail, Clock, Edit3, Trash2, FolderOpen, Plus, Sparkles, X, Search, Filter, Globe, Copy, Check, CheckCircle, AlertCircle, Loader, RefreshCw, ExternalLink, Calendar, Shield } from 'lucide-react';
 import TemplateEditorBuilder from './TemplateEditorBuilder';
+import { supabase } from '../utils/supabase/client';
 import { 
   TemplateData, 
   SavedWebsite, 
@@ -3076,6 +3077,358 @@ const CustomDomainModal = ({ website, onClose }: { website: SavedWebsite; onClos
   );
 };
 
+// Connected Domains Tab Component
+interface DomainRecord {
+  id: number;
+  domain: string;
+  status: string;
+  dns_verified: boolean;
+  created_at: string;
+  updated_at: string;
+  expiry_date: string | null;
+  registration_date: string | null;
+  registrar: string | null;
+  website_id: string | null;
+}
+
+const ConnectedDomainsTab = ({ savedWebsites }: { savedWebsites: SavedWebsite[] }) => {
+  const [domains, setDomains] = useState<DomainRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newDomain, setNewDomain] = useState('');
+  const [adding, setAdding] = useState(false);
+  const [refreshingId, setRefreshingId] = useState<number | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+
+  const getAuthToken = async () => {
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token;
+  };
+
+  const loadDomains = async () => {
+    try {
+      const token = await getAuthToken();
+      if (!token) return;
+      
+      const response = await fetch('/api/domains', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setDomains(data.domains || []);
+      }
+    } catch (error) {
+      console.error('Failed to load domains:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDomains();
+  }, []);
+
+  const handleAddDomain = async () => {
+    if (!newDomain.trim()) return;
+    setAdding(true);
+    
+    try {
+      const token = await getAuthToken();
+      if (!token) return;
+      
+      const response = await fetch('/api/domains', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ domain: newDomain })
+      });
+      
+      if (response.ok) {
+        setNewDomain('');
+        setShowAddModal(false);
+        loadDomains();
+      } else {
+        const data = await response.json();
+        alert(data.error || 'Failed to add domain');
+      }
+    } catch (error) {
+      console.error('Failed to add domain:', error);
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const handleRefresh = async (id: number) => {
+    setRefreshingId(id);
+    try {
+      const token = await getAuthToken();
+      if (!token) return;
+      
+      const response = await fetch(`/api/domains/${id}/refresh`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        loadDomains();
+      }
+    } catch (error) {
+      console.error('Failed to refresh domain:', error);
+    } finally {
+      setRefreshingId(null);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    try {
+      const token = await getAuthToken();
+      if (!token) return;
+      
+      const response = await fetch(`/api/domains/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        loadDomains();
+      }
+    } catch (error) {
+      console.error('Failed to delete domain:', error);
+    } finally {
+      setDeleteConfirmId(null);
+    }
+  };
+
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return 'N/A';
+    return new Date(dateStr).toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  };
+
+  const getExpiryStatus = (expiryDate: string | null) => {
+    if (!expiryDate) return null;
+    const expiry = new Date(expiryDate);
+    const now = new Date();
+    const daysUntilExpiry = Math.floor((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysUntilExpiry < 0) return { status: 'expired', color: 'text-red-600', bg: 'bg-red-100' };
+    if (daysUntilExpiry < 30) return { status: 'expiring soon', color: 'text-orange-600', bg: 'bg-orange-100' };
+    return { status: 'active', color: 'text-green-600', bg: 'bg-green-100' };
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-800">Custom Domains</h2>
+          <p className="text-sm text-gray-500">Manage your custom domains and check their status</p>
+        </div>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-colors font-medium"
+        >
+          <Plus className="w-4 h-4" />
+          Add Domain
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-16 bg-white rounded-2xl border border-gray-200">
+          <Loader className="w-6 h-6 animate-spin text-indigo-600" />
+          <span className="ml-2 text-gray-500">Loading domains...</span>
+        </div>
+      ) : domains.length === 0 ? (
+        <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
+          <div className="text-gray-400 text-6xl mb-4">🌐</div>
+          <h3 className="text-xl font-semibold text-gray-700 mb-2">No domains added yet</h3>
+          <p className="text-gray-500 mb-6">Add your custom domains to track their status and expiry</p>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Add Your First Domain
+          </button>
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Domain</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Registrar</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Registered</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Expires</th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {domains.map((domain) => {
+                  const expiryStatus = getExpiryStatus(domain.expiry_date);
+                  return (
+                    <tr key={domain.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <Globe className="w-5 h-5 text-gray-400" />
+                          <div>
+                            <a 
+                              href={`https://${domain.domain}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-medium text-gray-900 hover:text-indigo-600 flex items-center gap-1"
+                            >
+                              {domain.domain}
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                            <p className="text-xs text-gray-500">Added {formatDate(domain.created_at)}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2.5 h-2.5 rounded-full ${domain.dns_verified ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                          <span className={`text-sm font-medium ${domain.dns_verified ? 'text-green-700' : 'text-red-700'}`}>
+                            {domain.dns_verified ? 'Connected' : 'Not Connected'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Shield className="w-4 h-4 text-gray-400" />
+                          {domain.registrar || 'Unknown'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Calendar className="w-4 h-4 text-gray-400" />
+                          {formatDate(domain.registration_date)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-sm text-gray-600">{formatDate(domain.expiry_date)}</span>
+                          {expiryStatus && (
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${expiryStatus.bg} ${expiryStatus.color}`}>
+                              {expiryStatus.status}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => handleRefresh(domain.id)}
+                            disabled={refreshingId === domain.id}
+                            className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors disabled:opacity-50"
+                            title="Refresh Status"
+                          >
+                            <RefreshCw className={`w-4 h-4 ${refreshingId === domain.id ? 'animate-spin' : ''}`} />
+                          </button>
+                          <button
+                            onClick={() => setDeleteConfirmId(domain.id)}
+                            className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Add Domain Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Add Domain</h3>
+              <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">
+              Enter your domain name. We'll automatically check its DNS status and fetch registration details.
+            </p>
+            <input
+              type="text"
+              value={newDomain}
+              onChange={(e) => setNewDomain(e.target.value)}
+              placeholder="example.com"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              onKeyDown={(e) => e.key === 'Enter' && handleAddDomain()}
+            />
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddDomain}
+                disabled={adding || !newDomain.trim()}
+                className="flex-1 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {adding ? (
+                  <>
+                    <Loader className="w-4 h-4 animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4" />
+                    Add Domain
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Domain</h3>
+            <p className="text-sm text-gray-500 mb-6">
+              Are you sure you want to remove this domain? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteConfirmId(null)}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDelete(deleteConfirmId)}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 interface WebTemplatesProps {
   initialTab?: 'templates' | 'saved' | 'connected';
 }
@@ -3829,96 +4182,7 @@ export const WebTemplates = ({ initialTab = 'templates' }: WebTemplatesProps) =>
       )}
 
       {activeTab === 'connected' && (
-        <div>
-          {(() => {
-            const connectedSites = savedWebsites.filter(w => (w as any).customDomain);
-            
-            if (connectedSites.length === 0) {
-              return (
-                <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
-                  <div className="text-gray-400 text-6xl mb-4">🌐</div>
-                  <h3 className="text-xl font-semibold text-gray-700 mb-2">No connected websites</h3>
-                  <p className="text-gray-500 mb-6">Connect a custom domain to your saved websites to see them here</p>
-                  <button
-                    onClick={() => setActiveTab('saved')}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-colors"
-                  >
-                    <FolderOpen className="w-4 h-4" />
-                    View Saved Websites
-                  </button>
-                </div>
-              );
-            }
-            
-            return (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-gray-800">
-                    Websites with Custom Domains ({connectedSites.length})
-                  </h2>
-                </div>
-                
-                <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-                  <div className="divide-y divide-gray-200">
-                    {connectedSites.map((website) => (
-                      <div key={website.id} className="p-5 hover:bg-gray-50 transition-colors">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3">
-                              <h3 className="font-bold text-lg text-gray-800">{website.name}</h3>
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
-                                <CheckCircle className="w-3 h-3" />
-                                Connected
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-4 mt-2">
-                              <a 
-                                href={`https://${(website as any).customDomain}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-1 text-indigo-600 hover:text-green-700 font-medium text-sm"
-                              >
-                                <Globe className="w-4 h-4" />
-                                {(website as any).customDomain}
-                              </a>
-                              <span className="text-sm text-gray-500">
-                                <Clock className="w-4 h-4 inline mr-1" />
-                                Updated {new Date(website.updatedAt).toLocaleDateString()}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => handleEditSavedWebsite(website)}
-                              className="p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                              title="Edit Website"
-                            >
-                              <Edit3 className="w-5 h-5" />
-                            </button>
-                            <button
-                              onClick={() => setDomainModalWebsite(website)}
-                              className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                              title="Manage Domain"
-                            >
-                              <Globe className="w-5 h-5" />
-                            </button>
-                            <button
-                              onClick={() => handleDownloadSavedWebsite(website)}
-                              className="p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                              title="Download"
-                            >
-                              <Download className="w-5 h-5" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
-        </div>
+        <ConnectedDomainsTab savedWebsites={savedWebsites} />
       )}
 
       {previewTemplate && (

@@ -3983,6 +3983,381 @@ app.post('/api/email/campaign-export', async (c) => {
   }
 });
 
+// ============== DOMAIN MANAGEMENT API ==============
+
+// Create domains table if not exists
+async function initDomainsTable() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS user_domains (
+        id SERIAL PRIMARY KEY,
+        user_id VARCHAR(255) NOT NULL,
+        domain VARCHAR(255) NOT NULL UNIQUE,
+        website_id VARCHAR(255),
+        status VARCHAR(50) DEFAULT 'pending',
+        dns_verified BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW(),
+        expiry_date TIMESTAMP,
+        registration_date TIMESTAMP,
+        registrar VARCHAR(255),
+        nameservers TEXT[]
+      )
+    `);
+  } catch (error) {
+    console.error('Error creating domains table:', error);
+  }
+}
+initDomainsTable();
+
+// Lookup domain info using RDAP (free, open protocol)
+async function lookupDomainInfo(domain: string) {
+  try {
+    // Extract TLD to find correct RDAP server
+    const parts = domain.split('.');
+    const tld = parts[parts.length - 1];
+    
+    // Common RDAP servers for different TLDs
+    const rdapServers: Record<string, string> = {
+      'com': 'https://rdap.verisign.com/com/v1/domain/',
+      'net': 'https://rdap.verisign.com/net/v1/domain/',
+      'org': 'https://rdap.publicinterestregistry.org/rdap/domain/',
+      'io': 'https://rdap.nic.io/domain/',
+      'co': 'https://rdap.nic.co/domain/',
+      'dev': 'https://rdap.nic.google/domain/',
+      'app': 'https://rdap.nic.google/domain/',
+    };
+    
+    const rdapUrl = rdapServers[tld] || `https://rdap.org/domain/${domain}`;
+    
+    const response = await fetch(rdapUrl + domain, {
+      headers: { 'Accept': 'application/rdap+json' }
+    });
+    
+    if (!response.ok) {
+      return { found: false, error: 'Domain not found or RDAP lookup failed' };
+    }
+    
+    const data = await response.json();
+    
+    // Parse RDAP response
+    let registrationDate = null;
+    let expiryDate = null;
+    let registrar = null;
+    let nameservers: string[] = [];
+    
+    // Get events (registration, expiration dates)
+    if (data.events) {
+      for (const event of data.events) {
+        if (event.eventAction === 'registration') {
+          registrationDate = event.eventDate;
+        } else if (event.eventAction === 'expiration') {
+          expiryDate = event.eventDate;
+        }
+      }
+    }
+    
+    // Get registrar from entities
+    if (data.entities) {
+      for (const entity of data.entities) {
+        if (entity.roles?.includes('registrar')) {
+          registrar = entity.vcardArray?.[1]?.find((v: any) => v[0] === 'fn')?.[3] || entity.handle;
+        }
+      }
+    }
+    
+    // Get nameservers
+    if (data.nameservers) {
+      nameservers = data.nameservers.map((ns: any) => ns.ldhName || ns.handle);
+    }
+    
+    return {
+      found: true,
+      registrationDate,
+      expiryDate,
+      registrar,
+      nameservers,
+      status: data.status || []
+    };
+  } catch (error) {
+    console.error('RDAP lookup error:', error);
+    return { found: false, error: 'RDAP lookup failed' };
+  }
+}
+
+// Check DNS resolution
+async function checkDnsResolution(domain: string, expectedIp?: string) {
+  try {
+    const dns = await import('dns');
+    const { promisify } = await import('util');
+    const resolve4 = promisify(dns.resolve4);
+    const resolveCname = promisify(dns.resolveCname);
+    
+    let resolved = false;
+    let records: string[] = [];
+    
+    try {
+      const aRecords = await resolve4(domain);
+      records = aRecords;
+      resolved = true;
+    } catch {
+      try {
+        const cnameRecords = await resolveCname(domain);
+        records = cnameRecords;
+        resolved = true;
+      } catch {
+        resolved = false;
+      }
+    }
+    
+    return { resolved, records };
+  } catch (error) {
+    return { resolved: false, records: [], error: 'DNS check failed' };
+  }
+}
+
+// Get all domains for a user
+app.get('/api/domains', async (c) => {
+  try {
+    const authHeader = c.req.header('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+    
+    const token = authHeader.substring(7);
+    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+    const userId = payload.sub;
+    
+    const result = await pool.query(
+      'SELECT * FROM user_domains WHERE user_id = $1 ORDER BY created_at DESC',
+      [userId]
+    );
+    
+    return c.json({ domains: result.rows });
+  } catch (error: any) {
+    console.error('Get domains error:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// Add a new domain
+app.post('/api/domains', async (c) => {
+  try {
+    const authHeader = c.req.header('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+    
+    const token = authHeader.substring(7);
+    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+    const userId = payload.sub;
+    
+    const { domain, websiteId } = await c.req.json();
+    
+    if (!domain) {
+      return c.json({ error: 'Domain is required' }, 400);
+    }
+    
+    // Clean domain (remove protocol, paths, etc.)
+    const cleanDomain = domain.toLowerCase()
+      .replace(/^https?:\/\//, '')
+      .replace(/^www\./, '')
+      .split('/')[0]
+      .trim();
+    
+    // Lookup domain info
+    const domainInfo = await lookupDomainInfo(cleanDomain);
+    
+    // Check DNS resolution
+    const dnsCheck = await checkDnsResolution(cleanDomain);
+    
+    const result = await pool.query(
+      `INSERT INTO user_domains (user_id, domain, website_id, status, dns_verified, registration_date, expiry_date, registrar, nameservers)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       ON CONFLICT (domain) DO UPDATE SET
+         website_id = EXCLUDED.website_id,
+         updated_at = NOW()
+       RETURNING *`,
+      [
+        userId,
+        cleanDomain,
+        websiteId || null,
+        dnsCheck.resolved ? 'connected' : 'pending',
+        dnsCheck.resolved,
+        domainInfo.registrationDate ? new Date(domainInfo.registrationDate) : null,
+        domainInfo.expiryDate ? new Date(domainInfo.expiryDate) : null,
+        domainInfo.registrar || null,
+        domainInfo.nameservers || []
+      ]
+    );
+    
+    return c.json({ 
+      success: true, 
+      domain: result.rows[0],
+      domainInfo,
+      dnsCheck
+    });
+  } catch (error: any) {
+    console.error('Add domain error:', error);
+    if (error.code === '23505') {
+      return c.json({ error: 'Domain already exists' }, 400);
+    }
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// Update domain
+app.put('/api/domains/:id', async (c) => {
+  try {
+    const authHeader = c.req.header('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+    
+    const token = authHeader.substring(7);
+    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+    const userId = payload.sub;
+    
+    const id = c.req.param('id');
+    const { websiteId } = await c.req.json();
+    
+    const result = await pool.query(
+      `UPDATE user_domains SET website_id = $1, updated_at = NOW() WHERE id = $2 AND user_id = $3 RETURNING *`,
+      [websiteId, id, userId]
+    );
+    
+    if (result.rows.length === 0) {
+      return c.json({ error: 'Domain not found' }, 404);
+    }
+    
+    return c.json({ success: true, domain: result.rows[0] });
+  } catch (error: any) {
+    console.error('Update domain error:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// Delete domain
+app.delete('/api/domains/:id', async (c) => {
+  try {
+    const authHeader = c.req.header('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+    
+    const token = authHeader.substring(7);
+    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+    const userId = payload.sub;
+    
+    const id = c.req.param('id');
+    
+    const result = await pool.query(
+      'DELETE FROM user_domains WHERE id = $1 AND user_id = $2 RETURNING *',
+      [id, userId]
+    );
+    
+    if (result.rows.length === 0) {
+      return c.json({ error: 'Domain not found' }, 404);
+    }
+    
+    return c.json({ success: true });
+  } catch (error: any) {
+    console.error('Delete domain error:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// Refresh domain status (re-check DNS and RDAP)
+app.post('/api/domains/:id/refresh', async (c) => {
+  try {
+    const authHeader = c.req.header('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+    
+    const token = authHeader.substring(7);
+    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+    const userId = payload.sub;
+    
+    const id = c.req.param('id');
+    
+    // Get current domain
+    const domainResult = await pool.query(
+      'SELECT * FROM user_domains WHERE id = $1 AND user_id = $2',
+      [id, userId]
+    );
+    
+    if (domainResult.rows.length === 0) {
+      return c.json({ error: 'Domain not found' }, 404);
+    }
+    
+    const domainRecord = domainResult.rows[0];
+    
+    // Re-check domain info and DNS
+    const domainInfo = await lookupDomainInfo(domainRecord.domain);
+    const dnsCheck = await checkDnsResolution(domainRecord.domain);
+    
+    // Update record
+    const updateResult = await pool.query(
+      `UPDATE user_domains SET 
+        status = $1, 
+        dns_verified = $2, 
+        registration_date = $3, 
+        expiry_date = $4, 
+        registrar = $5, 
+        nameservers = $6,
+        updated_at = NOW()
+       WHERE id = $7 RETURNING *`,
+      [
+        dnsCheck.resolved ? 'connected' : 'pending',
+        dnsCheck.resolved,
+        domainInfo.registrationDate ? new Date(domainInfo.registrationDate) : domainRecord.registration_date,
+        domainInfo.expiryDate ? new Date(domainInfo.expiryDate) : domainRecord.expiry_date,
+        domainInfo.registrar || domainRecord.registrar,
+        domainInfo.nameservers?.length ? domainInfo.nameservers : domainRecord.nameservers,
+        id
+      ]
+    );
+    
+    return c.json({ 
+      success: true, 
+      domain: updateResult.rows[0],
+      domainInfo,
+      dnsCheck
+    });
+  } catch (error: any) {
+    console.error('Refresh domain error:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// Lookup domain info (public endpoint for checking before adding)
+app.get('/api/domains/lookup/:domain', async (c) => {
+  try {
+    const domain = c.req.param('domain');
+    
+    // Clean domain
+    const cleanDomain = domain.toLowerCase()
+      .replace(/^https?:\/\//, '')
+      .replace(/^www\./, '')
+      .split('/')[0]
+      .trim();
+    
+    const domainInfo = await lookupDomainInfo(cleanDomain);
+    const dnsCheck = await checkDnsResolution(cleanDomain);
+    
+    return c.json({
+      domain: cleanDomain,
+      ...domainInfo,
+      dnsResolved: dnsCheck.resolved,
+      dnsRecords: dnsCheck.records
+    });
+  } catch (error: any) {
+    console.error('Domain lookup error:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
 // Determine ports - in production, use PORT env var; in development, use 3001 for API
 const isProduction = process.env.NODE_ENV === 'production';
 const apiPort = isProduction ? parseInt(process.env.PORT || '5000', 10) : 3001;
