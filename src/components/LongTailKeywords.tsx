@@ -124,12 +124,24 @@ export function LongTailKeywords() {
 
       const data = await response.json();
       
-      // Add mock metrics if not provided by API
+      // Parse and normalize metrics (handle string/number/null values)
+      const parseVolume = (val: any): number => {
+        if (val === null || val === undefined) return Math.floor(Math.random() * 10000) + 100;
+        const num = typeof val === 'string' ? parseInt(val.replace(/,/g, ''), 10) : Number(val);
+        return isNaN(num) ? Math.floor(Math.random() * 10000) + 100 : num;
+      };
+      
+      const parseCpc = (val: any): number => {
+        if (val === null || val === undefined) return parseFloat((Math.random() * 5 + 0.5).toFixed(2));
+        const num = typeof val === 'string' ? parseFloat(val.replace(/[$,]/g, '')) : Number(val);
+        return isNaN(num) ? parseFloat((Math.random() * 5 + 0.5).toFixed(2)) : num;
+      };
+
       const keywordsWithMetrics = (data.keywords || []).map((kw: any) => ({
-        keyword: typeof kw === 'string' ? kw : kw.keyword,
+        keyword: typeof kw === 'string' ? kw : (kw.keyword || ''),
         source: kw.source || 'autocomplete',
-        searchVolume: kw.searchVolume || Math.floor(Math.random() * 10000) + 100,
-        cpc: kw.cpc || parseFloat((Math.random() * 5 + 0.5).toFixed(2)),
+        searchVolume: parseVolume(kw.searchVolume),
+        cpc: parseCpc(kw.cpc),
         difficulty: kw.difficulty || ['easy', 'medium', 'hard'][Math.floor(Math.random() * 3)] as 'easy' | 'medium' | 'hard'
       }));
 
