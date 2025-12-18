@@ -437,57 +437,65 @@ export const CampaignPresets: React.FC<CampaignPresetsProps> = ({ onLoadPreset }
           </div>
         </div>
 
-        {/* Shell View Info Box */}
-        <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden mb-6">
-          <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
-            <div className="flex gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
-              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+        {/* Shell View - Two Boxes */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          {/* Box 1: Stats */}
+          <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
+              <div className="flex gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+              </div>
+              <span className="text-xs text-slate-400 ml-2 font-mono">preset_stats.sh</span>
             </div>
-            <span className="text-xs text-slate-400 ml-2 font-mono">preset_library.sh</span>
+            <div className="p-4 font-mono">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-1 text-center">
+                  <div className="text-2xl font-bold text-violet-400">{campaignPresets.length}</div>
+                  <div className="text-xs text-slate-400">Presets</div>
+                </div>
+                <div className="space-y-1 text-center">
+                  <div className="text-2xl font-bold text-emerald-400">5</div>
+                  <div className="text-xs text-slate-400">Structures</div>
+                </div>
+                <div className="space-y-1 text-center">
+                  <div className="text-2xl font-bold text-amber-400">CSV</div>
+                  <div className="text-xs text-slate-400">Export</div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="p-4 font-mono">
-            <div className="grid grid-cols-3 gap-6 mb-4">
-              <div className="space-y-1">
-                <div className="text-3xl font-bold text-violet-400">{campaignPresets.length}</div>
-                <div className="text-sm text-slate-400">Ready-to-Use Presets</div>
+
+          {/* Box 2: Details */}
+          <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
+              <div className="flex gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                <div className="w-3 h-3 rounded-full bg-green-500"></div>
               </div>
-              <div className="space-y-1">
-                <div className="text-3xl font-bold text-emerald-400">5</div>
-                <div className="text-sm text-slate-400">Campaign Structures</div>
-              </div>
-              <div className="space-y-1">
-                <div className="text-3xl font-bold text-amber-400">CSV</div>
-                <div className="text-sm text-slate-400">Google Ads Editor Export</div>
-              </div>
+              <span className="text-xs text-slate-400 ml-2 font-mono">preset_config.sh</span>
             </div>
-            <div className="border-t border-slate-700 pt-3 space-y-2 text-xs">
-              <div className="flex items-center gap-6 flex-wrap">
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-500">industries:</span>
-                  <span className="text-cyan-400">Home Services, Medical, Legal, Auto, Real Estate</span>
-                </div>
+            <div className="p-4 font-mono space-y-2 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="text-slate-500">industries:</span>
+                <span className="text-cyan-400">Home Services, Medical, Legal, Auto</span>
               </div>
-              <div className="flex items-center gap-6 flex-wrap">
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-500">keyword_range:</span>
-                  <span className="text-amber-400">410-710</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-500">ad_types:</span>
-                  <span className="text-pink-400">RSA, Call-Only, DKI</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-500">extensions:</span>
-                  <span className="text-blue-400">Sitelinks, Callouts, Snippets</span>
-                </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-slate-500">keywords:</span>
+                <span className="text-amber-400">410-710</span>
+                <span className="text-slate-600 mx-1">|</span>
+                <span className="text-slate-500">ads:</span>
+                <span className="text-pink-400">RSA, Call-Only, DKI</span>
               </div>
-              <div className="flex items-center gap-6 flex-wrap">
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-500">structures:</span>
-                  <span className="text-emerald-400">SKAG, STAG, Intent-Based, Alpha-Beta, Hybrid</span>
-                </div>
+              <div className="flex items-center gap-2">
+                <span className="text-slate-500">extensions:</span>
+                <span className="text-blue-400">Sitelinks, Callouts, Snippets</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-slate-500">structures:</span>
+                <span className="text-emerald-400">SKAG, STAG, Intent-Based, Alpha-Beta</span>
               </div>
             </div>
           </div>
