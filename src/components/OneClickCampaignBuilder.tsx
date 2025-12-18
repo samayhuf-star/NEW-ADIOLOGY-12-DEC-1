@@ -345,7 +345,7 @@ export function OneClickCampaignBuilder() {
   return (
     <div className="min-h-screen bg-slate-50 p-6">
       {currentStep === 'input' && (
-        <div className="max-w-4xl mx-auto space-y-8">
+        <div className="max-w-4xl mx-auto space-y-6">
           <div className="space-y-2">
             <div>
               <h1 className="text-2xl font-semibold text-slate-800">1-Click Campaign Builder</h1>
@@ -353,97 +353,70 @@ export function OneClickCampaignBuilder() {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="md:col-span-2 space-y-6">
-              <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-5">
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-slate-700">
-                    Landing Page URL
-                  </label>
-                  <Input
-                    type="url"
-                    value={websiteUrl}
-                    onChange={(e) => setWebsiteUrl(e.target.value)}
-                    placeholder="https://example.com"
-                    className="h-12 text-base border-slate-200 focus:border-slate-400 focus:ring-slate-400"
-                  />
-                </div>
-
-                {error && (
-                  <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <AlertCircle className="w-5 h-5 text-red-500" />
-                    <span className="text-sm text-red-700">{error}</span>
-                  </div>
-                )}
-
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
-                  <p className="text-sm text-slate-600">
-                    <span className="font-medium text-slate-700">Default Settings:</span> Mobile + Desktop, Search Network, USA, English
-                  </p>
-                </div>
-
-                <Button
-                  onClick={handleAnalyze}
-                  disabled={isGenerating}
-                  className="w-full bg-slate-800 hover:bg-slate-900 text-white py-6 text-base font-medium"
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Zap className="w-5 h-5 mr-2" />
-                      Generate Campaign
-                    </>
-                  )}
-                </Button>
+          {/* Shell View - AI Automation Info */}
+          <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border-b border-slate-700">
+              <div className="flex gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                <div className="w-3 h-3 rounded-full bg-green-500"></div>
               </div>
+              <span className="text-xs text-slate-400 ml-2 font-mono">ai_campaign_builder.sh</span>
+            </div>
+            <div className="p-4 font-mono text-sm space-y-1">
+              <p className="text-emerald-400 mb-2">AI will automatically:</p>
+              <p className="text-green-400">✓ Analyze your website content</p>
+              <p className="text-green-400">✓ Generate 100+ targeted keywords</p>
+              <p className="text-green-400">✓ Create high-converting ad copy</p>
+              <p className="text-green-400">✓ Build complete campaign structure</p>
+              <p className="text-green-400">✓ Export ready-to-import CSV</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-5">
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-slate-700">
+                Landing Page URL
+              </label>
+              <Input
+                type="url"
+                value={websiteUrl}
+                onChange={(e) => setWebsiteUrl(e.target.value)}
+                placeholder="https://example.com"
+                className="h-12 text-base border-slate-200 focus:border-slate-400 focus:ring-slate-400"
+              />
             </div>
 
-            <div className="hidden md:block space-y-4">
-              <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-blue-50 rounded-2xl border border-indigo-100 p-6 shadow-sm">
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
-                    <Sparkles className="w-5 h-5 text-white" />
-                  </div>
-                  <h3 className="text-base font-semibold text-slate-800">AI will automatically:</h3>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3 p-3 bg-white/60 rounded-xl border border-white/80 backdrop-blur-sm">
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center flex-shrink-0 shadow-sm">
-                      <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
-                    </div>
-                    <span className="text-sm text-slate-700 font-medium">Analyze your website content</span>
-                  </div>
-                  <div className="flex items-start gap-3 p-3 bg-white/60 rounded-xl border border-white/80 backdrop-blur-sm">
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center flex-shrink-0 shadow-sm">
-                      <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
-                    </div>
-                    <span className="text-sm text-slate-700 font-medium">Generate 100+ targeted keywords</span>
-                  </div>
-                  <div className="flex items-start gap-3 p-3 bg-white/60 rounded-xl border border-white/80 backdrop-blur-sm">
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center flex-shrink-0 shadow-sm">
-                      <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
-                    </div>
-                    <span className="text-sm text-slate-700 font-medium">Create high-converting ad copy</span>
-                  </div>
-                  <div className="flex items-start gap-3 p-3 bg-white/60 rounded-xl border border-white/80 backdrop-blur-sm">
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center flex-shrink-0 shadow-sm">
-                      <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
-                    </div>
-                    <span className="text-sm text-slate-700 font-medium">Build complete campaign structure</span>
-                  </div>
-                  <div className="flex items-start gap-3 p-3 bg-white/60 rounded-xl border border-white/80 backdrop-blur-sm">
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center flex-shrink-0 shadow-sm">
-                      <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
-                    </div>
-                    <span className="text-sm text-slate-700 font-medium">Export ready-to-import CSV</span>
-                  </div>
-                </div>
+            {error && (
+              <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <AlertCircle className="w-5 h-5 text-red-500" />
+                <span className="text-sm text-red-700">{error}</span>
               </div>
+            )}
+
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+              <p className="text-sm text-slate-600">
+                <span className="font-medium text-slate-700">Default Settings:</span> Mobile + Desktop, Search Network, USA, English
+              </p>
             </div>
+
+            <Button
+              onClick={handleAnalyze}
+              disabled={isGenerating}
+              className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white py-6 text-base font-medium"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Zap className="w-5 h-5 mr-2" />
+                  Generate Campaign
+                </>
+              )}
+            </Button>
           </div>
         </div>
       )}
