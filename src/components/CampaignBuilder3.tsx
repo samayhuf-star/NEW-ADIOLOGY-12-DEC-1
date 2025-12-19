@@ -39,6 +39,7 @@ import { exportCampaignToCSVV3, validateCSVBeforeExport } from '../utils/csvGene
 import { exportCampaignToGoogleAdsEditorCSV, campaignStructureToCSVRows, GOOGLE_ADS_EDITOR_HEADERS } from '../utils/googleAdsEditorCSVExporter';
 import { validateAndFixAds, formatValidationReport } from '../utils/adValidationUtils';
 import Papa from 'papaparse';
+import JSZip from 'jszip';
 import { historyService } from '../utils/historyService';
 import { generateCSVWithBackend } from '../utils/csvExportBackend';
 import { convertBuilderDataToEditorFormat, downloadGoogleAdsEditorCSV } from '../utils/googleAdsEditorCSV';
