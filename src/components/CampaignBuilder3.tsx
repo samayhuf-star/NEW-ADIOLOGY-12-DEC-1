@@ -3540,16 +3540,20 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                             sk => (sk?.id || sk?.text || sk?.keyword || sk) === (kw?.id || kw?.text || kw?.keyword || kw)
                           );
                           
-                          const formatVolume = (v: number | null | undefined) => {
-                            if (v === null || v === undefined) return '-';
-                            if (v >= 1000000) return (v / 1000000).toFixed(1) + 'M';
-                            if (v >= 1000) return (v / 1000).toFixed(1) + 'K';
-                            return v.toString();
+                          const formatVolume = (v: number | string | null | undefined) => {
+                            if (v === null || v === undefined || v === '') return '-';
+                            const num = typeof v === 'string' ? parseFloat(v) : v;
+                            if (isNaN(num)) return '-';
+                            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+                            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+                            return num.toString();
                           };
                           
-                          const formatCpc = (c: number | null | undefined) => {
-                            if (c === null || c === undefined) return '-';
-                            return '$' + c.toFixed(2);
+                          const formatCpc = (c: number | string | null | undefined) => {
+                            if (c === null || c === undefined || c === '') return '-';
+                            const num = typeof c === 'string' ? parseFloat(c) : c;
+                            if (isNaN(num)) return '-';
+                            return '$' + num.toFixed(2);
                           };
                           
                           const getCompetitionStyle = (comp: string | null | undefined) => {
