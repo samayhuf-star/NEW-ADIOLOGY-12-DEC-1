@@ -3203,53 +3203,59 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
         const details = structureDetails[campaignData.selectedStructure] || structureDetails['skag'];
         
         return (
-          <Card className="mb-6 border-slate-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-indigo-100">
-                    <Icon className="w-5 h-5 text-indigo-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-slate-800">{selectedStruct?.name}</h3>
-                    <p className="text-sm text-slate-500">{selectedStruct?.description}</p>
-                  </div>
-                </div>
-                {isBest && (
-                  <Badge className="bg-indigo-100 text-indigo-700 border-indigo-200">Best</Badge>
-                )}
+          <div className="mb-6 rounded-xl overflow-hidden shadow-lg border border-slate-700">
+            {/* Terminal Header */}
+            <div className="bg-slate-800 px-4 py-2 flex items-center justify-between border-b border-slate-700">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+                <div className="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
+                <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+              </div>
+              <span className="text-slate-400 text-xs font-mono">structure-info.sh</span>
+              <div className="w-16"></div>
+            </div>
+            
+            {/* Terminal Body */}
+            <div className="bg-slate-900 p-4 font-mono text-xs">
+              {/* Header with name */}
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-emerald-400 font-semibold">[{selectedStruct?.name}]</span>
+                {isBest && <span className="text-yellow-400">*RECOMMENDED*</span>}
               </div>
               
-              <div className="border border-slate-200 rounded-lg p-4 mb-4">
-                <p className="text-sm font-medium text-slate-700 mb-3">Campaign</p>
-                <div className="space-y-2">
+              {/* Description */}
+              <div className="text-slate-400 mb-3">&gt; {selectedStruct?.description}</div>
+              
+              {/* Hierarchy - Compact inline */}
+              <div className="mb-2">
+                <span className="text-cyan-400">hierarchy:</span>
+                <span className="text-slate-300 ml-2">
                   {details.hierarchy.map((item, idx) => (
-                    <div key={idx} className={`border rounded-lg p-3 ${item.color}`}>
-                      <p className="text-sm font-medium text-slate-700">{item.name}</p>
-                      <p className="text-xs text-slate-500 font-mono">{item.desc}</p>
-                    </div>
+                    <span key={idx}>
+                      <span className="text-purple-400">{item.name}</span>
+                      {idx < details.hierarchy.length - 1 && <span className="text-slate-500"> → </span>}
+                    </span>
                   ))}
-                </div>
+                </span>
               </div>
               
-              <div className="mb-4">
-                <p className="text-sm font-medium text-slate-700 mb-2">Key Benefits:</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {details.benefits.map((benefit, idx) => (
-                    <div key={idx} className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
-                      <span className="text-sm text-slate-600">{benefit}</span>
-                    </div>
+              {/* Benefits - Single line */}
+              <div className="mb-2">
+                <span className="text-cyan-400">benefits:</span>
+                <span className="text-emerald-400 ml-2">
+                  {details.benefits.map((b, i) => (
+                    <span key={i}>&#10003; {b}{i < details.benefits.length - 1 ? ' | ' : ''}</span>
                   ))}
-                </div>
+                </span>
               </div>
               
-              <p className="text-sm">
-                <span className="font-medium text-pink-600">Best for:</span>{' '}
-                <span className="text-slate-600">{details.bestFor}</span>
-              </p>
-            </CardContent>
-          </Card>
+              {/* Best for */}
+              <div>
+                <span className="text-pink-400">best_for:</span>
+                <span className="text-slate-300 ml-2">{details.bestFor}</span>
+              </div>
+            </div>
+          </div>
         );
       })()}
 
