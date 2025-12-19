@@ -2718,6 +2718,24 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
   // Render functions for each step
   const renderStep1 = () => (
     <div className="max-w-4xl mx-auto p-6">
+      {/* Step Navigation */}
+      <div className="flex justify-between items-center mb-6">
+        <button
+          onClick={handleBackStep}
+          disabled={true}
+          className="text-2xl font-semibold italic bg-gradient-to-r from-slate-300 to-slate-400 bg-clip-text text-transparent cursor-not-allowed opacity-50"
+        >
+          Back
+        </button>
+        <button
+          onClick={handleNextStep}
+          disabled={loading}
+          className="text-2xl font-semibold italic bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50"
+        >
+          Next
+        </button>
+      </div>
+
       <div className="mb-8">
         <h3 className="text-lg font-semibold text-slate-800 mb-2">Enter Your Website URL</h3>
         <p className="text-slate-600">AI will analyze your website to identify intent, CTA, and vertical</p>
@@ -2853,6 +2871,23 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
 
   const renderStep2 = () => (
     <div className="max-w-6xl mx-auto p-6">
+      {/* Step Navigation */}
+      <div className="flex justify-between items-center mb-6">
+        <button
+          onClick={handleBackStep}
+          className="text-2xl font-semibold italic bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent hover:from-indigo-500 hover:to-purple-500"
+        >
+          Back
+        </button>
+        <button
+          onClick={handleNextStep}
+          disabled={loading}
+          className="text-2xl font-semibold italic bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50"
+        >
+          Next
+        </button>
+      </div>
+
       <div className="mb-8">
         <h3 className="text-lg font-semibold text-slate-800 mb-2">Select Campaign Structure</h3>
         <p className="text-slate-600">AI has ranked the best structures for your vertical. Choose the one that fits your needs.</p>
@@ -3223,6 +3258,23 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
 
   const renderStep3 = () => (
     <div className="max-w-6xl mx-auto p-6">
+      {/* Step Navigation */}
+      <div className="flex justify-between items-center mb-6">
+        <button
+          onClick={handleBackStep}
+          className="text-2xl font-semibold italic bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent hover:from-indigo-500 hover:to-purple-500"
+        >
+          Back
+        </button>
+        <button
+          onClick={handleNextStep}
+          disabled={loading}
+          className="text-2xl font-semibold italic bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50"
+        >
+          Next
+        </button>
+      </div>
+
       <div className="mb-8">
         <h3 className="text-lg font-semibold text-slate-800 mb-2">Keywords Planner</h3>
         <p className="text-slate-600">Generate 410-710 keywords based on your seed keywords and campaign structure</p>
@@ -3535,6 +3587,23 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
 
     return (
       <div className="max-w-7xl mx-auto p-6">
+        {/* Step Navigation */}
+        <div className="flex justify-between items-center mb-6">
+          <button
+            onClick={handleBackStep}
+            className="text-2xl font-semibold italic bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent hover:from-indigo-500 hover:to-purple-500"
+          >
+            Back
+          </button>
+          <button
+            onClick={handleNextStep}
+            disabled={loading}
+            className="text-2xl font-semibold italic bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+
         <div className="mb-8">
           <h3 className="text-lg font-semibold text-slate-800 mb-2">Ads & Extensions</h3>
         </div>
@@ -4138,6 +4207,23 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
 
     return (
       <div className="max-w-5xl mx-auto p-6">
+        {/* Step Navigation */}
+        <div className="flex justify-between items-center mb-6">
+          <button
+            onClick={handleBackStep}
+            className="text-2xl font-semibold italic bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent hover:from-indigo-500 hover:to-purple-500"
+          >
+            Back
+          </button>
+          <button
+            onClick={handleNextStep}
+            disabled={loading}
+            className="text-2xl font-semibold italic bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+
         {/* Header with gradient */}
         <div className="mb-8 text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 shadow-lg shadow-indigo-200/50 mb-4">
