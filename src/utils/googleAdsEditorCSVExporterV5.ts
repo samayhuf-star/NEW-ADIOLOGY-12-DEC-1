@@ -657,22 +657,52 @@ export function convertToV5Format(legacyData: any): CampaignDataV5 {
         campaign.adGroups.push(targetGroup);
       }
       
-      const convertedAd: AdV5 = {
-        type: ad.type === 'call_only' ? 'CallOnly' : 
-              ad.type === 'dki' ? 'DKI' : 'RSA',
-        headlines: [
+      // Handle headlines - RSA uses headlines array, DKI uses individual fields
+      let headlines: string[] = [];
+      if (ad.headlines && Array.isArray(ad.headlines) && ad.headlines.length > 0) {
+        // RSA format - use headlines array directly
+        headlines = ad.headlines.filter((h: string) => h && h.trim());
+      } else {
+        // DKI/legacy format - use individual headline fields
+        headlines = [
           ad.headline1 || '',
           ad.headline2 || '',
           ad.headline3 || '',
           ad.headline4 || '',
-          ad.headline5 || ''
-        ].filter(h => h),
-        descriptions: [
+          ad.headline5 || '',
+          ad.headline6 || '',
+          ad.headline7 || '',
+          ad.headline8 || '',
+          ad.headline9 || '',
+          ad.headline10 || '',
+          ad.headline11 || '',
+          ad.headline12 || '',
+          ad.headline13 || '',
+          ad.headline14 || '',
+          ad.headline15 || ''
+        ].filter(h => h && h.trim());
+      }
+      
+      // Handle descriptions - same logic
+      let descriptions: string[] = [];
+      if (ad.descriptions && Array.isArray(ad.descriptions) && ad.descriptions.length > 0) {
+        descriptions = ad.descriptions.filter((d: string) => d && d.trim());
+      } else {
+        descriptions = [
           ad.description1 || '',
-          ad.description2 || ''
-        ].filter(d => d),
-        path1: ad.path1 || '',
-        path2: ad.path2 || '',
+          ad.description2 || '',
+          ad.description3 || '',
+          ad.description4 || ''
+        ].filter(d => d && d.trim());
+      }
+      
+      const convertedAd: AdV5 = {
+        type: ad.type === 'call_only' ? 'CallOnly' : 
+              ad.type === 'dki' ? 'DKI' : 'RSA',
+        headlines,
+        descriptions,
+        path1: ad.path1 || (ad.displayPath && ad.displayPath[0]) || '',
+        path2: ad.path2 || (ad.displayPath && ad.displayPath[1]) || '',
         finalUrl: ad.finalUrl || ad.final_url || legacyData.url || '',
         phoneNumber: ad.phoneNumber || '',
         verificationUrl: ad.verificationUrl || '',
