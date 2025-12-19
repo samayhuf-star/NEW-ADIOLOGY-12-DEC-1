@@ -382,6 +382,143 @@ export const NETHERLANDS_ZIP_CODES_EXTENDED = (() => {
   return zips.slice(0, 5000);
 })();
 
+// Canadian postal codes (FSA - Forward Sortation Areas)
+export const CANADA_ZIP_CODES_EXTENDED = (() => {
+  const zips: string[] = [];
+  const letters = ['A', 'B', 'C', 'E', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'R', 'S', 'T', 'V', 'X', 'Y'];
+  const digits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+  const secondLetters = ['A', 'B', 'C', 'E', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'R', 'S', 'T', 'V', 'W', 'X', 'Y', 'Z'];
+  for (const l1 of letters) {
+    for (const d1 of digits) {
+      for (const l2 of secondLetters.slice(0, 10)) {
+        zips.push(`${l1}${d1}${l2}`);
+      }
+    }
+  }
+  return zips.slice(0, 5000);
+})();
+
+// Australian postcodes
+export const AUSTRALIA_ZIP_CODES_EXTENDED = (() => {
+  const zips: string[] = [];
+  // NSW: 2000-2999, VIC: 3000-3999, QLD: 4000-4999, SA: 5000-5999, WA: 6000-6999, TAS: 7000-7999
+  for (let i = 2000; i <= 2999; i++) zips.push(String(i));
+  for (let i = 3000; i <= 3999; i++) zips.push(String(i));
+  for (let i = 4000; i <= 4999; i++) zips.push(String(i));
+  for (let i = 5000; i <= 5999; i++) zips.push(String(i));
+  for (let i = 6000; i <= 6999; i++) zips.push(String(i));
+  for (let i = 7000; i <= 7999; i++) zips.push(String(i));
+  return zips;
+})();
+
+// French postal codes
+export const FRANCE_ZIP_CODES_EXTENDED = (() => {
+  const zips: string[] = [];
+  const departments = [
+    { start: 75001, count: 20 }, // Paris
+    { start: 13001, count: 16 }, // Marseille
+    { start: 69001, count: 9 }, // Lyon
+    { start: 31000, count: 50 }, // Toulouse
+    { start: 6000, count: 50 }, // Nice
+    { start: 44000, count: 50 }, // Nantes
+    { start: 34000, count: 50 }, // Montpellier
+    { start: 67000, count: 50 }, // Strasbourg
+    { start: 33000, count: 50 }, // Bordeaux
+    { start: 59000, count: 100 }, // Lille region
+  ];
+  for (const dept of departments) {
+    for (let i = 0; i < dept.count; i++) {
+      zips.push(String(dept.start + i).padStart(5, '0'));
+    }
+  }
+  // Add more general postal codes
+  for (let i = 1000; i <= 95999; i += 10) {
+    zips.push(String(i).padStart(5, '0'));
+  }
+  return [...new Set(zips)].slice(0, 5000);
+})();
+
+// Italian CAP postal codes
+export const ITALY_ZIP_CODES_EXTENDED = (() => {
+  const zips: string[] = [];
+  const metroRanges = [
+    { start: 100, count: 200 }, // Rome
+    { start: 20100, count: 150 }, // Milan
+    { start: 80100, count: 100 }, // Naples
+    { start: 10100, count: 100 }, // Turin
+    { start: 90100, count: 80 }, // Palermo
+    { start: 16100, count: 80 }, // Genoa
+    { start: 40100, count: 80 }, // Bologna
+    { start: 50100, count: 80 }, // Florence
+  ];
+  for (const range of metroRanges) {
+    for (let i = 0; i < range.count; i++) {
+      zips.push(String(range.start + i).padStart(5, '0'));
+    }
+  }
+  return [...new Set(zips)].slice(0, 5000);
+})();
+
+// Spanish postal codes
+export const SPAIN_ZIP_CODES_EXTENDED = (() => {
+  const zips: string[] = [];
+  const metroRanges = [
+    { start: 28001, count: 100 }, // Madrid
+    { start: 8001, count: 100 }, // Barcelona
+    { start: 46001, count: 80 }, // Valencia
+    { start: 41001, count: 80 }, // Seville
+    { start: 50001, count: 60 }, // Zaragoza
+    { start: 29001, count: 60 }, // Málaga
+    { start: 30001, count: 60 }, // Murcia
+    { start: 7001, count: 50 }, // Palma
+    { start: 48001, count: 50 }, // Bilbao
+  ];
+  for (const range of metroRanges) {
+    for (let i = 0; i < range.count; i++) {
+      zips.push(String(range.start + i).padStart(5, '0'));
+    }
+  }
+  return [...new Set(zips)].slice(0, 5000);
+})();
+
+// Belgian postal codes
+export const BELGIUM_ZIP_CODES_EXTENDED = (() => {
+  const zips: string[] = [];
+  for (let i = 1000; i <= 9999; i++) {
+    zips.push(String(i));
+  }
+  return zips;
+})();
+
+// Swiss postal codes
+export const SWITZERLAND_ZIP_CODES_EXTENDED = (() => {
+  const zips: string[] = [];
+  for (let i = 1000; i <= 9999; i++) {
+    zips.push(String(i));
+  }
+  return zips;
+})();
+
+// Polish postal codes
+export const POLAND_ZIP_CODES_EXTENDED = (() => {
+  const zips: string[] = [];
+  for (let i = 0; i <= 99; i++) {
+    for (let j = 0; j <= 999; j++) {
+      zips.push(`${String(i).padStart(2, '0')}-${String(j).padStart(3, '0')}`);
+    }
+  }
+  return zips.slice(0, 5000);
+})();
+
+// Austrian postal codes
+export const AUSTRIA_ZIP_CODES_EXTENDED = (() => {
+  const zips: string[] = [];
+  for (let i = 1010; i <= 9999; i++) {
+    zips.push(String(i));
+  }
+  return zips.slice(0, 5000);
+})();
+
 // Italy cities
 export const ITALY_CITIES_TOP_500 = [
   'Rome', 'Milan', 'Naples', 'Turin', 'Palermo', 'Genoa', 'Bologna', 'Florence',
@@ -666,10 +803,10 @@ export const COUNTRY_GEO_PRESETS: Record<string, {
       top50: CANADA_STATES_ALL,
     },
     zips: {
-      top1000: [],
-      top5000: [],
-      top15000: [],
-      top25000: [],
+      top1000: CANADA_ZIP_CODES_EXTENDED.slice(0, 1000),
+      top5000: CANADA_ZIP_CODES_EXTENDED,
+      top15000: CANADA_ZIP_CODES_EXTENDED,
+      top25000: CANADA_ZIP_CODES_EXTENDED,
     },
   },
   'Australia': {
@@ -684,10 +821,10 @@ export const COUNTRY_GEO_PRESETS: Record<string, {
       top50: AUSTRALIA_STATES_ALL,
     },
     zips: {
-      top1000: [],
-      top5000: [],
-      top15000: [],
-      top25000: [],
+      top1000: AUSTRALIA_ZIP_CODES_EXTENDED.slice(0, 1000),
+      top5000: AUSTRALIA_ZIP_CODES_EXTENDED.slice(0, 5000),
+      top15000: AUSTRALIA_ZIP_CODES_EXTENDED,
+      top25000: AUSTRALIA_ZIP_CODES_EXTENDED,
     },
   },
   'France': {
@@ -702,10 +839,10 @@ export const COUNTRY_GEO_PRESETS: Record<string, {
       top50: FRANCE_STATES_ALL,
     },
     zips: {
-      top1000: [],
-      top5000: [],
-      top15000: [],
-      top25000: [],
+      top1000: FRANCE_ZIP_CODES_EXTENDED.slice(0, 1000),
+      top5000: FRANCE_ZIP_CODES_EXTENDED,
+      top15000: FRANCE_ZIP_CODES_EXTENDED,
+      top25000: FRANCE_ZIP_CODES_EXTENDED,
     },
   },
   'Netherlands': {
@@ -737,7 +874,12 @@ export const COUNTRY_GEO_PRESETS: Record<string, {
       top25: ITALY_STATES_ALL,
       top50: ITALY_STATES_ALL,
     },
-    zips: { top1000: [], top5000: [], top15000: [], top25000: [] },
+    zips: {
+      top1000: ITALY_ZIP_CODES_EXTENDED.slice(0, 1000),
+      top5000: ITALY_ZIP_CODES_EXTENDED,
+      top15000: ITALY_ZIP_CODES_EXTENDED,
+      top25000: ITALY_ZIP_CODES_EXTENDED,
+    },
   },
   'Spain': {
     cities: {
@@ -750,7 +892,12 @@ export const COUNTRY_GEO_PRESETS: Record<string, {
       top25: SPAIN_STATES_ALL,
       top50: SPAIN_STATES_ALL,
     },
-    zips: { top1000: [], top5000: [], top15000: [], top25000: [] },
+    zips: {
+      top1000: SPAIN_ZIP_CODES_EXTENDED.slice(0, 1000),
+      top5000: SPAIN_ZIP_CODES_EXTENDED,
+      top15000: SPAIN_ZIP_CODES_EXTENDED,
+      top25000: SPAIN_ZIP_CODES_EXTENDED,
+    },
   },
   'Belgium': {
     cities: {
@@ -763,7 +910,12 @@ export const COUNTRY_GEO_PRESETS: Record<string, {
       top25: BELGIUM_STATES_ALL,
       top50: BELGIUM_STATES_ALL,
     },
-    zips: { top1000: [], top5000: [], top15000: [], top25000: [] },
+    zips: {
+      top1000: BELGIUM_ZIP_CODES_EXTENDED.slice(0, 1000),
+      top5000: BELGIUM_ZIP_CODES_EXTENDED.slice(0, 5000),
+      top15000: BELGIUM_ZIP_CODES_EXTENDED,
+      top25000: BELGIUM_ZIP_CODES_EXTENDED,
+    },
   },
   'Switzerland': {
     cities: {
@@ -776,7 +928,12 @@ export const COUNTRY_GEO_PRESETS: Record<string, {
       top25: SWITZERLAND_STATES_ALL,
       top50: SWITZERLAND_STATES_ALL,
     },
-    zips: { top1000: [], top5000: [], top15000: [], top25000: [] },
+    zips: {
+      top1000: SWITZERLAND_ZIP_CODES_EXTENDED.slice(0, 1000),
+      top5000: SWITZERLAND_ZIP_CODES_EXTENDED.slice(0, 5000),
+      top15000: SWITZERLAND_ZIP_CODES_EXTENDED,
+      top25000: SWITZERLAND_ZIP_CODES_EXTENDED,
+    },
   },
   'Sweden': {
     cities: {
@@ -841,7 +998,12 @@ export const COUNTRY_GEO_PRESETS: Record<string, {
       top25: POLAND_STATES_ALL,
       top50: POLAND_STATES_ALL,
     },
-    zips: { top1000: [], top5000: [], top15000: [], top25000: [] },
+    zips: {
+      top1000: POLAND_ZIP_CODES_EXTENDED.slice(0, 1000),
+      top5000: POLAND_ZIP_CODES_EXTENDED,
+      top15000: POLAND_ZIP_CODES_EXTENDED,
+      top25000: POLAND_ZIP_CODES_EXTENDED,
+    },
   },
   'Austria': {
     cities: {
@@ -854,7 +1016,12 @@ export const COUNTRY_GEO_PRESETS: Record<string, {
       top25: AUSTRIA_STATES_ALL,
       top50: AUSTRIA_STATES_ALL,
     },
-    zips: { top1000: [], top5000: [], top15000: [], top25000: [] },
+    zips: {
+      top1000: AUSTRIA_ZIP_CODES_EXTENDED.slice(0, 1000),
+      top5000: AUSTRIA_ZIP_CODES_EXTENDED,
+      top15000: AUSTRIA_ZIP_CODES_EXTENDED,
+      top25000: AUSTRIA_ZIP_CODES_EXTENDED,
+    },
   },
   'Ireland': {
     cities: {
