@@ -3449,7 +3449,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
           <Card className="mb-6" data-keywords-section>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <span>Generated Keywords & Negative Keywords ({filteredKeywords.length + campaignData.negativeKeywords.length})</span>
+                  <span>Generated Keywords & Negative Keywords ({campaignData.selectedKeywords.length} selected / {filteredKeywords.length} total)</span>
                   <div className="flex items-center gap-2 text-xs font-normal">
                     <span className="text-slate-500">Data Source:</span>
                     <Badge variant="outline" className={`text-xs ${
@@ -3467,12 +3467,48 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                     </Badge>
                   </div>
                 </CardTitle>
-                <CardDescription>Keywords with search volume, CPC, and competition metrics. Red keywords are negative (excluded).</CardDescription>
+                <CardDescription>Keywords with search volume, CPC, and competition metrics. Click checkboxes to select/unselect keywords.</CardDescription>
               </CardHeader>
             <CardContent>
+              {/* Select All / Deselect All Controls */}
+              <div className="flex items-center gap-4 mb-4 p-3 bg-slate-50 rounded-lg border">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setCampaignData(prev => ({
+                      ...prev,
+                      selectedKeywords: [...filteredKeywords]
+                    }));
+                  }}
+                  className="text-xs"
+                >
+                  <Check className="w-3 h-3 mr-1" />
+                  Select All ({filteredKeywords.length})
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setCampaignData(prev => ({
+                      ...prev,
+                      selectedKeywords: []
+                    }));
+                  }}
+                  className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <X className="w-3 h-3 mr-1" />
+                  Deselect All
+                </Button>
+                <span className="text-xs text-slate-500 ml-auto">
+                  {campaignData.selectedKeywords.length} of {filteredKeywords.length} keywords selected
+                </span>
+              </div>
+
               {/* Column Headers */}
               <div className="hidden md:grid grid-cols-12 gap-2 p-2 mb-2 text-xs font-semibold text-slate-600 bg-slate-100 rounded-t border">
-                <div className="col-span-5">Keyword</div>
+                <div className="col-span-1 text-center">Select</div>
+                <div className="col-span-4">Keyword</div>
                 <div className="col-span-1 text-center">Type</div>
                 <div className="col-span-2 text-center">Volume</div>
                 <div className="col-span-2 text-center">CPC</div>
@@ -3490,9 +3526,13 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                         {/* Generated Keywords with Metrics */}
                         {filteredKeywords.map((kw, idx) => {
                           const keywordText = typeof kw === 'string' ? kw : (kw?.text || kw?.keyword || String(kw || ''));
+                          const keywordId = kw?.id || `kw-${idx}`;
                           const volume = kw?.volume ?? kw?.avgMonthlySearches;
                           const cpc = kw?.cpc ?? kw?.avgCpc;
                           const competition = kw?.competition;
+                          const isSelected = campaignData.selectedKeywords.some(
+                            sk => (sk?.id || sk?.text || sk?.keyword || sk) === (kw?.id || kw?.text || kw?.keyword || kw)
+                          );
                           
                           const formatVolume = (v: number | null | undefined) => {
                             if (v === null || v === undefined) return '-';
@@ -3514,11 +3554,45 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                               default: return 'bg-slate-50 text-slate-500 border-slate-200';
                             }
                           };
+
+                          const toggleKeywordSelection = () => {
+                            setCampaignData(prev => {
+                              if (isSelected) {
+                                return {
+                                  ...prev,
+                                  selectedKeywords: prev.selectedKeywords.filter(
+                                    sk => (sk?.id || sk?.text || sk?.keyword || sk) !== (kw?.id || kw?.text || kw?.keyword || kw)
+                                  )
+                                };
+                              } else {
+                                return {
+                                  ...prev,
+                                  selectedKeywords: [...prev.selectedKeywords, kw]
+                                };
+                              }
+                            });
+                          };
                           
                           return (
-                            <div key={kw?.id || idx} className="grid grid-cols-12 gap-2 items-center p-2 border rounded bg-white hover:bg-slate-50 transition-colors">
-                              <div className="col-span-12 md:col-span-5">
-                                <span className="text-sm font-medium text-slate-800">{keywordText}</span>
+                            <div 
+                              key={keywordId} 
+                              className={`grid grid-cols-12 gap-2 items-center p-2 border rounded transition-colors cursor-pointer ${
+                                isSelected 
+                                  ? 'bg-indigo-50 border-indigo-200 hover:bg-indigo-100' 
+                                  : 'bg-white hover:bg-slate-50 border-slate-200 opacity-60'
+                              }`}
+                              onClick={toggleKeywordSelection}
+                            >
+                              <div className="col-span-2 md:col-span-1 flex justify-center">
+                                <Checkbox
+                                  checked={isSelected}
+                                  onCheckedChange={toggleKeywordSelection}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="data-[state=checked]:bg-indigo-600"
+                                />
+                              </div>
+                              <div className="col-span-10 md:col-span-4">
+                                <span className={`text-sm font-medium ${isSelected ? 'text-slate-800' : 'text-slate-500'}`}>{keywordText}</span>
                               </div>
                               <div className="col-span-4 md:col-span-1 flex justify-center">
                                 {kw?.matchType && (
