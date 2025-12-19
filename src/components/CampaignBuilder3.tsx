@@ -4728,92 +4728,108 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
             </Card>
           </div>
 
-          {/* Campaign Summary - Redesigned */}
-          <Card className="mb-6 border-2 border-slate-200/60 bg-white/80 backdrop-blur-xl shadow-2xl">
-            <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-slate-200 py-3 px-4">
+          {/* Campaign Summary - Shell View */}
+          <div className="mb-6 rounded-xl overflow-hidden shadow-2xl border border-slate-700">
+            {/* Terminal Header */}
+            <div className="bg-slate-800 px-4 py-3 flex items-center justify-between border-b border-slate-700">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-md">
-                  <CheckCircle2 className="w-5 h-5 text-white" />
+                <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                <div className="w-3 h-3 rounded-full bg-green-500"></div>
               </div>
-              <div>
-                  <CardTitle className="text-lg text-slate-900">Campaign Summary</CardTitle>
-                  <CardDescription className="text-xs text-slate-600 mt-0.5">All checks passed - ready for export</CardDescription>
-              </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Campaign Name</Label>
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                    <p className="text-base font-semibold text-slate-900">{campaignData.campaignName}</p>
+              <span className="text-slate-400 text-xs font-mono">campaign-export.sh</span>
+              <div className="w-16"></div>
             </div>
+            
+            {/* Terminal Body */}
+            <div className="bg-slate-900 p-5 font-mono text-sm space-y-3">
+              {/* Header */}
+              <div className="text-emerald-400 font-semibold text-base mb-4">
+                [CAMPAIGN BUILD COMPLETE]
+              </div>
+              
+              {/* Campaign Details */}
+              <div className="space-y-2">
+                <div className="flex items-start gap-2">
+                  <span className="text-emerald-400">&#10003;</span>
+                  <span className="text-slate-400">[{new Date().toLocaleTimeString('en-US', { hour12: false })}]</span>
+                  <span className="text-slate-300">Campaign Name:</span>
+                  <span className="text-cyan-400 font-semibold">{campaignData.campaignName}</span>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Structure</Label>
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                    <p className="text-base font-semibold text-slate-900">{structureName}</p>
-                  </div>
+                
+                <div className="flex items-start gap-2">
+                  <span className="text-emerald-400">&#10003;</span>
+                  <span className="text-slate-400">[{new Date().toLocaleTimeString('en-US', { hour12: false })}]</span>
+                  <span className="text-slate-300">Structure:</span>
+                  <span className="text-purple-400 font-semibold">{structureName}</span>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Target Location</Label>
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                    <p className="text-base font-semibold text-slate-900">{targetLocationText}</p>
-                  </div>
+                
+                <div className="flex items-start gap-2">
+                  <span className="text-emerald-400">&#10003;</span>
+                  <span className="text-slate-400">[{new Date().toLocaleTimeString('en-US', { hour12: false })}]</span>
+                  <span className="text-slate-300">Target Location:</span>
+                  <span className="text-orange-400 font-semibold">{targetLocationText}</span>
+                </div>
+                
+                <div className="flex items-start gap-2">
+                  <span className="text-emerald-400">&#10003;</span>
+                  <span className="text-slate-400">[{new Date().toLocaleTimeString('en-US', { hour12: false })}]</span>
+                  <span className="text-slate-300">Ad Groups Generated:</span>
+                  <span className="text-yellow-400 font-semibold">{campaignData.adGroups.length}</span>
+                </div>
+                
+                <div className="flex items-start gap-2">
+                  <span className="text-emerald-400">&#10003;</span>
+                  <span className="text-slate-400">[{new Date().toLocaleTimeString('en-US', { hour12: false })}]</span>
+                  <span className="text-slate-300">Keywords Selected:</span>
+                  <span className="text-pink-400 font-semibold">{campaignData.selectedKeywords.length}</span>
+                </div>
+                
+                <div className="flex items-start gap-2">
+                  <span className="text-emerald-400">&#10003;</span>
+                  <span className="text-slate-400">[{new Date().toLocaleTimeString('en-US', { hour12: false })}]</span>
+                  <span className="text-slate-300">Ads Created:</span>
+                  <span className="text-blue-400 font-semibold">{campaignData.ads.length}</span>
+                </div>
+                
+                <div className="flex items-start gap-2">
+                  <span className="text-emerald-400">&#10003;</span>
+                  <span className="text-slate-400">[{new Date().toLocaleTimeString('en-US', { hour12: false })}]</span>
+                  <span className="text-slate-300">Locations Targeted:</span>
+                  <span className="text-teal-400 font-semibold">{locationInfo.count}</span>
                 </div>
               </div>
               
-            {/* Cities Summary - Show if cities are selected */}
-            {campaignData.locations.cities.length > 0 && (() => {
-              const cityCount = campaignData.locations.cities.length;
-              const presetCounts = [20, 50, 100, 200, LOCATION_PRESETS.cities.length];
-              const isPreset = presetCounts.includes(cityCount);
-              const presetLabel = cityCount === 20 ? 'Top 20 Cities' :
-                                cityCount === 50 ? 'Top 50 Cities' :
-                                cityCount === 100 ? 'Top 100 Cities' :
-                                cityCount === 200 ? 'Top 200 Cities' :
-                                cityCount === LOCATION_PRESETS.cities.length ? 'All Cities' : null;
+              {/* Divider */}
+              <div className="border-t border-slate-700 my-4"></div>
               
-              return (
-                  <div className="pt-6 border-t border-slate-200">
-                    <div className="bg-gradient-to-r from-blue-50 via-cyan-50 to-blue-50 border-2 border-blue-200/60 rounded-xl p-5 shadow-sm">
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center flex-shrink-0 shadow-md">
-                          <Building2 className="w-6 h-6 text-white" />
-                      </div>
-                      <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-3">
-                            <p className="text-base font-bold text-slate-900">
-                            {presetLabel || 'Custom Cities'}
-                          </p>
-                            <Badge className="text-xs bg-blue-100 text-blue-700 border-blue-300 font-semibold px-2.5 py-1">
-                            {cityCount} selected
-                          </Badge>
-                        </div>
-                          <div>
-                            <p className="text-xs font-medium text-slate-600 mb-2">Selected cities:</p>
-                            <div className="flex flex-wrap gap-2">
-                            {campaignData.locations.cities.slice(0, 10).map((city, idx) => (
-                                <Badge key={idx} className="text-xs bg-white text-slate-700 border-slate-300 shadow-sm font-medium">
-                                {city}
-                              </Badge>
-                            ))}
-                            {cityCount > 10 && (
-                                <Badge className="text-xs bg-slate-100 text-slate-600 border-slate-300 shadow-sm font-medium">
-                                +{cityCount - 10} more
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+              {/* Status Message */}
+              <div className="flex items-center gap-2">
+                <span className="text-emerald-400 animate-pulse">&#9679;</span>
+                <span className="text-emerald-400 font-semibold">All validation checks passed</span>
+              </div>
+              
+              <div className="text-slate-500 text-xs mt-2">
+                &gt; Ready for export to Google Ads Editor. Click download to generate CSV file.
+              </div>
+              
+              {/* Cities info if selected */}
+              {campaignData.locations.cities.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-slate-700">
+                  <div className="flex items-start gap-2 flex-wrap">
+                    <span className="text-emerald-400">&#10003;</span>
+                    <span className="text-slate-400">[cities]</span>
+                    <span className="text-slate-300">
+                      {campaignData.locations.cities.slice(0, 5).join(', ')}
+                      {campaignData.locations.cities.length > 5 && (
+                        <span className="text-slate-500"> +{campaignData.locations.cities.length - 5} more</span>
+                      )}
+                    </span>
                   </div>
                 </div>
-              );
-            })()}
-
-          </CardContent>
-        </Card>
+              )}
+            </div>
+          </div>
 
           {/* Primary Action Section */}
           <div className="mb-6">
