@@ -7,7 +7,7 @@ import {
   Phone, Mail, Calendar, Clock, Eye, FileSpreadsheet, Copy,
   MessageSquare, Gift, Image as ImageIcon, DollarSign, MapPin as MapPinIcon,
   Star, RefreshCw, Smartphone, Megaphone, FolderOpen,
-  Type, ChevronUp, ChevronDown, MousePointerClick, Briefcase
+  Type, ChevronUp, ChevronDown, ChevronRight, MousePointerClick, Briefcase
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -5066,80 +5066,69 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 via-indigo-100/60 to-purple-100/70">
-      {/* Shell View Navigation & Progress */}
-      <div className="bg-slate-900 sticky top-0 z-20">
-        {/* Terminal Header */}
-        <div className="flex items-center justify-between px-4 py-2 bg-slate-800 border-b border-slate-700">
-          <div className="flex items-center gap-3">
-            <div className="flex gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
-              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-              <div className="w-3 h-3 rounded-full bg-green-500"></div>
-            </div>
-            <span className="text-xs text-slate-400 font-mono">campaign_builder.sh</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleResetCampaign}
-              className="text-xs text-red-400 hover:text-red-300 font-mono flex items-center gap-1"
-            >
-              <RefreshCw className="w-3 h-3" />
-              reset
-            </button>
-          </div>
-        </div>
-
-        {/* Progress Steps */}
-        <div className="px-4 py-3 overflow-x-auto border-b border-slate-700">
-          <div className="flex items-center justify-between min-w-max gap-2">
+      {/* Navigation & Progress - Normal Theme */}
+      <div className="bg-white/90 backdrop-blur-sm sticky top-0 z-20 border-b border-slate-200 shadow-sm">
+        <div className="px-6 py-4">
+          <div className="flex items-center justify-between">
+            {/* Back Button */}
             <button
               onClick={handleBackStep}
               disabled={currentStep === 1}
-              className="text-xs text-slate-400 hover:text-slate-200 font-mono flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 text-slate-600 hover:text-indigo-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <ArrowLeft className="w-3 h-3" />
-              back
+              <ArrowLeft className="w-4 h-4" />
+              <span className="text-sm font-medium">Back</span>
             </button>
             
-            <div className="flex items-center gap-1 flex-1 justify-center">
+            {/* Progress Steps */}
+            <div className="flex items-center gap-1">
               {steps.map((step, idx) => (
                 <React.Fragment key={step.id}>
-                  <div className="flex items-center">
-                    <span className={`font-mono text-xs ${
-                      currentStep > step.id
-                        ? 'text-green-400'
-                        : currentStep === step.id
-                        ? 'text-cyan-400'
-                        : 'text-slate-500'
-                    }`}>
-                      {currentStep > step.id ? '✓' : `${step.id}.`}
-                    </span>
-                    <span className={`ml-1 font-mono text-xs whitespace-nowrap ${
-                      currentStep === step.id ? 'text-cyan-400' : currentStep > step.id ? 'text-green-400' : 'text-slate-500'
-                    }`}>
-                      {step.label}
-                    </span>
+                  <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm ${
+                    currentStep === step.id
+                      ? 'bg-indigo-100 text-indigo-700 font-semibold'
+                      : currentStep > step.id
+                      ? 'bg-green-100 text-green-700'
+                      : 'text-slate-400'
+                  }`}>
+                    {currentStep > step.id ? (
+                      <CheckCircle2 className="w-4 h-4" />
+                    ) : (
+                      <span className="w-5 h-5 rounded-full bg-current/10 flex items-center justify-center text-xs font-medium">
+                        {step.id}
+                      </span>
+                    )}
+                    <span className="whitespace-nowrap hidden sm:inline">{step.label}</span>
                   </div>
                   {idx < steps.length - 1 && (
-                    <span className={`mx-2 font-mono text-xs ${
-                      currentStep > step.id ? 'text-green-400' : 'text-slate-600'
-                    }`}>→</span>
+                    <ChevronRight className={`w-4 h-4 mx-1 ${
+                      currentStep > step.id ? 'text-green-400' : 'text-slate-300'
+                    }`} />
                   )}
                 </React.Fragment>
               ))}
             </div>
             
-            <button
-              onClick={handleNextStep}
-              disabled={loading || currentStep === 6}
-              className="text-xs text-emerald-400 hover:text-emerald-300 font-mono flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {currentStep === 5 ? 'finish' : currentStep === 6 ? 'done' : 'next'}
-              <ArrowRight className="w-3 h-3" />
-            </button>
+            {/* Next/Reset Buttons */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleResetCampaign}
+                className="text-sm text-slate-500 hover:text-red-500 transition-colors flex items-center gap-1"
+              >
+                <RefreshCw className="w-4 h-4" />
+                <span className="hidden sm:inline">Reset</span>
+              </button>
+              <button
+                onClick={handleNextStep}
+                disabled={loading || currentStep === 6}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg text-sm font-medium hover:from-indigo-500 hover:to-purple-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <span>{currentStep === 5 ? 'Finish' : currentStep === 6 ? 'Done' : 'Next'}</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
-
       </div>
 
       {/* Content */}
