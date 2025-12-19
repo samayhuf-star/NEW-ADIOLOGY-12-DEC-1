@@ -24,17 +24,64 @@ class AnalysisService {
       timestamp: new Date().toISOString(),
     };
 
-    const analyses = this.getAllAnalyses();
-    analyses.unshift(record);
-    
-    // Keep only last 50 analyses
-    const trimmed = analyses.slice(0, 50);
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(trimmed));
+    // Try to save, with fallback for quota exceeded
+    try {
+      const analyses = this.getAllAnalyses();
+      analyses.unshift(record);
+      
+      // Keep only last 20 analyses (reduced from 50 to save space)
+      const trimmed = analyses.slice(0, 20);
+      this.safeSetItem(this.STORAGE_KEY, JSON.stringify(trimmed));
+    } catch (error) {
+      console.warn('Could not save analysis to localStorage:', error);
+      // Continue without saving locally - backend sync is the primary storage
+    }
 
-    // Also sync to backend API if available
+    // Also sync to backend API if available (primary storage)
     this.syncToBackend(record).catch(err => console.warn('Failed to sync analysis to backend:', err));
 
     return record;
+  }
+
+  private safeSetItem(key: string, value: string): void {
+    try {
+      localStorage.setItem(key, value);
+    } catch (error: any) {
+      if (error?.name === 'QuotaExceededError' || error?.message?.includes('quota')) {
+        console.warn('localStorage quota exceeded, clearing old data...');
+        this.clearOldData();
+        try {
+          localStorage.setItem(key, value);
+        } catch (retryError) {
+          console.warn('Still cannot save after cleanup, skipping localStorage');
+        }
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  private clearOldData(): void {
+    const keysToClean = [
+      'adiology_analyses',
+      'adiology_history',
+      'campaign_drafts',
+      'keyword_history',
+    ];
+    
+    for (const key of keysToClean) {
+      try {
+        const data = localStorage.getItem(key);
+        if (data) {
+          const parsed = JSON.parse(data);
+          if (Array.isArray(parsed) && parsed.length > 5) {
+            localStorage.setItem(key, JSON.stringify(parsed.slice(0, 5)));
+          }
+        }
+      } catch (e) {
+        localStorage.removeItem(key);
+      }
+    }
   }
 
   getAnalysisByUrl(url: string): WebsiteAnalysis | undefined {
