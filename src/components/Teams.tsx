@@ -146,12 +146,27 @@ export const Teams: React.FC = () => {
       setTeamMembers(updatedMembers);
       saveTeamData(updatedMembers);
 
+<<<<<<< HEAD
       setSuccess(`Invitation sent to ${inviteEmail}`);
       setInviteEmail('');
       setInviteRole('member');
       setIsInviteDialogOpen(false);
 
       setTimeout(() => setSuccess(null), 5000);
+=======
+      const sentEmail = inviteEmail;
+      setInviteEmail('');
+      setInviteRole('member');
+      setIsInviteDialogOpen(false);
+      
+      // Show success message after dialog closes (use setTimeout to ensure dialog animation completes)
+      setTimeout(() => {
+        setSuccess(`Invitation successfully sent to ${sentEmail}`);
+      }, 100);
+      
+      // Clear success message after 8 seconds (longer display time)
+      setTimeout(() => setSuccess(null), 8000);
+>>>>>>> origin/fix/deployment
     } catch (err: any) {
       console.error('Invite error:', err);
       setError(err.message || 'Failed to send invitation. Please try again.');
@@ -307,7 +322,20 @@ export const Teams: React.FC = () => {
         </div>
       </div>
 
+<<<<<<< HEAD
       <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+=======
+      <Dialog open={isInviteDialogOpen} onOpenChange={(open: boolean) => {
+        setIsInviteDialogOpen(open);
+        if (!open) {
+          // Clear error when dialog closes
+          setError(null);
+        } else {
+          // Clear any stale errors when dialog opens
+          setError(null);
+        }
+      }}>
+>>>>>>> origin/fix/deployment
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -350,7 +378,11 @@ export const Teams: React.FC = () => {
             </div>
           </div>
           <DialogFooter>
+<<<<<<< HEAD
             <Button variant="outline" onClick={() => setIsInviteDialogOpen(false)}>
+=======
+            <Button variant="outline" onClick={() => { setIsInviteDialogOpen(false); setError(null); }}>
+>>>>>>> origin/fix/deployment
               Cancel
             </Button>
             <Button onClick={handleInvite} disabled={isLoading} className="bg-purple-600 hover:bg-purple-700">

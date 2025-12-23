@@ -283,12 +283,21 @@ export function Dashboard({ user, onNavigate }: DashboardProps) {
   }
 
   const quickActions = [
+<<<<<<< HEAD
     { id: 'one-click', title: '1 Click Campaign', icon: Zap },
     { id: 'builder-2', title: 'Campaign Builder', icon: Sparkles },
     { id: 'web-templates', title: 'Web Templates', icon: Globe },
     { id: 'campaign-presets', title: 'Campaign Presets', icon: Package },
     { id: 'keyword-planner', title: 'Keywords Planner', icon: Target },
     { id: 'saved-campaigns', title: 'Saved Campaigns', icon: FolderOpen },
+=======
+    { id: 'one-click-builder', title: '1 Click Campaign', icon: Zap },
+    { id: 'builder-3', title: 'Campaign Builder', icon: Sparkles },
+    { id: 'web-templates', title: 'Web Templates', icon: Globe },
+    { id: 'preset-campaigns', title: 'Campaign Presets', icon: Package },
+    { id: 'keyword-planner', title: 'Keywords Planner', icon: Target },
+    { id: 'draft-campaigns', title: 'Saved Campaigns', icon: FolderOpen },
+>>>>>>> origin/fix/deployment
   ];
 
   const myCampaigns = stats?.userResources?.myCampaigns || 0;

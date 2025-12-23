@@ -172,6 +172,25 @@ export const KeywordMixer = ({ initialData }: { initialData?: any }) => {
 
     const [pendingMixedKeywords, setPendingMixedKeywords] = useState<string[]>([]);
 
+<<<<<<< HEAD
+=======
+    // Auto-complete terminal animation and show results
+    useEffect(() => {
+        if (showTerminalConsole && pendingMixedKeywords.length > 0 && !terminalComplete) {
+            const timer = setTimeout(() => {
+                setTerminalComplete(true);
+                // Auto-transition to results after a brief moment
+                setTimeout(() => {
+                    setShowTerminalConsole(false);
+                    setMixedKeywords(pendingMixedKeywords);
+                    setShowResultsConsole(true);
+                }, 500);
+            }, 1500);
+            return () => clearTimeout(timer);
+        }
+    }, [showTerminalConsole, pendingMixedKeywords, terminalComplete]);
+
+>>>>>>> origin/fix/deployment
     const mixKeywords = () => {
         // Parse each list - split by newlines and commas, trim, and filter empty
         const parseList = (text: string): string[] => {
