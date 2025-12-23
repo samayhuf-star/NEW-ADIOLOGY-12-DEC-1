@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from './ui/alert';
 import { notifications } from '../utils/notifications';
 import { supabase } from '../utils/supabase/client';
 import { resendVerificationEmail } from '../utils/auth';
+import { Session } from '@supabase/supabase-js';
 
 interface EmailVerificationProps {
   onVerificationSuccess: () => void;
@@ -31,7 +32,7 @@ export const EmailVerification: React.FC<EmailVerificationProps> = ({
     }
 
     // Handle email verification from Supabase
-    const { data: subscription } = supabase.auth.onAuthStateChange((event: string, session: any) => {
+    const { data: subscription } = supabase.auth.onAuthStateChange((event: string, session: Session | null) => {
       if (event === 'SIGNED_IN' && session?.user) {
         // User has verified their email
         if (session.user.email_confirmed_at) {
