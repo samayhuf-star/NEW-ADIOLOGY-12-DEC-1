@@ -33,6 +33,7 @@ import { KeywordMixer } from './components/KeywordMixer';
 import { NegativeKeywordsBuilder } from './components/NegativeKeywordsBuilder';
 import { KeywordSavedLists } from './components/KeywordSavedLists';
 import { LongTailKeywords } from './components/LongTailKeywords';
+import { KeywordsV3 } from './components/KeywordsV3';
 import { BillingPanel } from './components/BillingPanel';
 import { SupportPanel } from './components/SupportPanel';
 import { HelpSupport } from './components/HelpSupport';
@@ -894,6 +895,7 @@ const App = () => {
         { id: 'keyword-mixer', label: 'Mixer', icon: Shuffle },
         { id: 'negative-keywords', label: 'Negatives', icon: MinusCircle },
         { id: 'long-tail-keywords', label: 'Long Tail', icon: Sparkles },
+        { id: 'keywords-v3', label: 'Keywords V3', icon: Search },
       ]
     },
     { 
@@ -1367,6 +1369,8 @@ const App = () => {
         return <NegativeKeywordsBuilder initialData={activeTab === 'negative-keywords' ? historyData : null} />;
       case 'long-tail-keywords':
         return <LongTailKeywords />;
+      case 'keywords-v3':
+        return <KeywordsV3 />;
       case 'keyword-saved-lists':
         return <KeywordSavedLists />;
       case 'web-templates':
