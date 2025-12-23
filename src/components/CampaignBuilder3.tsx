@@ -7,8 +7,9 @@ import {
   Phone, Mail, Calendar, Clock, Eye, FileSpreadsheet, Copy,
   MessageSquare, Gift, Image as ImageIcon, DollarSign, MapPin as MapPinIcon,
   Star, RefreshCw, Smartphone, Megaphone, FolderOpen,
-  Type, ChevronUp, ChevronDown, ChevronRight, MousePointerClick, Briefcase
+  Type, ChevronUp, ChevronDown, ChevronRight, MousePointerClick, Briefcase, Info
 } from 'lucide-react';
+import JSZip from 'jszip';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
@@ -770,16 +771,20 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
 
       if (comprehensiveData?.aiInsights) {
         const ai = comprehensiveData.aiInsights;
-        intentResult = {
-          intentId: ai.primaryIntent?.toLowerCase()?.includes('call') ? IntentId.CALL 
+        const detectedIntentId = ai.primaryIntent?.toLowerCase()?.includes('call') ? IntentId.CALL 
             : ai.primaryIntent?.toLowerCase()?.includes('lead') ? IntentId.LEAD
             : ai.primaryIntent?.toLowerCase()?.includes('purchase') ? IntentId.PURCHASE
-            : IntentId.VISIT,
-          intentLabel: ai.primaryIntent || 'Visit',
-          score: 0.9
+            : IntentId.TRAFFIC;
+        intentResult = {
+          intentId: detectedIntentId,
+          intentLabel: ai.primaryIntent || 'Traffic',
+          confidence: 0.9,
+          recommendedDevice: 'any',
+          primaryKPIs: ['clicks', 'impressions'],
+          suggestedAdTypes: ['RSA']
         };
         vertical = ai.businessType || detectVertical(landingData);
-        cta = ai.conversionGoal || detectCTA(landingData, vertical);
+        cta = ai.conversionGoal || detectCTA(landingData, vertical ?? undefined);
         const rawKeywords = ai.suggestedKeywords?.slice(0, 5) || await generateSeedKeywords(landingData, intentResult);
         seedKeywords = filterValidSeedKeywords(rawKeywords);
         
@@ -819,27 +824,34 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
 
       // Auto-select best campaign structures
       addAnalysisLog('Ranking campaign structures...', 'step');
-      const rankings = rankCampaignStructures(intentResult, vertical);
+      const rankings = rankCampaignStructures(intentResult, vertical ?? 'general');
       setCampaignData(prev => ({
         ...prev,
         structureRankings: rankings,
         selectedStructure: rankings[0]?.id || 'skag',
       }));
-      addAnalysisLog(`Recommended structure: ${rankings[0]?.name || 'SKAG'}`, 'success');
+      const topStructure = CAMPAIGN_STRUCTURES.find(s => s.id === rankings[0]?.id);
+      addAnalysisLog(`Recommended structure: ${topStructure?.name || 'SKAG'}`, 'success');
 
-      // Save analysis to database
-      addAnalysisLog('Saving analysis to database...', 'step');
-      analysisService.saveAnalysis({
-        url: formattedUrl,
-        domain: extractDomain(formattedUrl),
-        intent: intentResult,
-        vertical: vertical || 'Unknown',
-        cta: cta || 'Unknown',
-        seedKeywords: seedKeywords,
-        contentSummary: comprehensiveData?.aiInsights?.uniqueValueProposition || `Website analyzed: ${formattedUrl}`,
-        detectedServices: landingData?.services || [],
-        detectedCTAs: comprehensiveData?.data?.ctaElements?.map((c: any) => c.text) || [],
-      });
+      // Save analysis to database (non-blocking)
+      addAnalysisLog('Saving analysis to cache...', 'step');
+      try {
+        analysisService.saveAnalysis({
+          url: formattedUrl,
+          domain: extractDomain(formattedUrl),
+          intent: intentResult,
+          vertical: vertical || 'Unknown',
+          cta: cta || 'Unknown',
+          seedKeywords: seedKeywords,
+          contentSummary: comprehensiveData?.aiInsights?.uniqueValueProposition || `Website analyzed: ${formattedUrl}`,
+          detectedServices: landingData?.services || [],
+          detectedCTAs: comprehensiveData?.data?.ctaElements?.map((c: any) => c.text) || [],
+        });
+        addAnalysisLog('Analysis cached successfully', 'success');
+      } catch (saveError) {
+        console.warn('Failed to cache analysis (localStorage may be full):', saveError);
+        addAnalysisLog('Cache unavailable, continuing...', 'info');
+      }
 
       setShowAnalysisResults(true);
       addAnalysisLog('Analysis complete! Ready to proceed.', 'success');
@@ -2535,41 +2547,83 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
     }
   };
 
-  // Calculate export statistics from campaign data (same source as success page)
+  // Calculate export statistics from actual CSV data to match what will be imported
   const getExportStatistics = () => {
     if (!campaignData.csvData) return null;
     
     try {
-      // Parse the CSV only to get total rows count
+      // Parse the CSV to count actual rows by type
       const csvText = campaignData.csvData.replace(/^\uFEFF/, ''); // Remove BOM
       const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
-      const totalRows = parsed.data?.length || 0;
+      const rows = parsed.data as Record<string, string>[];
+      const totalRows = rows.length || 0;
       
-      // Calculate locations count from campaignData
-      const { cities, zipCodes, states, countries } = campaignData.locations;
-      const locationsCount = cities.length + zipCodes.length + states.length + countries.length;
+      // Count entities from actual CSV data (matches what Google Ads Editor will import)
+      let campaigns = 0;
+      let adGroupsSet = new Set<string>();
+      let keywords = 0;
+      let negativeKeywords = 0;
+      let ads = 0;
+      let extensions = 0;
+      let locations = 0;
       
-      // Count total ads: each ad is applied to every ad group
-      const totalAds = campaignData.ads.length * Math.max(1, campaignData.adGroups.length);
-      
-      // Count total keywords across all ad groups
-      const totalKeywords = campaignData.adGroups.reduce((sum, group) => {
-        return sum + (group.keywords?.length || 0);
-      }, 0) || campaignData.selectedKeywords.length;
-      
-      // Count extensions from ads
-      const totalExtensions = campaignData.ads.reduce((sum, ad) => {
-        return sum + (ad.extensions?.length || 0);
-      }, 0);
+      rows.forEach(row => {
+        const adGroupName = row['Ad Group'] || '';
+        const keyword = row['Keyword'] || '';
+        const negativeKw = row['Keyword (Negative)'] || '';
+        const adType = row['Ad Type'] || '';
+        const locationType = row['Location Type'] || '';
+        const headline1 = row['Headline 1'] || '';
+        
+        // Check for extension columns
+        const sitelinkText = row['Sitelink Text'] || row['Sitelink 1 Text'] || '';
+        const calloutText = row['Callout Text'] || row['Callout 1 Text'] || '';
+        const snippetHeader = row['Structured Snippet Header'] || row['Structured Snippet 1 Header'] || '';
+        
+        // Count campaigns (rows with budget and no ad group)
+        if (row['Campaign Daily Budget'] && !adGroupName) {
+          campaigns++;
+        }
+        
+        // Count unique ad groups (rows with ad group name but no keyword/ad)
+        if (adGroupName && !keyword && !negativeKw && !adType && !locationType) {
+          adGroupsSet.add(adGroupName);
+        }
+        
+        // Count keywords
+        if (keyword) {
+          keywords++;
+        }
+        
+        // Count negative keywords
+        if (negativeKw) {
+          negativeKeywords++;
+        }
+        
+        // Count ads (rows with Ad Type and headlines)
+        if (adType && headline1) {
+          ads++;
+        }
+        
+        // Count extensions (rows with extension data but no keyword/ad/location)
+        if ((sitelinkText || calloutText || snippetHeader) && !keyword && !negativeKw && !adType && !locationType) {
+          extensions++;
+        }
+        
+        // Count locations
+        if (locationType) {
+          locations++;
+        }
+      });
       
       const stats = {
-        campaigns: 1,
-        adGroups: campaignData.adGroups.length,
-        keywords: totalKeywords,
-        negativeKeywords: campaignData.negativeKeywords.length,
-        ads: totalAds,
-        extensions: totalExtensions,
-        locations: locationsCount || 1, // At least 1 for country-level targeting
+        campaigns: Math.max(campaigns, 1),
+        adGroups: adGroupsSet.size || campaignData.adGroups.length,
+        keywords: keywords,
+        negativeKeywords: negativeKeywords,
+        ads: ads,
+        extensions: extensions,
+        locations: locations || 1,
         totalRows: totalRows,
       };
       
@@ -2596,8 +2650,13 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
   };
 
   const confirmDownloadCSV = async () => {
-    if (!campaignData.csvData) return;
+    if (!campaignData.csvData) {
+      notifications.error('No CSV data available. Please generate the campaign first.', { title: 'Export Error' });
+      setShowExportDialog(false);
+      return;
+    }
     
+    try {
     const baseFilename = (campaignData.campaignName || 'campaign').replace(/[^a-z0-9]/gi, '_');
     const dateStr = new Date().toISOString().split('T')[0];
     
@@ -2648,7 +2707,10 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
       const a = document.createElement('a');
       a.href = url;
       a.download = `${baseFilename}_multi_country_${dateStr}.zip`;
+      a.style.display = 'none';
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } else if (campaignData.selectedStructure === 'geo' && selectedCountries.length === 1) {
       const csvContent = generateCountrySpecificCSV(campaignData.csvData, selectedCountries[0], campaignData.campaignName || 'Campaign');
@@ -2658,7 +2720,10 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
       const a = document.createElement('a');
       a.href = url;
       a.download = filename;
+      a.style.display = 'none';
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } else {
       const filename = `${baseFilename}_google_ads_editor_${dateStr}.csv`;
@@ -2667,11 +2732,16 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
       const a = document.createElement('a');
       a.href = url;
       a.download = filename;
+      a.style.display = 'none';
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }
     
     setShowExportDialog(false);
+    
+    notifications.success('CSV downloaded successfully!', { title: 'Export Complete' });
     
     setTimeout(() => {
       const event = new CustomEvent('navigate', { detail: { tab: 'dashboard' } });
@@ -2680,6 +2750,11 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
         window.location.hash = '#dashboard';
       }
     }, 1000);
+    } catch (error) {
+      console.error('Download error:', error);
+      notifications.error('Failed to download CSV. Please try again.', { title: 'Download Error' });
+      setShowExportDialog(false);
+    }
   };
 
   const handleSaveCampaign = async () => {
@@ -2718,7 +2793,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
 
   // Render functions for each step
   const renderStep1 = () => (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-4xl mx-auto px-3 py-4 sm:p-6">
       {/* Step Navigation */}
       <div className="flex justify-between items-center mb-6">
         <button
@@ -2737,61 +2812,97 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
         </button>
       </div>
 
-      <div className="mb-8">
-        <h3 className="text-lg font-semibold text-slate-800 mb-2">Enter Your Website URL</h3>
-        <p className="text-slate-600">AI will analyze your website to identify intent, CTA, and vertical</p>
-      </div>
-
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Campaign Details</CardTitle>
-          <CardDescription>Enter your campaign name and landing page URL</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="campaignName" className="text-sm font-medium text-slate-700 mb-1.5 block">Campaign Name</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                id="campaignName"
-                type="text"
-                placeholder="Campaign-Search-Dec 12, 2025 4:30 PM"
-                value={campaignData.campaignName}
-                onChange={(e) => setCampaignData(prev => ({ ...prev, campaignName: e.target.value }))}
-                disabled={!editingCampaignName}
-                className={`flex-1 ${!editingCampaignName ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''}`}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() => setEditingCampaignName(!editingCampaignName)}
-                className={`shrink-0 ${editingCampaignName ? 'border-indigo-500 text-indigo-600' : 'text-slate-500'}`}
-                title={editingCampaignName ? 'Done editing' : 'Edit campaign name'}
-              >
-                {editingCampaignName ? <Check className="w-4 h-4" /> : <Edit3 className="w-4 h-4" />}
-              </Button>
+      {/* Shell View - Campaign Builder Info */}
+      <Card className="mb-6 border-slate-700 bg-slate-900 shadow-xl">
+        <CardHeader className="pb-2 border-b border-slate-700">
+          <div className="flex items-center gap-3">
+            <div className="flex gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+              <div className="w-3 h-3 rounded-full bg-indigo-500"></div>
             </div>
-            <p className="text-xs text-slate-500 mt-1">Auto-generated name. Click edit icon to customize.</p>
+            <span className="text-slate-400 text-sm font-mono">Campaign Builder 3.0</span>
           </div>
-          <div>
-            <Label htmlFor="websiteUrl" className="text-sm font-medium text-slate-700 mb-1.5 block">Website URL</Label>
-            <div className="flex gap-4">
-              <Input
-                id="websiteUrl"
-                type="url"
-                placeholder="https://www.example.com"
-                value={campaignData.url}
-                onChange={(e) => setCampaignData(prev => ({ ...prev, url: e.target.value }))}
-                className="flex-1"
-              />
-              <Button onClick={handleUrlSubmit} disabled={loading}>
-                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
-                Analyze
-              </Button>
+        </CardHeader>
+        <CardContent className="p-4">
+          <div className="font-mono text-sm space-y-2">
+            <div className="flex items-start gap-3">
+              <span className="text-slate-500 text-xs shrink-0">[{new Date().toLocaleTimeString()}]</span>
+              <span className="text-cyan-400">
+                <span className="text-cyan-500 mr-1">{'>'}</span>
+                Initializing Campaign Builder...
+              </span>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-slate-500 text-xs shrink-0">[{new Date().toLocaleTimeString()}]</span>
+              <span className="text-green-400">
+                <span className="text-green-500 mr-1">✓</span>
+                14 Campaign Structures Available
+              </span>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-slate-500 text-xs shrink-0">[{new Date().toLocaleTimeString()}]</span>
+              <span className="text-yellow-300">
+                <span className="text-yellow-500 mr-1">•</span>
+                Supported: SKAG, STAG, Intent-Based, Alpha-Beta, Funnel, GEO-Segmented & more
+              </span>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-slate-500 text-xs shrink-0">[{new Date().toLocaleTimeString()}]</span>
+              <span className="text-indigo-400">
+                <span className="text-indigo-500 mr-1">★</span>
+                AI-Powered Analysis Ready
+              </span>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-slate-500 text-xs shrink-0">[{new Date().toLocaleTimeString()}]</span>
+              <span className="text-slate-400">
+                <span className="text-slate-500 mr-1">→</span>
+                Enter your website URL below to begin analysis
+              </span>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Simple 2-row form: Campaign Name + URL */}
+      <div className="space-y-4 mb-6">
+        <div className="flex items-center gap-2">
+          <Input
+            id="campaignName"
+            type="text"
+            placeholder="Campaign Name"
+            value={campaignData.campaignName}
+            onChange={(e) => setCampaignData(prev => ({ ...prev, campaignName: e.target.value }))}
+            disabled={!editingCampaignName}
+            className={`flex-1 ${!editingCampaignName ? 'bg-slate-100 text-slate-500' : ''}`}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => setEditingCampaignName(!editingCampaignName)}
+            className={`shrink-0 ${editingCampaignName ? 'border-indigo-500 text-indigo-600' : 'text-slate-500'}`}
+            title={editingCampaignName ? 'Done editing' : 'Edit campaign name'}
+          >
+            {editingCampaignName ? <Check className="w-4 h-4" /> : <Edit3 className="w-4 h-4" />}
+          </Button>
+        </div>
+        <div className="flex gap-2">
+          <Input
+            id="websiteUrl"
+            type="url"
+            placeholder="https://www.example.com"
+            value={campaignData.url}
+            onChange={(e) => setCampaignData(prev => ({ ...prev, url: e.target.value }))}
+            className="flex-1"
+          />
+          <Button onClick={handleUrlSubmit} disabled={loading}>
+            {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
+            Analyze
+          </Button>
+        </div>
+      </div>
 
       {/* Live Analysis Logs - Terminal Style */}
       {(isAnalyzing || analysisLogs.length > 0) && (
@@ -2871,7 +2982,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
   );
 
   const renderStep2 = () => (
-    <div className="max-w-6xl mx-auto p-6">
+    <div className="max-w-6xl mx-auto px-3 py-4 sm:p-6">
       {/* Step Navigation */}
       <div className="flex justify-between items-center mb-6">
         <button
@@ -2894,7 +3005,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
         <p className="text-slate-600">AI has ranked the best structures for your vertical. Choose the one that fits your needs.</p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-12">
         {CAMPAIGN_STRUCTURES.map((structure, idx) => {
           const ranking = campaignData.structureRankings.findIndex(r => r.id === structure.id);
           const isRecommended = ranking === 0 || ranking === 1 || ranking === 2;
@@ -2905,44 +3016,35 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
           return (
             <div key={structure.id} className="relative group">
               <Card
-                className={`cursor-pointer transition-all p-2 ${
+                className={`cursor-pointer transition-all duration-200 p-3 h-full border-2 ${
                   isSelected
-                    ? 'ring-2 ring-indigo-500 bg-indigo-50'
-                    : 'hover:shadow-md hover:border-indigo-200'
+                    ? 'ring-2 ring-indigo-500 bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-300 shadow-lg'
+                    : 'hover:shadow-lg hover:border-indigo-300 hover:bg-slate-50 border-slate-200'
                 }`}
                 onClick={() => handleStructureSelect(structure.id)}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-1.5">
-                    <Icon className="w-4 h-4 text-indigo-600 shrink-0" />
-                    <span className="text-sm font-semibold text-slate-800 truncate">{structure.name}</span>
+                <div className="flex items-center justify-between mb-2">
+                  <div className={`p-1.5 rounded-lg ${isSelected ? 'bg-indigo-100' : 'bg-slate-100 group-hover:bg-indigo-100'} transition-colors`}>
+                    <Icon className={`w-4 h-4 ${isSelected ? 'text-indigo-600' : 'text-slate-600 group-hover:text-indigo-600'} transition-colors`} />
                   </div>
                   {isRecommended && rankLabel && (
-                    <Badge variant={ranking === 0 ? 'default' : 'secondary'} className="text-[10px] px-1.5 py-0 h-4">
+                    <Badge 
+                      variant={ranking === 0 ? 'default' : 'secondary'} 
+                      className={`text-[10px] px-1.5 py-0.5 h-5 ${ranking === 0 ? 'bg-gradient-to-r from-indigo-600 to-purple-600' : ''}`}
+                    >
                       {rankLabel}
                     </Badge>
                   )}
                 </div>
-                <p className="text-xs text-slate-500 line-clamp-1">{structure.description}</p>
+                <h4 className="text-sm font-bold text-slate-800 mb-1">{structure.name}</h4>
+                <p className="text-xs text-slate-500 leading-relaxed">{structure.description}</p>
                 {isSelected && (
-                  <div className="flex items-center gap-1 text-indigo-600 mt-1">
-                    <CheckCircle2 className="w-3 h-3" />
-                    <span className="text-xs font-medium">Selected</span>
+                  <div className="flex items-center gap-1.5 text-indigo-600 mt-2 pt-2 border-t border-indigo-200">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span className="text-xs font-semibold">Selected</span>
                   </div>
                 )}
               </Card>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="absolute -top-8 left-0 opacity-0 group-hover:opacity-100 transition-opacity text-xs h-6"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedStructureForDiagram({ id: structure.id, name: structure.name });
-                  setShowFlowDiagram(true);
-                }}
-              >
-                View Structure
-              </Button>
             </div>
           );
         })}
@@ -3264,19 +3366,19 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
   );
 
   const renderStep3 = () => (
-    <div className="max-w-6xl mx-auto p-6">
+    <div className="max-w-6xl mx-auto px-3 py-4 sm:p-6">
       {/* Step Navigation */}
       <div className="flex justify-between items-center mb-6">
         <button
           onClick={handleBackStep}
-          className="text-2xl font-semibold italic bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent hover:from-indigo-500 hover:to-purple-500"
+          className="text-xl sm:text-2xl font-semibold italic bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent hover:from-indigo-500 hover:to-purple-500"
         >
           Back
         </button>
         <button
           onClick={handleNextStep}
           disabled={loading}
-          className="text-2xl font-semibold italic bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50"
+          className="text-xl sm:text-2xl font-semibold italic bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50"
         >
           Next
         </button>
@@ -3437,8 +3539,8 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                 <CardTitle>Keyword Type Filters</CardTitle>
                 <CardDescription>Toggle keyword types to filter the list</CardDescription>
               </CardHeader>
-              <CardContent>
-              <div className="flex gap-4">
+              <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-wrap gap-3 sm:gap-4">
                   {KEYWORD_TYPES.map(type => (
                     <div key={type.id} className="flex items-center gap-2">
                       <Checkbox
@@ -3446,7 +3548,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                         checked={campaignData.keywordTypes[type.id] || false}
                         onCheckedChange={() => handleKeywordTypeToggle(type.id)}
                       />
-                      <Label htmlFor={type.id}>{type.label}</Label>
+                      <Label htmlFor={type.id} className="text-sm whitespace-nowrap">{type.label}</Label>
                     </div>
                   ))}
                 </div>
@@ -3454,9 +3556,9 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
             </Card>
 
           <Card className="mb-6" data-keywords-section>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>Generated Keywords & Negative Keywords ({campaignData.selectedKeywords.length} selected / {filteredKeywords.length} total)</span>
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <span className="text-base sm:text-lg">Generated Keywords & Negative Keywords ({campaignData.selectedKeywords.length} selected / {filteredKeywords.length} total)</span>
                   <div className="flex items-center gap-2 text-xs font-normal">
                     <span className="text-slate-500">Data Source:</span>
                     <Badge variant="outline" className={`text-xs ${
@@ -3476,9 +3578,9 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                 </CardTitle>
                 <CardDescription>Keywords with search volume, CPC, and competition metrics. Click checkboxes to select/unselect keywords.</CardDescription>
               </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 sm:p-6">
               {/* Select All / Deselect All Controls */}
-              <div className="flex items-center gap-4 mb-4 p-3 bg-slate-50 rounded-lg border">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-4 p-3 bg-slate-50 rounded-lg border">
                 <Button
                   variant="outline"
                   size="sm"
@@ -3507,7 +3609,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                   <X className="w-3 h-3 mr-1" />
                   Deselect All
                 </Button>
-                <span className="text-xs text-slate-500 ml-auto">
+                <span className="text-xs text-slate-500 sm:ml-auto w-full sm:w-auto mt-2 sm:mt-0">
                   {campaignData.selectedKeywords.length} of {filteredKeywords.length} keywords selected
                 </span>
               </div>
@@ -3598,7 +3700,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                                 <Checkbox
                                   checked={isSelected}
                                   onCheckedChange={toggleKeywordSelection}
-                                  onClick={(e) => e.stopPropagation()}
+                                  onClick={(e: React.MouseEvent) => e.stopPropagation()}
                                   className="data-[state=checked]:bg-indigo-600"
                                 />
                               </div>
@@ -3671,25 +3773,25 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
     ];
 
     return (
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto px-3 py-4 sm:p-6">
         {/* Step Navigation */}
         <div className="flex justify-between items-center mb-6">
           <button
             onClick={handleBackStep}
-            className="text-2xl font-semibold italic bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent hover:from-indigo-500 hover:to-purple-500"
+            className="text-xl sm:text-2xl font-semibold italic bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent hover:from-indigo-500 hover:to-purple-500"
           >
             Back
           </button>
           <button
             onClick={handleNextStep}
             disabled={loading}
-            className="text-2xl font-semibold italic bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50"
+            className="text-xl sm:text-2xl font-semibold italic bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50"
           >
             Next
           </button>
         </div>
 
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <h3 className="text-lg font-semibold text-slate-800 mb-2">Ads & Extensions</h3>
         </div>
 
@@ -3811,25 +3913,25 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
               </Card>
             ) : (
               displayAds.map((ad) => (
-                <Card key={ad.id} className="border-2">
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <Badge variant="outline" className="text-xs">
+                <Card key={ad.id} className="border-2 overflow-hidden">
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-4">
+                      <Badge variant="outline" className="text-xs w-fit">
                         {ad.type?.toUpperCase() || ad.adType || 'RSA'}
                       </Badge>
-                        <div className="flex gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleEditAd(ad.id)} className="text-indigo-600 hover:text-indigo-700">
-                          <Edit3 className="w-4 h-4 mr-1" />
-                          EDIT
+                        <div className="flex flex-wrap gap-1 sm:gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => handleEditAd(ad.id)} className="text-indigo-600 hover:text-indigo-700 px-2 sm:px-3">
+                          <Edit3 className="w-4 h-4 sm:mr-1" />
+                          <span className="hidden sm:inline">EDIT</span>
                           </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDuplicateAd(ad.id)} className="text-indigo-600 hover:text-indigo-700">
-                          <Copy className="w-4 h-4 mr-1" />
-                          DUPLICATE
+                        <Button variant="ghost" size="sm" onClick={() => handleDuplicateAd(ad.id)} className="text-indigo-600 hover:text-indigo-700 px-2 sm:px-3">
+                          <Copy className="w-4 h-4 sm:mr-1" />
+                          <span className="hidden sm:inline">DUPLICATE</span>
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDeleteAd(ad.id)} className="text-indigo-600 hover:text-indigo-700">
-                          <Trash2 className="w-4 h-4 mr-1" />
-                          DELETE
-                          </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteAd(ad.id)} className="text-indigo-600 hover:text-indigo-700 px-2 sm:px-3">
+                          <Trash2 className="w-4 h-4 sm:mr-1" />
+                          <span className="hidden sm:inline">DELETE</span>
+                        </Button>
                         </div>
                       </div>
                       
@@ -3914,24 +4016,24 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                               }
                               
                               return (
-                                <div key={ext.id} className="flex items-center justify-between p-3 bg-slate-50 rounded border border-slate-200">
-                                  <div className="flex items-center gap-3 flex-1">
-                                    {ext.type === 'snippet' && <FileText className="w-4 h-4 text-blue-600 flex-shrink-0" />}
-                                    {ext.type === 'callout' && <MessageSquare className="w-4 h-4 text-indigo-600 flex-shrink-0" />}
-                                    {ext.type === 'sitelink' && <Link2 className="w-4 h-4 text-indigo-600 flex-shrink-0" />}
-                                    {ext.type === 'call' && <Phone className="w-4 h-4 text-indigo-600 flex-shrink-0" />}
-                                    {ext.type === 'price' && <DollarSign className="w-4 h-4 text-yellow-600 flex-shrink-0" />}
-                                    {ext.type === 'app' && <Smartphone className="w-4 h-4 text-cyan-600 flex-shrink-0" />}
-                                    {ext.type === 'location' && <MapPinIcon className="w-4 h-4 text-red-600 flex-shrink-0" />}
-                                    {ext.type === 'message' && <MessageSquare className="w-4 h-4 text-indigo-600 flex-shrink-0" />}
-                                    {ext.type === 'leadform' && <FileText className="w-4 h-4 text-orange-600 flex-shrink-0" />}
-                                    {ext.type === 'promotion' && <Gift className="w-4 h-4 text-pink-600 flex-shrink-0" />}
-                                    {ext.type === 'image' && <ImageIcon className="w-4 h-4 text-indigo-600 flex-shrink-0" />}
+                                <div key={ext.id} className="flex items-start justify-between p-2 sm:p-3 bg-slate-50 rounded border border-slate-200 gap-2">
+                                  <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
+                                    {ext.type === 'snippet' && <FileText className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />}
+                                    {ext.type === 'callout' && <MessageSquare className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />}
+                                    {ext.type === 'sitelink' && <Link2 className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />}
+                                    {ext.type === 'call' && <Phone className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />}
+                                    {ext.type === 'price' && <DollarSign className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />}
+                                    {ext.type === 'app' && <Smartphone className="w-4 h-4 text-cyan-600 flex-shrink-0 mt-0.5" />}
+                                    {ext.type === 'location' && <MapPinIcon className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />}
+                                    {ext.type === 'message' && <MessageSquare className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />}
+                                    {ext.type === 'leadform' && <FileText className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />}
+                                    {ext.type === 'promotion' && <Gift className="w-4 h-4 text-pink-600 flex-shrink-0 mt-0.5" />}
+                                    {ext.type === 'image' && <ImageIcon className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />}
                                     <div className="flex-1 min-w-0">
                                       <span className="text-xs text-slate-500 uppercase font-semibold block mb-1">
                                         {ext.label || ext.type.charAt(0).toUpperCase() + ext.type.slice(1).replace(/([A-Z])/g, ' $1')}
                                       </span>
-                                      <span className="text-sm text-slate-700 font-medium block truncate">
+                                      <span className="text-xs sm:text-sm text-slate-700 font-medium block break-words">
                                         {displayText}
                                 </span>
                                     </div>
@@ -3940,7 +4042,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleRemoveExtension(ad.id, ext.id)}
-                                    className="text-red-600 hover:text-red-700 flex-shrink-0"
+                                    className="text-red-600 hover:text-red-700 flex-shrink-0 p-1 h-auto"
                               >
                                 <X className="w-4 h-4" />
                               </Button>
@@ -4240,36 +4342,46 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
   const renderStep5 = () => {
     const handlePresetSelect = (type: 'cities' | 'states' | 'zips', preset: string) => {
       let items: string[] = [];
+      let requestedCount = 0;
       const countryPresets = getGeoPresetsForCountry(campaignData.targetCountry);
       
       if (type === 'cities') {
-        if (preset === 'top50') items = countryPresets.cities.top50;
-        else if (preset === 'top250') items = countryPresets.cities.top250;
-        else if (preset === 'top500') items = countryPresets.cities.top500;
+        if (preset === 'top50') { items = countryPresets.cities.top50; requestedCount = 50; }
+        else if (preset === 'top250') { items = countryPresets.cities.top250; requestedCount = 250; }
+        else if (preset === 'top500') { items = countryPresets.cities.top500; requestedCount = 500; }
         setCampaignData(prev => ({ 
           ...prev, 
           locations: { ...prev.locations, cities: items, states: [], zipCodes: [] }
         }));
       } else if (type === 'states') {
-        if (preset === 'top10') items = countryPresets.states.top10;
-        else if (preset === 'top25') items = countryPresets.states.top25;
-        else if (preset === 'top50') items = countryPresets.states.top50;
+        if (preset === 'top10') { items = countryPresets.states.top10; requestedCount = 10; }
+        else if (preset === 'top25') { items = countryPresets.states.top25; requestedCount = 25; }
+        else if (preset === 'top50') { items = countryPresets.states.top50; requestedCount = 50; }
         setCampaignData(prev => ({ 
           ...prev, 
           locations: { ...prev.locations, states: items, cities: [], zipCodes: [] }
         }));
       } else if (type === 'zips') {
-        if (preset === 'top1000') items = countryPresets.zips.top1000;
-        else if (preset === 'top5000') items = countryPresets.zips.top5000;
-        else if (preset === 'top15000') items = countryPresets.zips.top15000;
-        else if (preset === 'top25000') items = countryPresets.zips.top25000;
+        if (preset === 'top1000') { items = countryPresets.zips.top1000; requestedCount = 1000; }
+        else if (preset === 'top5000') { items = countryPresets.zips.top5000; requestedCount = 5000; }
+        else if (preset === 'top15000') { items = countryPresets.zips.top15000; requestedCount = 15000; }
+        else if (preset === 'top25000') { items = countryPresets.zips.top25000; requestedCount = 25000; }
         setCampaignData(prev => ({ 
           ...prev, 
           locations: { ...prev.locations, zipCodes: items, cities: [], states: [] }
         }));
       }
       autoSaveDraft();
-      notifications.success(`Selected ${items.length} ${type}`, { title: 'Geo Targeting Updated' });
+      
+      const typeLabel = type === 'zips' ? 'ZIP codes' : type;
+      if (items.length < requestedCount) {
+        notifications.info(`${campaignData.targetCountry} only has ${items.length.toLocaleString()} ${typeLabel} available (max)`, { 
+          title: 'Geo Targeting Updated',
+          description: `Selected all ${items.length.toLocaleString()} available ${typeLabel}`
+        });
+      } else {
+        notifications.success(`Selected ${items.length.toLocaleString()} ${typeLabel}`, { title: 'Geo Targeting Updated' });
+      }
     };
 
     const clearLocations = () => {
@@ -4291,30 +4403,30 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
     const currentSelection = getCurrentSelection();
 
     return (
-      <div className="max-w-5xl mx-auto p-6">
+      <div className="max-w-5xl mx-auto px-3 py-4 sm:p-6">
         {/* Step Navigation */}
         <div className="flex justify-between items-center mb-6">
           <button
             onClick={handleBackStep}
-            className="text-2xl font-semibold italic bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent hover:from-indigo-500 hover:to-purple-500"
+            className="text-xl sm:text-2xl font-semibold italic bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent hover:from-indigo-500 hover:to-purple-500"
           >
             Back
           </button>
           <button
             onClick={handleNextStep}
             disabled={loading}
-            className="text-2xl font-semibold italic bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50"
+            className="text-xl sm:text-2xl font-semibold italic bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50"
           >
             Next
           </button>
         </div>
 
         {/* Header with gradient */}
-        <div className="mb-8 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 shadow-lg shadow-indigo-200/50 mb-4">
-            <MapPin className="w-8 h-8 text-white" />
+        <div className="mb-6 sm:mb-8 text-center">
+          <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 shadow-lg shadow-indigo-200/50 mb-4">
+            <MapPin className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
           </div>
-          <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
+          <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
             Geo Targeting
           </h2>
           <p className="text-slate-600 max-w-xl mx-auto">
@@ -4628,6 +4740,351 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
           </div>
         </div>
 
+=======
+        {/* Info Banner */}
+        <div className="mb-6 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+              <Info className="w-4 h-4 text-indigo-600" />
+            </div>
+            <div className="text-sm text-slate-700">
+              <p className="font-medium text-indigo-900 mb-1">How Geo Targeting Works</p>
+              <ul className="space-y-1 text-slate-600">
+                <li><span className="text-indigo-600 font-medium">Nationwide by default:</span> Your ads will show across the entire selected country.</li>
+                <li><span className="text-indigo-600 font-medium">Change country:</span> Use the dropdown on the left to select a different country.</li>
+                <li><span className="text-indigo-600 font-medium">Target specific areas:</span> Click <span className="font-semibold">Cities</span>, <span className="font-semibold">States</span>, or <span className="font-semibold">ZIP Codes</span> on the right to narrow your targeting.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Two-column layout on larger screens */}
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Left Column - Country & Summary */}
+          <div className="space-y-6">
+            {/* Target Country Card */}
+            <div className="rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 p-1 shadow-xl">
+              <div className="bg-slate-900 rounded-lg p-5">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                    <div className="w-3 h-3 rounded-full bg-indigo-500"></div>
+                  </div>
+                  <span className="text-slate-400 text-sm font-medium">Target Country</span>
+                </div>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center">
+                    <Globe className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <Select 
+                      value={campaignData.targetCountry} 
+                      onValueChange={(value: string) => {
+                        setCampaignData(prev => ({ ...prev, targetCountry: value }));
+                        autoSaveDraft();
+                      }}
+                    >
+                      <SelectTrigger className="bg-slate-800 border-slate-700 text-white hover:bg-slate-700">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-800 border-slate-700">
+                        {LOCATION_PRESETS.countries.map(country => (
+                          <SelectItem key={country} value={country} className="text-white hover:bg-slate-700">{country}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <p className="text-slate-500 text-xs">
+                  Base country for your campaign targeting
+                </p>
+              </div>
+            </div>
+
+            {/* Live Summary Card */}
+            <div className="rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 p-1 shadow-xl">
+              <div className="bg-slate-900 rounded-lg p-5">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                    <div className="w-3 h-3 rounded-full bg-indigo-500"></div>
+                  </div>
+                  <span className="text-slate-400 text-sm font-medium">Targeting Summary</span>
+                  {currentSelection && (
+                    <Badge className="ml-auto bg-indigo-500/20 text-green-400 border-green-500/30">
+                      <Check className="w-3 h-3 mr-1" />
+                      Active
+                    </Badge>
+                  )}
+                </div>
+                
+                <div className="space-y-3 font-mono text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-500">[geo]</span>
+                    <span className="text-green-400">Country:</span>
+                    <span className="text-white">{campaignData.targetCountry}</span>
+                  </div>
+                  
+                  {currentSelection ? (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-500">[geo]</span>
+                        <span className="text-yellow-400">&gt;</span>
+                        <span className="text-white">{currentSelection.type}:</span>
+                        <span className="text-cyan-400">{currentSelection.count.toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-500">[geo]</span>
+                        <span className="text-green-400">✓</span>
+                        <span className="text-slate-300">Targeting configured</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-500">[geo]</span>
+                      <span className="text-cyan-400">→</span>
+                      <span className="text-slate-300">Nationwide coverage</span>
+                    </div>
+                  )}
+                </div>
+                
+                {currentSelection && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={clearLocations}
+                    className="mt-4 text-red-400 hover:text-red-300 hover:bg-red-500/10 w-full"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Clear All Locations
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column - Location Tabs */}
+          <div className="lg:col-span-2">
+            <Card className="border-2 border-slate-200 shadow-xl overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-slate-50 via-indigo-50/30 to-purple-50/30 border-b">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg">
+                      <Target className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Location Targeting</CardTitle>
+                      <CardDescription className="text-xs">
+                        Choose cities, states, or ZIP codes within {campaignData.targetCountry}
+                      </CardDescription>
+                    </div>
+                  </div>
+                  {currentSelection && (
+                    <Badge className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-0 shadow-lg">
+                      {currentSelection.count.toLocaleString()} {currentSelection.type}
+                    </Badge>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="p-6">
+                <Tabs defaultValue="cities" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3 mb-6 bg-slate-100 p-1 rounded-xl">
+                    <TabsTrigger value="cities" className="flex items-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md">
+                      <Building2 className="w-4 h-4" />
+                      <span className="hidden sm:inline">Cities</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="states" className="flex items-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md">
+                      <MapPinIcon className="w-4 h-4" />
+                      <span className="hidden sm:inline">States</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="zips" className="flex items-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md">
+                      <Hash className="w-4 h-4" />
+                      <span className="hidden sm:inline">ZIP Codes</span>
+                    </TabsTrigger>
+                  </TabsList>
+
+                  {/* Nationwide Default Message */}
+                  {!currentSelection && (
+                    <div className="mb-6 p-4 bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 border-2 border-amber-300 rounded-xl shadow-md">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0 shadow-lg">
+                          <Globe className="w-5 h-5 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-amber-900 font-bold text-base mb-1">
+                            Nationwide is Currently Selected
+                          </p>
+                          <p className="text-amber-700 text-sm">
+                            Your ads will show across all of <span className="font-semibold">{campaignData.targetCountry}</span>. 
+                            To target specific locations, click on <span className="font-bold text-indigo-700">Cities</span>, <span className="font-bold text-indigo-700">States</span>, or <span className="font-bold text-indigo-700">ZIP Codes</span> above and select a preset.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Cities Tab */}
+                  <TabsContent value="cities" className="space-y-5">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-amber-500" />
+                        <Label className="text-sm font-semibold text-slate-700">Quick Presets</Label>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { label: 'Top 50', value: 'top50', count: 50 },
+                          { label: 'Top 250', value: 'top250', count: 250 },
+                          { label: 'Top 500', value: 'top500', count: 500 },
+                        ].map(preset => (
+                          <Button
+                            key={preset.value}
+                            variant={campaignData.locations.cities.length === preset.count ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handlePresetSelect('cities', preset.value)}
+                            className={campaignData.locations.cities.length === preset.count 
+                              ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-600 hover:to-purple-700 border-0 shadow-lg" 
+                              : "hover:border-indigo-300 hover:bg-indigo-50"}
+                          >
+                            <Building2 className="w-3 h-3 mr-1.5" />
+                            {preset.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {campaignData.locations.cities.length > 0 && (
+                      <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-200">
+                        <div className="flex items-center gap-2 mb-3">
+                          <CheckCircle2 className="w-4 h-4 text-green-600" />
+                          <span className="text-sm font-semibold text-green-800">
+                            {campaignData.locations.cities.length} cities selected
+                          </span>
+                        </div>
+                        <ScrollArea className="h-20">
+                          <div className="flex flex-wrap gap-1.5">
+                            {campaignData.locations.cities.slice(0, 15).map((city, idx) => (
+                              <Badge key={idx} className="bg-white text-slate-700 border border-slate-200 text-xs">{city}</Badge>
+                            ))}
+                            {campaignData.locations.cities.length > 15 && (
+                              <Badge className="bg-slate-100 text-slate-600 text-xs">
+                                +{campaignData.locations.cities.length - 15} more
+                              </Badge>
+                            )}
+                          </div>
+                        </ScrollArea>
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  {/* States Tab */}
+                  <TabsContent value="states" className="space-y-5">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-amber-500" />
+                        <Label className="text-sm font-semibold text-slate-700">Quick Presets</Label>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { label: 'Top 10', value: 'top10', count: 10 },
+                          { label: 'Top 25', value: 'top25', count: 25 },
+                          { label: 'All 50', value: 'top50', count: 50 },
+                        ].map(preset => (
+                          <Button
+                            key={preset.value}
+                            variant={campaignData.locations.states.length === preset.count ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handlePresetSelect('states', preset.value)}
+                            className={campaignData.locations.states.length === preset.count 
+                              ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-600 hover:to-purple-700 border-0 shadow-lg" 
+                              : "hover:border-indigo-300 hover:bg-indigo-50"}
+                          >
+                            <MapPinIcon className="w-3 h-3 mr-1.5" />
+                            {preset.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {campaignData.locations.states.length > 0 && (
+                      <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-200">
+                        <div className="flex items-center gap-2 mb-3">
+                          <CheckCircle2 className="w-4 h-4 text-green-600" />
+                          <span className="text-sm font-semibold text-green-800">
+                            {campaignData.locations.states.length} states selected
+                          </span>
+                        </div>
+                        <ScrollArea className="h-20">
+                          <div className="flex flex-wrap gap-1.5">
+                            {campaignData.locations.states.map((state, idx) => (
+                              <Badge key={idx} className="bg-white text-slate-700 border border-slate-200 text-xs">{state}</Badge>
+                            ))}
+                          </div>
+                        </ScrollArea>
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  {/* ZIP Codes Tab */}
+                  <TabsContent value="zips" className="space-y-5">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-amber-500" />
+                        <Label className="text-sm font-semibold text-slate-700">Quick Presets</Label>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {[
+                          { label: '1K ZIPs', value: 'top1000', count: 1000 },
+                          { label: '5K ZIPs', value: 'top5000', count: 5000 },
+                          { label: '15K ZIPs', value: 'top15000', count: 15000 },
+                        ].map(preset => (
+                          <Button
+                            key={preset.value}
+                            variant={campaignData.locations.zipCodes.length === preset.count ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handlePresetSelect('zips', preset.value)}
+                            className={campaignData.locations.zipCodes.length === preset.count 
+                              ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-600 hover:to-purple-700 border-0 shadow-lg" 
+                              : "hover:border-indigo-300 hover:bg-indigo-50"}
+                          >
+                            <Hash className="w-3 h-3 mr-1.5" />
+                            {preset.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {campaignData.locations.zipCodes.length > 0 && (
+                      <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-200">
+                        <div className="flex items-center gap-2 mb-3">
+                          <CheckCircle2 className="w-4 h-4 text-green-600" />
+                          <span className="text-sm font-semibold text-green-800">
+                            {campaignData.locations.zipCodes.length.toLocaleString()} ZIP codes selected
+                          </span>
+                        </div>
+                        <ScrollArea className="h-20">
+                          <div className="flex flex-wrap gap-1.5">
+                            {campaignData.locations.zipCodes.slice(0, 20).map((zip, idx) => (
+                              <Badge key={idx} className="bg-white text-slate-700 border border-slate-200 text-xs font-mono">{zip}</Badge>
+                            ))}
+                            {campaignData.locations.zipCodes.length > 20 && (
+                              <Badge className="bg-slate-100 text-slate-600 text-xs">
+                                +{(campaignData.locations.zipCodes.length - 20).toLocaleString()} more
+                              </Badge>
+                            )}
+                          </div>
+                        </ScrollArea>
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+>>>>>>> origin/fix/deployment
       </div>
     );
   };
@@ -4903,13 +5360,13 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
   };
 
   const renderStep7 = () => (
-    <div className="max-w-6xl mx-auto p-6">
-      <div className="mb-8 flex items-center justify-end">
-        <div className="text-sm text-slate-500 mr-4">CSV generation step - no inputs to fill</div>
+    <div className="max-w-6xl mx-auto px-3 py-4 sm:p-6">
+      <div className="mb-6 sm:mb-8 flex items-center justify-end">
+        <div className="text-xs sm:text-sm text-slate-500 mr-4">CSV generation step - no inputs to fill</div>
       </div>
-      <div className="mb-8">
+      <div className="mb-6 sm:mb-8">
         <h3 className="text-lg font-semibold text-slate-800 mb-2">CSV Generation</h3>
-        <p className="text-slate-600">Generate your campaign CSV for Google Ads Editor</p>
+        <p className="text-sm sm:text-base text-slate-600">Generate your campaign CSV for Google Ads Editor</p>
       </div>
 
       <Card className="mb-6">
@@ -5073,23 +5530,23 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
     <div className="min-h-screen bg-gradient-to-br from-slate-100 via-indigo-100/60 to-purple-100/70">
       {/* Navigation & Progress - Normal Theme */}
       <div className="bg-white/90 backdrop-blur-sm sticky top-0 z-20 border-b border-slate-200 shadow-sm">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
+        <div className="px-3 sm:px-6 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2">
             {/* Back Button */}
             <button
               onClick={handleBackStep}
               disabled={currentStep === 1}
-              className="flex items-center gap-2 text-slate-600 hover:text-indigo-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-1 sm:gap-2 text-slate-600 hover:text-indigo-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span className="text-sm font-medium">Back</span>
+              <span className="text-xs sm:text-sm font-medium hidden sm:inline">Back</span>
             </button>
             
             {/* Progress Steps */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto scrollbar-hide">
               {steps.map((step, idx) => (
                 <React.Fragment key={step.id}>
-                  <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm ${
+                  <div className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm flex-shrink-0 ${
                     currentStep === step.id
                       ? 'bg-indigo-100 text-indigo-700 font-semibold'
                       : currentStep > step.id
@@ -5097,16 +5554,16 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
                       : 'text-slate-400'
                   }`}>
                     {currentStep > step.id ? (
-                      <CheckCircle2 className="w-4 h-4" />
+                      <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     ) : (
-                      <span className="w-5 h-5 rounded-full bg-current/10 flex items-center justify-center text-xs font-medium">
+                      <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-current/10 flex items-center justify-center text-[10px] sm:text-xs font-medium">
                         {step.id}
                       </span>
                     )}
-                    <span className="whitespace-nowrap hidden sm:inline">{step.label}</span>
+                    <span className="whitespace-nowrap hidden md:inline">{step.label}</span>
                   </div>
                   {idx < steps.length - 1 && (
-                    <ChevronRight className={`w-4 h-4 mx-1 ${
+                    <ChevronRight className={`w-3 h-3 sm:w-4 sm:h-4 mx-0.5 flex-shrink-0 ${
                       currentStep > step.id ? 'text-green-400' : 'text-slate-300'
                     }`} />
                   )}
@@ -5115,10 +5572,10 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
             </div>
             
             {/* Next/Reset Buttons */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
               <button
                 onClick={handleResetCampaign}
-                className="text-sm text-slate-500 hover:text-red-500 transition-colors flex items-center gap-1"
+                className="text-xs sm:text-sm text-slate-500 hover:text-red-500 transition-colors flex items-center gap-1 p-1"
               >
                 <RefreshCw className="w-4 h-4" />
                 <span className="hidden sm:inline">Reset</span>
@@ -5126,10 +5583,10 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
               <button
                 onClick={handleNextStep}
                 disabled={loading || currentStep === 6}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg text-sm font-medium hover:from-indigo-500 hover:to-purple-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg text-xs sm:text-sm font-medium hover:from-indigo-500 hover:to-purple-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <span>{currentStep === 5 ? 'Finish' : currentStep === 6 ? 'Done' : 'Next'}</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
             </div>
           </div>
@@ -5286,15 +5743,15 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
           </DialogContent>
         </Dialog>
 
-        {/* Campaign Structure Flow Diagram */}
-        {selectedStructureForDiagram && (
+        {/* Campaign Structure Flow Diagram - Hidden per user request */}
+        {/* {selectedStructureForDiagram && (
           <CampaignFlowDiagram
             open={showFlowDiagram}
             onOpenChange={setShowFlowDiagram}
             structureName={selectedStructureForDiagram.name}
             structureId={selectedStructureForDiagram.id}
           />
-        )}
+        )} */}
     </div>
   );
 };

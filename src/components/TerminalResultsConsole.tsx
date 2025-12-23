@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Download, Save, RefreshCw, ArrowLeft, Check, Copy } from 'lucide-react';
+import { Download, Save, RefreshCw, ArrowLeft, Check, Copy, Plus } from 'lucide-react';
 import { Button } from './ui/button';
 
 export interface ResultStat {
@@ -16,12 +16,15 @@ interface TerminalResultsConsoleProps {
   onSave?: () => void;
   onGenerateAnother?: () => void;
   onCopy?: () => void;
+  onAppendMore?: () => void;
   showDownload?: boolean;
   showSave?: boolean;
   showCopy?: boolean;
+  showAppendMore?: boolean;
   downloadButtonText?: string;
   saveButtonText?: string;
   copyButtonText?: string;
+  appendMoreButtonText?: string;
   isSaving?: boolean;
 }
 
@@ -48,12 +51,15 @@ export function TerminalResultsConsole({
   onSave,
   onGenerateAnother,
   onCopy,
+  onAppendMore,
   showDownload = true,
   showSave = true,
   showCopy = false,
+  showAppendMore = false,
   downloadButtonText = 'Download CSV for Google Ads',
   saveButtonText = 'Save to Saved Lists',
   copyButtonText = 'Copy Keywords',
+  appendMoreButtonText = 'Append More',
   isSaving = false,
 }: TerminalResultsConsoleProps) {
   const [displayedStats, setDisplayedStats] = useState<{ stat: ResultStat; timestamp: string }[]>([]);
@@ -186,6 +192,15 @@ export function TerminalResultsConsole({
             >
               {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               {copied ? 'Copied!' : copyButtonText}
+            </Button>
+          )}
+          {showAppendMore && onAppendMore && (
+            <Button
+              onClick={onAppendMore}
+              className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-medium px-4 py-2 rounded-lg flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              {appendMoreButtonText}
             </Button>
           )}
           {onGenerateAnother && (

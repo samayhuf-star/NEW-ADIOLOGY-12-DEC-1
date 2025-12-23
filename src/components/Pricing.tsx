@@ -102,24 +102,25 @@ const pricingPlans = [
   },
   {
     name: 'Lifetime',
-    price: '$99.99',
-    period: 'one-time',
+    price: '$49.99',
+    period: 'one-time payment',
     icon: '👑',
     color: 'from-pink-500 to-purple-600',
     bgColor: 'bg-pink-50',
     borderColor: 'border-pink-200',
     features: [
-      '5 Active Campaigns',
-      '3 Draft Campaigns',
-      '25 Campaign Exports/Month',
-      '250 Keyword Credits/Month',
-      '5 Landing Page Templates',
-      '3 Active/Saved Landing Pages',
-      '2 Connected Domains',
-      '5 Campaign Presets',
-      '1 User Seat',
-      'Email Support',
-      'Raise Tickets'
+      '5 campaigns per month',
+      '1 team member',
+      '10 web templates',
+      '20+ campaign presets for all verticals',
+      'Geo targeting: Countries',
+      '5 custom domains',
+      'Keywords mixer & planner',
+      'Live ad preview (RSA, DKI, Call-Only)',
+      '10+ Google Ads assets & extensions',
+      'CSV export to Google Ads',
+      'Email support',
+      'Chat support'
     ],
     buttonStyle: 'bg-white text-gray-900 border-2 border-gray-200 hover:border-gray-300',
     popular: false
@@ -222,7 +223,7 @@ export function Pricing({ onSelectPlan }: PricingProps) {
                         'Basic (Yearly)': { priceId: 'price_basic_yearly', amount: 67190, isSubscription: true },
                         'Pro': { priceId: 'price_pro_monthly', amount: 12999, isSubscription: true },
                         'Pro (Yearly)': { priceId: 'price_pro_yearly', amount: 124790, isSubscription: true },
-                        'Lifetime': { priceId: 'price_lifetime', amount: 9999, isSubscription: false }
+                        'Lifetime': { priceId: 'price_lifetime', amount: 4999, isSubscription: false }
                       };
                       const planData = priceIdMap[plan.name] || { priceId: '', amount: 0, isSubscription: false };
                       onSelectPlan(plan.name, planData.priceId, planData.amount, planData.isSubscription);

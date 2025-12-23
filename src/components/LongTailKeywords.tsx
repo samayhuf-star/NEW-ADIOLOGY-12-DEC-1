@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Sparkles, Download, Save, Trash2, Loader2, Plus, X, History, Search, RefreshCw, Copy, Check, ChevronUp, ChevronDown } from 'lucide-react';
+import { Sparkles, Download, Save, Trash2, Loader2, Plus, X, History, Search, RefreshCw, Copy, Check, ChevronUp, ChevronDown, Wand2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
@@ -44,6 +44,26 @@ export function LongTailKeywords() {
   const [generationProgress, setGenerationProgress] = useState<string[]>([]);
   const [sortColumn, setSortColumn] = useState<'keyword' | 'volume' | 'cpc' | 'difficulty'>('keyword');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  // Sample seed keywords for different niches
+  const SAMPLE_SEED_KEYWORDS = [
+    ['plumber', 'emergency plumbing', 'drain cleaning', 'water heater repair'],
+    ['dentist', 'teeth whitening', 'dental implants', 'root canal'],
+    ['lawyer', 'personal injury attorney', 'divorce lawyer', 'criminal defense'],
+    ['electrician', 'electrical repair', 'wiring installation', 'panel upgrade'],
+    ['roofing contractor', 'roof repair', 'roof replacement', 'shingle installation'],
+    ['HVAC technician', 'AC repair', 'furnace installation', 'duct cleaning'],
+    ['landscaper', 'lawn care', 'tree trimming', 'garden design'],
+    ['auto mechanic', 'brake repair', 'oil change', 'transmission service']
+  ];
+
+  const fillSampleKeywords = () => {
+    const randomSet = SAMPLE_SEED_KEYWORDS[Math.floor(Math.random() * SAMPLE_SEED_KEYWORDS.length)];
+    setSeedKeywords(randomSet.join('\n'));
+    notifications.success('Sample keywords added!', {
+      title: 'Sample Data Loaded'
+    });
+  };
 
   useEffect(() => {
     if (activeSubTab === 'saved') {
@@ -446,9 +466,21 @@ export function LongTailKeywords() {
           <Card>
             <CardContent className="pt-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Seed Keywords <span className="text-red-500">*</span>
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium">
+                    Seed Keywords <span className="text-red-500">*</span>
+                  </label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={fillSampleKeywords}
+                    className="h-7 text-xs gap-1.5"
+                  >
+                    <Wand2 className="w-3 h-3" />
+                    Fill Info
+                  </Button>
+                </div>
                 <Textarea
                   value={seedKeywords}
                   onChange={(e) => setSeedKeywords(e.target.value)}

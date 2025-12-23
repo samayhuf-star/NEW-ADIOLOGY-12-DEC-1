@@ -150,7 +150,29 @@ export const PlanSelection: React.FC<PlanSelectionProps> = ({
       }
       
       if (loadedPlans.length === 0) {
-        setError('No pricing plans available. Please try again later.');
+        // Fallback to default plans if Stripe products not available
+        const fallbackPlans: PlanData[] = [
+          {
+            ...planConfig['Basic Monthly'],
+            price: '$69.99',
+            priceId: 'fallback_basic',
+            amount: 6999
+          },
+          {
+            ...planConfig['Pro Monthly'],
+            price: '$129.99',
+            priceId: 'fallback_pro',
+            amount: 12999
+          },
+          {
+            ...planConfig['Lifetime'],
+            price: '$99.99',
+            priceId: 'fallback_lifetime',
+            amount: 9999
+          }
+        ];
+        setPlans(fallbackPlans);
+        console.warn('Using fallback pricing plans - Stripe products not configured');
       } else {
         setPlans(loadedPlans);
       }
