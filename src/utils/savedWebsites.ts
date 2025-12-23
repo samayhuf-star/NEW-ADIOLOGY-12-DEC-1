@@ -119,6 +119,7 @@ export interface SavedWebsite {
   messages: ChatMessage[];
   createdAt: string;
   updatedAt: string;
+  customDomain?: string;
 }
 
 const STORAGE_KEY = 'microedits_saved_websites';
