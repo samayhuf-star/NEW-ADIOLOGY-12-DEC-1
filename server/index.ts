@@ -4582,7 +4582,7 @@ app.post('/api/keywords-v3/generate', async (c) => {
     const originalSuggestions = await fetchGoogleSuggest(seedKeyword, platform, country);
     originalSuggestions.forEach(s => {
       const clean = s.toLowerCase().trim();
-      if (clean.length > 3) {
+      if (clean.length > 3 && clean !== seedKeyword) {
         allKeywords.add(clean);
       }
     });

@@ -14,7 +14,7 @@ interface KeywordResult {
   searchVolume: number;
   competition: string;
   cpc: number;
-  trend: 'up' | 'down' | 'stable';
+  trend: 'up' | 'down';
 }
 
 export function KeywordsV3() {
@@ -23,7 +23,7 @@ export function KeywordsV3() {
   const [isSearching, setIsSearching] = useState(false);
   const [keywords, setKeywords] = useState<KeywordResult[]>([]);
   const [filters, setFilters] = useState<KeywordFiltersState>(DEFAULT_FILTERS);
-  const [sortColumn, setSortColumn] = useState<'keyword' | 'volume' | 'competition' | 'cpc'>('volume');
+  const [sortColumn, setSortColumn] = useState<'keyword' | 'searchVolume' | 'competition' | 'cpc'>('searchVolume');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   const handleSearch = async () => {
@@ -80,7 +80,7 @@ export function KeywordsV3() {
     }
   };
 
-  const handleSort = (column: 'keyword' | 'volume' | 'competition' | 'cpc') => {
+  const handleSort = (column: 'keyword' | 'searchVolume' | 'competition' | 'cpc') => {
     if (sortColumn === column) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
@@ -90,38 +90,56 @@ export function KeywordsV3() {
   };
 
   const sortedKeywords = [...keywords].sort((a, b) => {
-    let aVal: any = a[sortColumn];
-    let bVal: any = b[sortColumn];
+    let aVal: any;
+    let bVal: any;
 
-    if (sortColumn === 'keyword') {
-      aVal = aVal.toLowerCase();
-      bVal = bVal.toLowerCase();
-    }
-
-    if (sortColumn === 'competition') {
+    // Map sortColumn to actual property names
+    if (sortColumn === 'searchVolume') {
+      aVal = a.searchVolume;
+      bVal = b.searchVolume;
+    } else if (sortColumn === 'keyword') {
+      aVal = a.keyword.toLowerCase();
+      bVal = b.keyword.toLowerCase();
+    } else if (sortColumn === 'competition') {
       const order = { 'LOW': 1, 'MEDIUM': 2, 'HIGH': 3 };
-      aVal = order[aVal as keyof typeof order] || 0;
-      bVal = order[bVal as keyof typeof order] || 0;
+      aVal = order[a.competition as keyof typeof order] || 0;
+      bVal = order[b.competition as keyof typeof order] || 0;
+    } else if (sortColumn === 'cpc') {
+      aVal = a.cpc;
+      bVal = b.cpc;
+    } else {
+      // Fallback
+      aVal = a[sortColumn as keyof KeywordResult];
+      bVal = b[sortColumn as keyof KeywordResult];
     }
 
     if (sortDirection === 'asc') {
-      return aVal > bVal ? 1 : -1;
+      // Ascending: smaller values first
+      return aVal < bVal ? -1 : (aVal > bVal ? 1 : 0);
     } else {
-      return aVal < bVal ? 1 : -1;
+      // Descending: larger values first
+      return aVal > bVal ? -1 : (aVal < bVal ? 1 : 0);
     }
   });
 
-  const handleCopyToClipboard = () => {
+  const handleCopyToClipboard = async () => {
     if (keywords.length === 0) {
       notifications.warning('No keywords to copy');
       return;
     }
 
     const keywordList = keywords.map(kw => kw.keyword).join('\n');
-    navigator.clipboard.writeText(keywordList);
-    notifications.success('Keywords copied to clipboard!', {
-      title: 'Copied',
-    });
+    try {
+      await navigator.clipboard.writeText(keywordList);
+      notifications.success('Keywords copied to clipboard!', {
+        title: 'Copied',
+      });
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error);
+      notifications.error('Failed to copy keywords to clipboard. Please try again.', {
+        title: 'Copy Failed',
+      });
+    }
   };
 
   const handleExportCSV = () => {
@@ -148,6 +166,8 @@ export function KeywordsV3() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    // Revoke the blob URL to prevent memory leak
+    URL.revokeObjectURL(url);
 
     notifications.success('Keywords exported to CSV!', {
       title: 'Exported',
@@ -293,10 +313,10 @@ export function KeywordsV3() {
                       </th>
                       <th
                         className="text-left py-3 px-4 font-semibold text-slate-700 dark:text-slate-300 cursor-pointer hover:text-slate-900 dark:hover:text-white"
-                        onClick={() => handleSort('volume')}
+                        onClick={() => handleSort('searchVolume')}
                       >
                         SEARCH VOLUME
-                        {sortColumn === 'volume' && (
+                        {sortColumn === 'searchVolume' && (
                           <span className="ml-2">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                         )}
                       </th>

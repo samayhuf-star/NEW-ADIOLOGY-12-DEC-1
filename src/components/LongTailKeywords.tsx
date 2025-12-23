@@ -1,9 +1,5 @@
 import { useState, useEffect } from 'react';
-<<<<<<< HEAD
-import { Sparkles, Download, Save, Trash2, Loader2, Plus, X, History, Search, RefreshCw, Copy, Check, ChevronUp, ChevronDown } from 'lucide-react';
-=======
 import { Sparkles, Download, Save, Trash2, Loader2, Plus, X, History, Search, RefreshCw, Copy, Check, ChevronUp, ChevronDown, Wand2 } from 'lucide-react';
->>>>>>> origin/fix/deployment
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
@@ -49,8 +45,6 @@ export function LongTailKeywords() {
   const [sortColumn, setSortColumn] = useState<'keyword' | 'volume' | 'cpc' | 'difficulty'>('keyword');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
-<<<<<<< HEAD
-=======
   // Sample seed keywords for different niches
   const SAMPLE_SEED_KEYWORDS = [
     ['plumber', 'emergency plumbing', 'drain cleaning', 'water heater repair'],
@@ -71,7 +65,6 @@ export function LongTailKeywords() {
     });
   };
 
->>>>>>> origin/fix/deployment
   useEffect(() => {
     if (activeSubTab === 'saved') {
       loadSavedLists();
@@ -473,11 +466,6 @@ export function LongTailKeywords() {
           <Card>
             <CardContent className="pt-6 space-y-4">
               <div>
-<<<<<<< HEAD
-                <label className="block text-sm font-medium mb-2">
-                  Seed Keywords <span className="text-red-500">*</span>
-                </label>
-=======
                 <div className="flex items-center justify-between mb-2">
                   <label className="block text-sm font-medium">
                     Seed Keywords <span className="text-red-500">*</span>
@@ -493,7 +481,6 @@ export function LongTailKeywords() {
                     Fill Info
                   </Button>
                 </div>
->>>>>>> origin/fix/deployment
                 <Textarea
                   value={seedKeywords}
                   onChange={(e) => setSeedKeywords(e.target.value)}

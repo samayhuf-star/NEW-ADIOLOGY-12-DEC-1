@@ -150,9 +150,6 @@ export const PlanSelection: React.FC<PlanSelectionProps> = ({
       }
       
       if (loadedPlans.length === 0) {
-<<<<<<< HEAD
-        setError('No pricing plans available. Please try again later.');
-=======
         // Fallback to default plans if Stripe products not available
         const fallbackPlans: PlanData[] = [
           {
@@ -176,7 +173,6 @@ export const PlanSelection: React.FC<PlanSelectionProps> = ({
         ];
         setPlans(fallbackPlans);
         console.warn('Using fallback pricing plans - Stripe products not configured');
->>>>>>> origin/fix/deployment
       } else {
         setPlans(loadedPlans);
       }

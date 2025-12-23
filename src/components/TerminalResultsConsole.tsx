@@ -1,9 +1,5 @@
 import { useState, useEffect } from 'react';
-<<<<<<< HEAD
-import { Download, Save, RefreshCw, ArrowLeft, Check, Copy } from 'lucide-react';
-=======
 import { Download, Save, RefreshCw, ArrowLeft, Check, Copy, Plus } from 'lucide-react';
->>>>>>> origin/fix/deployment
 import { Button } from './ui/button';
 
 export interface ResultStat {
@@ -20,14 +16,6 @@ interface TerminalResultsConsoleProps {
   onSave?: () => void;
   onGenerateAnother?: () => void;
   onCopy?: () => void;
-<<<<<<< HEAD
-  showDownload?: boolean;
-  showSave?: boolean;
-  showCopy?: boolean;
-  downloadButtonText?: string;
-  saveButtonText?: string;
-  copyButtonText?: string;
-=======
   onAppendMore?: () => void;
   showDownload?: boolean;
   showSave?: boolean;
@@ -37,7 +25,6 @@ interface TerminalResultsConsoleProps {
   saveButtonText?: string;
   copyButtonText?: string;
   appendMoreButtonText?: string;
->>>>>>> origin/fix/deployment
   isSaving?: boolean;
 }
 
@@ -64,14 +51,6 @@ export function TerminalResultsConsole({
   onSave,
   onGenerateAnother,
   onCopy,
-<<<<<<< HEAD
-  showDownload = true,
-  showSave = true,
-  showCopy = false,
-  downloadButtonText = 'Download CSV for Google Ads',
-  saveButtonText = 'Save to Saved Lists',
-  copyButtonText = 'Copy Keywords',
-=======
   onAppendMore,
   showDownload = true,
   showSave = true,
@@ -81,7 +60,6 @@ export function TerminalResultsConsole({
   saveButtonText = 'Save to Saved Lists',
   copyButtonText = 'Copy Keywords',
   appendMoreButtonText = 'Append More',
->>>>>>> origin/fix/deployment
   isSaving = false,
 }: TerminalResultsConsoleProps) {
   const [displayedStats, setDisplayedStats] = useState<{ stat: ResultStat; timestamp: string }[]>([]);
@@ -216,8 +194,6 @@ export function TerminalResultsConsole({
               {copied ? 'Copied!' : copyButtonText}
             </Button>
           )}
-<<<<<<< HEAD
-=======
           {showAppendMore && onAppendMore && (
             <Button
               onClick={onAppendMore}
@@ -227,7 +203,6 @@ export function TerminalResultsConsole({
               {appendMoreButtonText}
             </Button>
           )}
->>>>>>> origin/fix/deployment
           {onGenerateAnother && (
             <Button
               onClick={onGenerateAnother}
