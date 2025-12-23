@@ -2878,7 +2878,7 @@ const CustomDomainModal = ({ website, onClose }: { website: SavedWebsite; onClos
   const [verifying, setVerifying] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<'idle' | 'verified' | 'failed'>('idle');
   const [verificationMessage, setVerificationMessage] = useState('');
-  const [customDomain, setCustomDomain] = useState((website as any).customDomain || '');
+  const [customDomain, setCustomDomain] = useState(website.customDomain || '');
   
   const userDomain = customDomain.replace(/^www\./, '') || 'yourdomain.com';
   
@@ -3898,7 +3898,7 @@ export const WebTemplates = ({ initialTab = 'templates' }: WebTemplatesProps) =>
                 <div className="text-xs text-slate-400">Saved</div>
               </div>
               <div className="space-y-1 text-center">
-                <div className="text-2xl font-bold text-amber-400">{savedWebsites.filter(w => (w as any).customDomain).length}</div>
+                <div className="text-2xl font-bold text-amber-400">{savedWebsites.filter(w => 'customDomain' in w).length}</div>
                 <div className="text-xs text-slate-400">Domains</div>
               </div>
             </div>
@@ -3967,7 +3967,7 @@ export const WebTemplates = ({ initialTab = 'templates' }: WebTemplatesProps) =>
           }`}
         >
           <Globe className="w-3 h-3" />
-          Connected ({savedWebsites.filter(w => (w as any).customDomain).length})
+          Connected ({savedWebsites.filter(w => 'customDomain' in w).length})
         </button>
       </div>
 
