@@ -1009,15 +1009,32 @@ export default function VisualSectionsEditor({ templateData, onUpdate, onSave, o
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const [history, setHistory] = useState<Section[][]>([]);
   const maxHistory = 20;
+  const historySaveTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (historySaveTimeoutRef.current !== null) {
+        window.clearTimeout(historySaveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const saveToHistory = (currentSections: Section[]) => {
-    setHistory(prev => {
-      const newHistory = [...prev, JSON.parse(JSON.stringify(currentSections))];
-      if (newHistory.length > maxHistory) {
-        newHistory.shift();
-      }
-      return newHistory;
-    });
+    // Debounce history saving to avoid storing excessive large snapshots
+    if (historySaveTimeoutRef.current !== null) {
+      window.clearTimeout(historySaveTimeoutRef.current);
+    }
+
+    historySaveTimeoutRef.current = window.setTimeout(() => {
+      setHistory(prev => {
+        const newEntry = JSON.parse(JSON.stringify(currentSections)) as Section[];
+        const newHistory = [...prev, newEntry];
+        if (newHistory.length > maxHistory) {
+          newHistory.shift();
+        }
+        return newHistory;
+      });
+    }, 300);
   };
 
   const undo = () => {
