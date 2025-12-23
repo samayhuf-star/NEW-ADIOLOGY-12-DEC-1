@@ -4353,17 +4353,10 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
           locations: { ...prev.locations, states: items, cities: [], zipCodes: [] }
         }));
       } else if (type === 'zips') {
-<<<<<<< HEAD
-        if (preset === 'top1000') items = countryPresets.zips.top1000;
-        else if (preset === 'top5000') items = countryPresets.zips.top5000;
-        else if (preset === 'top15000') items = countryPresets.zips.top15000;
-        else if (preset === 'top25000') items = countryPresets.zips.top25000;
-=======
         if (preset === 'top1000') { items = countryPresets.zips.top1000; requestedCount = 1000; }
         else if (preset === 'top5000') { items = countryPresets.zips.top5000; requestedCount = 5000; }
         else if (preset === 'top15000') { items = countryPresets.zips.top15000; requestedCount = 15000; }
         else if (preset === 'top25000') { items = countryPresets.zips.top25000; requestedCount = 25000; }
->>>>>>> origin/fix/deployment
         setCampaignData(prev => ({ 
           ...prev, 
           locations: { ...prev.locations, zipCodes: items, cities: [], states: [] }
@@ -4401,11 +4394,7 @@ export const CampaignBuilder3: React.FC<CampaignBuilder3Props> = ({ initialData 
     const currentSelection = getCurrentSelection();
 
     return (
-<<<<<<< HEAD
-      <div className="max-w-5xl mx-auto p-6">
-=======
       <div className="max-w-5xl mx-auto px-3 py-4 sm:p-6">
->>>>>>> origin/fix/deployment
         {/* Step Navigation */}
         <div className="flex justify-between items-center mb-6">
           <button
